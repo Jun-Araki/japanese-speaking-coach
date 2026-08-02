@@ -1,5 +1,9 @@
 # Architecture
 
+**Translation of [`../ja/architecture.md`](../ja/architecture.md), which is authoritative.** If the two
+disagree, the Japanese version is correct and this file needs updating.
+
+
 > **Thin by design.** The table below is the public extract of the stack decisions.
 > **Nothing outside this table is adopted during August.**
 

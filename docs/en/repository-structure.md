@@ -1,5 +1,9 @@
 # Repository Structure
 
+**Translation of [`../ja/repository-structure.md`](../ja/repository-structure.md), which is authoritative.** If the two
+disagree, the Japanese version is correct and this file needs updating.
+
+
 > **Thin by design.** Directories are listed as they are created. Entries marked *(planned)*
 > do not exist yet.
 
@@ -9,6 +13,8 @@ japanese-speaking-coach/
 ├── README.md                  Public entry point (English)
 ├── .env.example               Required environment variables; .env is never committed
 ├── docs/                      Permanent documents — what to build and how
+│   ├── ja/                    Japanese, authoritative. Edited first
+│   └── en/                    English translation. Updated to match ja/
 ├── config/
 │   └── thresholds.toml        Validation thresholds. Never inline these in code
 ├── .steering/                 Per-task documents, one directory per piece of work

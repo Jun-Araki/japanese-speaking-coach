@@ -43,7 +43,7 @@ Streamlit (app/)
 
 ## データ構造
 
-[docs/functional-design.md](../../docs/functional-design.md) の定義に従う。今週の範囲では：
+[docs/ja/functional-design.md](../../docs/ja/functional-design.md) の定義に従う。今週の範囲では：
 
 **評価データ1件**（`data/evaluation/items.json` の配列要素）
 
@@ -107,7 +107,7 @@ Streamlit (app/)
 ## 採点の設計
 
 - **機械採点するのは `needs_correction` の一致だけ。**
-  `corrected_sentence` は完全一致で採点しない（[docs/glossary.md](../../docs/glossary.md) §5）
+  `corrected_sentence` は完全一致で採点しない（[docs/ja/glossary.md](../../docs/ja/glossary.md) §5）
 - `format_compliance_rate` は**精度と分けて記録する**。JSON が壊れた／理由が日本語で
   返ったケースを精度の低下と混同しない
 - **採点スクリプト自体に pytest を書く。** 採点の不具合はモデルの改善と区別がつかない
@@ -118,9 +118,9 @@ Streamlit (app/)
 ## 影響範囲
 
 - 既存コードなし（初回実装）
-- [docs/glossary.md](../../docs/glossary.md) の閾値2つ（編集距離・レベル超過語彙）は
+- [docs/ja/glossary.md](../../docs/ja/glossary.md) の閾値2つ（編集距離・レベル超過語彙）は
   今週の範囲外。第2週に確定させて glossary へ書き戻す
-- `docs/repository-structure.md` の *(planned)* 表記は、作ったディレクトリから外していく
+- `docs/ja/repository-structure.md` の *(planned)* 表記は、作ったディレクトリから外していく
 
 ---
 

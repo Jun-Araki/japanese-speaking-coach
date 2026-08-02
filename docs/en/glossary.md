@@ -1,5 +1,9 @@
 # Glossary — Ubiquitous Language
 
+**Translation of [`../ja/glossary.md`](../ja/glossary.md), which is authoritative.** If the two
+disagree, the Japanese version is correct and this file needs updating.
+
+
 This file is not documentation of the code. **It is the labelling standard for the 120-item
 evaluation set and the definition of every number published in the README.**
 
@@ -164,7 +168,7 @@ Applied by hand to 40 items; 20 of them are rated independently by a second nati
 
 ### Thresholds
 
-Values live in [`config/thresholds.toml`](../config/thresholds.toml), with the reasoning for
+Values live in [`config/thresholds.toml`](../../config/thresholds.toml), with the reasoning for
 each. **Never inline them in code.** Current state:
 
 | Threshold | Provisional value | Status |

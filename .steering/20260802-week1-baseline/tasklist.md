@@ -30,13 +30,15 @@
 
 - [ ] `correction.check()` を**会話とは別呼び出し**で実装
 - [ ] 構造化出力の JSON スキーマを固定（`grounding_ids` は空配列で確保）
+- [ ] **JSON が壊れて返ったときの処理**（[docs/ja/functional-design.md](../../docs/ja/functional-design.md) エラーハンドリング）
+      — 再試行1回、失敗しても `format_compliance_rate` の分母には必ず数える。**捨てて隠さない**
 - [ ] 訂正結果を `st.session_state` に溜め、**会話中は表示しない**
 - [ ] 「会話を終える」→ 振り返り表示
 
 ## Day 4（8/5 火）— 評価データ 60件
 
 - [ ] 候補を大規模モデルに生成させる（場面ごと、初級者が言いそうな文）
-- [ ] **全件を自分で検証・修正**（[docs/glossary.md](../../docs/glossary.md) §2 の基準に従う）
+- [ ] **全件を自分で検証・修正**（[docs/ja/glossary.md](../../docs/ja/glossary.md) §2 の基準に従う）
 - [ ] 迷った件は `false` に倒し、判断に迷った旨をメモに残す
 - [ ] dev / test に分割（比率は 2:1 を維持）
 

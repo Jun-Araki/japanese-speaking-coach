@@ -1,5 +1,9 @@
 # Functional Design
 
+**Translation of [`../ja/functional-design.md`](../ja/functional-design.md), which is authoritative.** If the two
+disagree, the Japanese version is correct and this file needs updating.
+
+
 > **Thin by design.** Structure and data shapes only, filled in here as implementation
 > settles them.
 
@@ -101,6 +105,28 @@ and it makes both implementation and evaluation heavier.
   speech and non-speech, token counts
 
 No learner name is stored. Audio is retained only for the September transcription study.
+
+## Error handling
+
+**Principle: a failure in correction never stops the conversation.** Corrections are shown
+after the session, so a background failure is survivable. **A failure in the conversation is
+never hidden**, however — when the AI goes silent, learners assume their pronunciation was
+at fault.
+
+| Failure | Behaviour |
+|---|---|
+| Transcription fails or returns empty | Show "I could not hear that" in English and prompt **Say again**. Not recorded as a turn |
+| Correction JSON is malformed | **Retry once.** If still malformed, omit that sentence from the review — but **always count it in the denominator of `format_compliance_rate`** (hiding failures makes format compliance look better than it is) |
+| Reason comes back in Japanese | Use the output, but count it as non-compliant in `format_compliance_rate`. Accuracy metrics are unaffected |
+| Dialogue API error | Show an error and a retry button. **Never paper over it with a canned reply** — the learner must not think the AI simply ignored them |
+| Still over level after regeneration | Use the reply as-is (one regeneration only) and record it as non-compliant in `level_compliance_rate` |
+| Retrieval returns nothing | Treat as ungrounded: **state nothing as certain in the reason**, and if the original sentence is already natural, fall back to "no correction needed" |
+| Recording exceeds the length cap | Show the cap before recording; anything beyond it is not sent |
+| Daily token or TTS cap reached | **Block the start of a new conversation** and explain in English when it resets. Never cut off a conversation in progress |
+| Database write fails | Continue the conversation. Record the gap in the application log — the tester's experience matters more than one usage row |
+
+**Counting format failures matters most.** Silently discarding malformed output inflates
+`format_compliance_rate` and **makes the evaluation itself dishonest.**
 
 ## Evaluation is measured in two stages
 
