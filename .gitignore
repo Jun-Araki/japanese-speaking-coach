@@ -1,0 +1,35 @@
+# Secrets — never commit. Only .env.example is tracked.
+.env
+.env.*
+!.env.example
+
+# Personal planning document. Contains career, contract and visa details that must
+# not be public. Kept locally; see docs/ for the public-facing documentation.
+PLAN.md
+
+# Reference material copied from books/articles. Not ours to publish.
+Sample/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+
+# Local data stores
+chroma/
+*.sqlite3
+*.db
+
+# Learner audio and transcripts — personal data, keep out of git
+data/recordings/
+data/sessions/
+
+# OS / editor
+.DS_Store
+.idea/
+*.swp

@@ -1,0 +1,69 @@
+# Validation thresholds.
+#
+# These are PROVISIONAL starting values, not measured results. Week 2 fixes them
+# against the dev split and records the final values in docs/glossary.md §7.
+# Never inline these numbers in code — read them from here.
+
+[rewrite_too_far]
+# A "correction" whose distance from the original exceeds this is treated as a
+# different sentence, not a correction, and is discarded by the validation node.
+#
+# Measured as character-level Levenshtein distance, normalised by the length of
+# the longer string.
+#
+# WHY 0.65 AND NOT 0.5 — measured on real corrections 2026-08-02:
+#
+#   おはようです      -> おはようございます        0.44
+#   ありがとう        -> ありがとうございます      0.50
+#   明日行くです      -> 明日行きます              0.33
+#   すみません、遅れます -> すみません、遅れそうです  0.25
+#   私は日本語を勉強します -> 私は日本語を勉強しています 0.15
+#
+# Corrections into polite form append long fixed endings to short sentences, so
+# they score high on a normalised ratio despite being the single most common and
+# most obviously correct type of correction in this app. A threshold of 0.5 would
+# discard "ありがとう -> ありがとうございます". Beginner sentences are short, which
+# makes the ratio unstable, so the threshold sits well above the observed range.
+normalised_distance_max = 0.65
+
+# Below this length the normalised ratio is meaningless (one character changed in
+# a four-character sentence is 0.25). Short sentences use the absolute distance.
+short_sentence_chars = 8
+short_sentence_distance_max = 6
+
+# TODO(week2): run this over the 90 needs_correction dev items, count how many
+# valid corrections get discarded, and raise the threshold until that count is
+# zero. A discarded valid correction is invisible to the learner and therefore
+# worse than a slightly loose threshold.
+
+[vocabulary_level]
+# The AI reply is regenerated if it uses too many words above the learner's level.
+# Tokenised with SudachiPy; frequency tiers come from SudachiDict.
+#
+# Only content words count — nouns, verbs, adjectives, adverbs. Particles and
+# auxiliaries are always high-frequency and would dilute the ratio toward zero,
+# making the check pass on replies that are in fact too hard.
+content_pos = ["名詞", "動詞", "形容詞", "副詞"]
+
+# WHY A RATIO AND NOT ZERO: replies are held to 1-2 sentences, roughly 5-15
+# content words. Requiring zero over-level words would trigger regeneration on
+# almost every reply, burning latency and tokens for no learning benefit, and a
+# single unfamiliar word in context is how vocabulary is actually acquired.
+over_level_ratio_max = 0.2
+
+# A word two tiers above the learner's level is rejected regardless of ratio —
+# one such word can make a whole reply incomprehensible to a beginner.
+absolute_tier_gap_max = 2
+
+# Proper nouns are exempt: names and places have no meaningful frequency tier and
+# are unavoidable in self-introduction and workplace scenes.
+exempt_pos = ["名詞,固有名詞"]
+
+# Regeneration is attempted at most once, then the reply is used as-is. An
+# unbounded loop would stall the conversation, and a slightly hard reply is far
+# less damaging than a hang.
+max_regenerations = 1
+
+# TODO(week2): measure level_compliance_rate before tuning. If regeneration fires
+# on more than ~30% of replies, the dialogue prompt is wrong and the threshold is
+# the wrong lever — fix the prompt first.
