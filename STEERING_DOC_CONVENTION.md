@@ -31,5 +31,3 @@
 - `.steering/20250115-add-tag-feature/`
 - `.steering/20250120-fix-filter-bug/`
 - `.steering/20250201-improve-performance/`
-
-西見 公宏; 吉田 真吾; 大嶋 勇樹. 実践Claude Code入門―現場で活用するためのAIコーディングの思考法 エンジニア選書 (Japanese Edition) (pp. 140-141). (Function). Kindle Edition.
