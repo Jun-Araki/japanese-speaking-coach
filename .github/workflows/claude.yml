@@ -36,13 +36,16 @@ jobs:
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
 
+          # Broad tool access so Claude can act without asking for permission.
+          # Only users with write access to this repository can trigger the
+          # action, so the blast radius is limited to the repo owner.
+          # The base tool list is repeated here because the action appends
+          # these args after its own --allowedTools flag.
+          claude_args: |
+            --allowedTools "Bash,Glob,Grep,LS,Read,Edit,Write,mcp__github_comment__update_claude_comment,mcp__github_ci__get_ci_status,mcp__github_ci__get_workflow_run_details,mcp__github_ci__download_job_log"
+
           # Optional: Customize the trigger phrase (default: @claude)
           # trigger_phrase: "/claude"
 
           # Optional: Trigger when specific user is assigned to an issue
           # assignee_trigger: "claude-bot"
-
-          # Optional: Configure Claude's behavior with CLI arguments
-          # claude_args: |
-          #   --max-turns 10
-          #   --allowedTools "Bash(npm install),Bash(npm run build),Bash(npm run test:*),Bash(npm run lint:*)"
