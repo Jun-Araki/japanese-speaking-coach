@@ -11,6 +11,7 @@ japanese-speaking-coach/
 ├── pyproject.toml             依存とツール設定（ruff / mypy / pytest）
 ├── uv.lock                    依存の固定。**コミットする**
 ├── .env.example               必要な環境変数。.env は決してコミットしない
+├── llm.py                     **提供元を選ぶ唯一の場所。** ここ1行で Gemini ⇄ Anthropic を差し替える
 ├── docs/                      恒久的ドキュメント — 何を作るか・どう作るか
 │   ├── ja/                    日本語版。こちらが正。先に編集する
 │   └── en/                    英語版。ja/ に合わせて更新する
@@ -19,8 +20,12 @@ japanese-speaking-coach/
 ├── .steering/                 作業単位のドキュメント。作業ごとに1ディレクトリ
 │   └── YYYYMMDD-タイトル/      requirements.md, design.md, tasklist.md
 ├── app/                       Streamlit の画面。1画面のみ
-│   └── audio_check.py         iOS Safari の録音・自動再生の確認用。**使い捨て**、結果を記録したら消す
-├── dialogue/                  (予定) 会話ノード
+│   ├── main.py                会話画面。**Community Cloud の起動ファイルはこれ**
+│   └── audio_check.py         iOS Safari の確認用。**使い捨て**、役目を終えたら消す
+├── dialogue/                  会話ノード
+│   ├── scenes.py              場面・レベルの定義。**glossary.md §3・§4 が正本**
+│   └── reply.py               `reply()`。相手役のプロンプトと1〜2文の制限
+├── tests/                     pytest。**モデルを呼ぶテストは書かない**（生成文には固定の正解がない）
 ├── correction/                (予定) 訂正ノードと検証
 ├── retrieval/                 (予定) Chroma への登録と検索
 ├── nlp/                       (予定) SudachiPy の分かち書き、語彙レベル判定

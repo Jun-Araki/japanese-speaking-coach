@@ -14,6 +14,8 @@ japanese-speaking-coach/
 ├── pyproject.toml             Dependencies and tool config (ruff / mypy / pytest)
 ├── uv.lock                    Pinned dependencies. **Committed**
 ├── .env.example               Required environment variables; .env is never committed
+├── llm.py                     **The only place the provider is chosen.** One line
+│                              switches between Gemini and Anthropic
 ├── docs/                      Permanent documents — what to build and how
 │   ├── ja/                    Japanese, authoritative. Edited first
 │   └── en/                    English translation. Updated to match ja/
@@ -22,9 +24,14 @@ japanese-speaking-coach/
 ├── .steering/                 Per-task documents, one directory per piece of work
 │   └── YYYYMMDD-title/        requirements.md, design.md, tasklist.md
 ├── app/                       Streamlit UI, single page
+│   ├── main.py                Conversation screen. **Community Cloud entry point**
 │   └── audio_check.py         Checks recording and autoplay on iOS Safari.
-│                              **Throwaway** — deleted once the result is recorded
-├── dialogue/                  (planned) Conversation node
+│                              **Throwaway** — deleted once it has served its purpose
+├── dialogue/                  Conversation node
+│   ├── scenes.py              Scenes and levels. **glossary.md §3 and §4 are the source**
+│   └── reply.py               `reply()`. Partner prompt and the one-to-two sentence cap
+├── tests/                     pytest. **No tests call the model** — generated Japanese
+│                              has no fixed right answer to assert against
 ├── correction/                (planned) Correction node and validation
 ├── retrieval/                 (planned) Chroma indexing and search
 ├── nlp/                       (planned) SudachiPy tokenization, vocabulary level checks
