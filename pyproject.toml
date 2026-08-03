@@ -1,0 +1,44 @@
+[project]
+name = "japanese-speaking-coach"
+version = "0.1.0"
+description = "Speaking practice for beginner learners of Japanese, with corrections after the conversation"
+requires-python = ">=3.11"
+
+# Week 1 needs a text-only conversation loop and a correction call. Retrieval,
+# tokenization, the API layer and the graph arrive in weeks 2-3 and their
+# dependencies are added then, not now.
+#
+# The model provider goes through LangChain so that swapping it is a one-line
+# change. Gemini is used because a key is already available; Anthropic is the
+# preferred provider and is swapped back in once billing is sorted. Both
+# integration packages are installed so the swap needs no dependency change.
+dependencies = [
+    "langchain",
+    "langchain-google-genai",
+    "langchain-anthropic",
+    "streamlit",
+    "python-dotenv",
+]
+
+[dependency-groups]
+dev = [
+    "ruff",
+    "mypy",
+    "pytest",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+warn_unreachable = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
