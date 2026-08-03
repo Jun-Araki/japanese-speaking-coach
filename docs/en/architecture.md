@@ -11,9 +11,9 @@ disagree, the Japanese version is correct and this file needs updating.
 
 | Area | Choice | Why |
 |---|---|---|
-| LLM | LangChain → Claude API | Strong Japanese output |
-| Transcription | OpenAI transcription endpoint | Accepts the WAV Streamlit produces |
-| Text to speech | OpenAI speech endpoint | Japanese support, streaming playback. **Terms require disclosing that the voice is AI-generated** |
+| LLM | **LangChain → Gemini** (decided 2026-08-03) | See "Choosing a provider" below |
+| Transcription | **Decided in week 3** (Gemini first, OpenAI as fallback) | Same |
+| Text to speech | **Decided in week 3** (same) | Both support Japanese. **Disclosing that the voice is AI-generated is done regardless of provider** |
 | Tokenization | SudachiPy + SudachiDict (Apache-2.0) | Japanese has no spaces between words, so vocabulary-level checking requires morphological analysis |
 | Embeddings | sentence-transformers, multilingual | Retrieval over Japanese text |
 | Vector store | Chroma | Fastest local option, sufficient for a demo |
@@ -24,6 +24,28 @@ disagree, the Japanese version is correct and this file needs updating.
 | Container | Docker + compose | `docker compose up` runs UI, API, and database |
 | Evaluation | Custom scripts (pytest allowed) | Produces the README numbers |
 | Deploy | UI on Streamlit Community Cloud, API on Hugging Face Spaces (fallback Render) | Free tiers; secrets via each platform's secret store |
+
+## Choosing a provider (2026-08-03)
+
+Claude API was the original choice, but Anthropic's payment form could not be completed and
+no key was obtained. A `GEMINI_API_KEY` was already available, so **Gemini was adopted to
+avoid blocking the build.**
+
+- Calls go through LangChain, so **swapping the provider is a one-line change** and Anthropic
+  can be swapped back in once billing works
+- **The baseline and the real implementation must be measured on the same model.** Measuring
+  the naive version on one model and the real one on another turns the comparison table into
+  a comparison of models rather than of the validation logic, which **destroys the centrepiece
+  of the evaluation**
+- If the provider is swapped, either re-measure both, or make the model explicit in the
+  `run_record` so a reader can tell the runs apart
+
+**The speech provider is decided in week 3, from measurement.** Gemini handles both
+transcription and speech generation (WAV accepted, Japanese supported) and would keep
+everything on one key. But **Gemini transcribes via a prompt — a language model writes the
+text** — so it may **repair the learner's mistakes more aggressively than a dedicated speech
+recogniser would**. That would erase exactly what this app exists to correct, so it is
+measured under "Evaluation is measured in two stages" before being chosen.
 
 ## Constraints that shaped these choices
 

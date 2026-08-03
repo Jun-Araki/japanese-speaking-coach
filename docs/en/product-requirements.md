@@ -59,10 +59,28 @@ phone browser. Story 6 is confirmed by running the evaluation script.
 
 ## What makes it different
 
-1. Corrections only — not a course
-2. **Correction quality is published as numbers** (competing services publish none, so
-   measuring at all is the differentiator)
-3. Corrections are grounded in a grammar reference via retrieval
+The closest comparison is `japanesecompass.com` (checked 2026-08-02 and 08-03). It wins on
+breadth of features, so this does not compete there.
+
+**Two things are not differentiators, both verified:**
+
+- **Its AI conversation already corrects** ("get gentle corrections", "teacher-grade
+  corrections" on the paid tier)
+- **It also takes voice, and even scores pronunciation** (`/practice/speaking/`).
+  **This project does not score pronunciation**
+
+**The gap is in the combination.** There, voice and conversation are separate features:
+speaking practice has you **read a model sentence aloud and shadow it**, while the AI
+conversation is a chat you **type**. You can speak, or you can compose your own sentences,
+but not both at once.
+
+1. **Speak your own words, out loud, in a conversation** — not shadowing, not typing.
+   **If learners only repeat fixed phrases there is nothing left to correct**, and the
+   evaluation has nothing to measure
+2. **Corrections are withheld until the conversation ends** — theirs corrects as you go
+3. **Correction quality is published as numbers** ← **the real one. Verified: they publish no
+   accuracy figures at all**
+4. Corrections are grounded in a grammar reference via retrieval
 
 ## Success criteria (end of August 2026)
 

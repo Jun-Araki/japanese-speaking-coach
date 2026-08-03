@@ -43,16 +43,41 @@ Corrections also never interrupt the conversation. They are computed every turn 
 background and shown only at the end, because correcting a beginner mid-sentence is the
 fastest way to make them stop talking.
 
-## Why build this when free alternatives exist
+## Why build this when good alternatives exist
 
-`japanesecompass.com` already offers kana, grammar, kanji, mock exams, a dictionary and an AI
-conversation partner, free. **Competing on feature count is a losing game, so this does not
-compete there.** The differences are three:
+`japanesecompass.com` is the closest comparison, and it is a strong product (checked
+2026-08-02): 2,136 kanji, 3,587 vocabulary entries, 303 grammar points, a 217,524-entry
+dictionary, JLPT and JFT-Basic mock exams, branching stories, stroke-order writing practice,
+and an AI conversation partner. Most of it is free; the AI conversation is capped at 10
+messages a day, and Pro is $49/year.
 
-1. **It only corrects.** It is not a course.
-2. **Correction quality is published as measured numbers.** No comparable service publishes
-   accuracy figures at all — measuring is itself the differentiator.
-3. **Corrections cite a grammar reference** rather than asserting things ungrounded.
+**Competing on feature count against that is a losing game, so this does not compete there.**
+
+It also does two things this project is often assumed to be first at, so both are stated
+plainly rather than glossed over:
+
+- **It corrects.** Its conversation partner offers "gentle corrections", with "teacher-grade
+  corrections" on the paid tier. **Correcting Japanese is not a differentiator.**
+- **It takes voice.** Its speaking practice records you and even scores your pronunciation.
+  **This project does not score pronunciation at all** — see above for why.
+
+The actual gap is narrower, and it is a gap in *combination*. On that site, voice and
+conversation are separate features: the speaking practice has you **read a model sentence
+aloud and shadow it**, while the AI conversation is a chat you **type** into. You can speak
+Japanese, or you can compose your own sentences, but not both at once.
+
+1. **Speak your own words, out loud, in a conversation.** Not shadowing a supplied sentence,
+   not typing. This matters beyond convenience: if the learner only repeats fixed phrases,
+   **there is nothing left to correct**, and the evaluation this project is built around has
+   nothing to measure.
+2. **Corrections are withheld until the conversation ends.** Theirs corrects as you go. That
+   is a reasonable choice; the opposite one is made here on purpose, because interrupting a
+   beginner mid-sentence is the fastest way to make them stop talking.
+3. **Correction quality is published as measured numbers.** No comparable service publishes
+   accuracy figures — including this one, which sells correction quality as a paid feature
+   without quantifying it. **Measuring is the real differentiator**, and it is the part of
+   this project worth reading.
+4. **Corrections cite a grammar reference** rather than asserting things ungrounded.
 
 ---
 
@@ -178,9 +203,12 @@ morphological analysis (SudachiPy) — it is load-bearing here, not decoration.
 
 ## Stack
 
-LangChain + Claude API · OpenAI transcription and speech · SudachiPy + SudachiDict ·
+LangChain (Gemini today, provider swappable in one line) · SudachiPy + SudachiDict ·
 sentence-transformers (multilingual) · Chroma · LangGraph · FastAPI · Streamlit ·
 PostgreSQL · Docker Compose
+
+The speech provider is chosen in week 3 from measurement, not upfront — a transcriber that
+quietly repairs the learner's mistakes would erase the thing this app exists to correct.
 
 Full table with the reasoning for each choice: [`docs/en/architecture.md`](docs/en/architecture.md).
 

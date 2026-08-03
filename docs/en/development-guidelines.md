@@ -8,7 +8,8 @@ disagree, the Japanese version is correct and this file needs updating.
 
 ## Language
 
-- Python 3.11+
+- Python 3.11+ (**currently 3.12.13**), managed with **`uv`**
+  — `uv sync` to install, `uv run <cmd>` to execute. The system Python is left alone
 - `ruff` for linting and formatting, `mypy` for type checking — run both after any code change
 - Type hints on every public function
 
