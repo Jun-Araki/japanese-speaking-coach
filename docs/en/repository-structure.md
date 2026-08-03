@@ -11,6 +11,8 @@ disagree, the Japanese version is correct and this file needs updating.
 japanese-speaking-coach/
 ├── CLAUDE.md                  Development process rules (Japanese, for the author)
 ├── README.md                  Public entry point (English)
+├── pyproject.toml             Dependencies and tool config (ruff / mypy / pytest)
+├── uv.lock                    Pinned dependencies. **Committed**
 ├── .env.example               Required environment variables; .env is never committed
 ├── docs/                      Permanent documents — what to build and how
 │   ├── ja/                    Japanese, authoritative. Edited first
@@ -19,7 +21,9 @@ japanese-speaking-coach/
 │   └── thresholds.toml        Validation thresholds. Never inline these in code
 ├── .steering/                 Per-task documents, one directory per piece of work
 │   └── YYYYMMDD-title/        requirements.md, design.md, tasklist.md
-├── app/                       (planned) Streamlit UI, single page
+├── app/                       Streamlit UI, single page
+│   └── audio_check.py         Checks recording and autoplay on iOS Safari.
+│                              **Throwaway** — deleted once the result is recorded
 ├── dialogue/                  (planned) Conversation node
 ├── correction/                (planned) Correction node and validation
 ├── retrieval/                 (planned) Chroma indexing and search

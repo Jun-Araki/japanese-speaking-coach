@@ -8,6 +8,8 @@
 japanese-speaking-coach/
 ├── CLAUDE.md                  開発プロセスの規約（日本語）
 ├── README.md                  公開の入口（英語）
+├── pyproject.toml             依存とツール設定（ruff / mypy / pytest）
+├── uv.lock                    依存の固定。**コミットする**
 ├── .env.example               必要な環境変数。.env は決してコミットしない
 ├── docs/                      恒久的ドキュメント — 何を作るか・どう作るか
 │   ├── ja/                    日本語版。こちらが正。先に編集する
@@ -16,7 +18,8 @@ japanese-speaking-coach/
 │   └── thresholds.toml        検証の閾値。コードに直値を埋め込まない
 ├── .steering/                 作業単位のドキュメント。作業ごとに1ディレクトリ
 │   └── YYYYMMDD-タイトル/      requirements.md, design.md, tasklist.md
-├── app/                       (予定) Streamlit の画面。1画面のみ
+├── app/                       Streamlit の画面。1画面のみ
+│   └── audio_check.py         iOS Safari の録音・自動再生の確認用。**使い捨て**、結果を記録したら消す
 ├── dialogue/                  (予定) 会話ノード
 ├── correction/                (予定) 訂正ノードと検証
 ├── retrieval/                 (予定) Chroma への登録と検索
