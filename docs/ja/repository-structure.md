@@ -20,8 +20,7 @@ japanese-speaking-coach/
 ├── .steering/                 作業単位のドキュメント。作業ごとに1ディレクトリ
 │   └── YYYYMMDD-タイトル/      requirements.md, design.md, tasklist.md
 ├── app/                       Streamlit の画面。1画面のみ
-│   ├── main.py                会話画面。**Community Cloud の起動ファイルはこれ**
-│   └── audio_check.py         iOS Safari の確認用。**使い捨て**、役目を終えたら消す
+│   └── main.py                会話画面。**Community Cloud の起動ファイルはこれ**
 ├── dialogue/                  会話ノード
 │   ├── scenes.py              場面・レベルの定義。**glossary.md §3・§4 が正本**
 │   └── reply.py               `reply()`。相手役のプロンプトと1〜2文の制限

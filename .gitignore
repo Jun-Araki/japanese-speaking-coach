@@ -3,6 +3,10 @@
 .env.*
 !.env.example
 
+# Streamlit puts local secrets here, and the same file's contents get pasted into
+# the Community Cloud settings. Same keys as .env, different filename.
+.streamlit/secrets.toml
+
 # Personal planning document. Contains career, contract and visa details that must
 # not be public. Kept locally; see docs/ for the public-facing documentation.
 PLAN.md

@@ -30,8 +30,10 @@
 - [x] **②自動再生は成功。** A・B は毎回鳴り、同じ音の C だけ鳴らなかった
       → 原因は Safari の制限ではなく**音声の同一性**。**第3週は自動再生で組んでよい**
 - [x] 結果と**本番の罠**（同じ返事＝同じ音声は2回目が鳴らない）を [design.md](design.md) に記録
-- [ ] `app/audio_check.py` を削除し、Community Cloud の Main file path を会話画面へ差し替える
-      — 会話画面ができてから。**デプロイ枠は消さない**（サブドメインを手放さないため）
+- [x] `app/audio_check.py` を削除
+- [ ] **Community Cloud 側の操作**（私からは触れない）
+      — Secrets に `GEMINI_API_KEY` を追加 → Main file path を `app/main.py` へ差し替え。
+      **枠は消さない**（サブドメインを手放さないため）
 - [x] Streamlit で会話画面（録音なし・テキスト直結）— [app/main.py](../../app/main.py)
       場面・レベル選択 → 複数ターン会話。**会話中に訂正は出さない**。
       生成失敗は**定型文でごまかさず**エラーと再試行ボタンを出す

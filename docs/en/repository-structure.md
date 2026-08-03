@@ -24,9 +24,7 @@ japanese-speaking-coach/
 ├── .steering/                 Per-task documents, one directory per piece of work
 │   └── YYYYMMDD-title/        requirements.md, design.md, tasklist.md
 ├── app/                       Streamlit UI, single page
-│   ├── main.py                Conversation screen. **Community Cloud entry point**
-│   └── audio_check.py         Checks recording and autoplay on iOS Safari.
-│                              **Throwaway** — deleted once it has served its purpose
+│   └── main.py                Conversation screen. **Community Cloud entry point**
 ├── dialogue/                  Conversation node
 │   ├── scenes.py              Scenes and levels. **glossary.md §3 and §4 are the source**
 │   └── reply.py               `reply()`. Partner prompt and the one-to-two sentence cap
