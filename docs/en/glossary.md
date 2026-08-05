@@ -61,6 +61,37 @@ Explicitly label `false` for:
 - **Regional or casual variants** that are genuinely used
 - **Sentences a native would not remark on**, even if the author personally prefers another form
 
+### The politeness floor — set by who is listening (decided 2026-08-05)
+
+Judging that the **politeness is wrong for the scene** requires knowing how casual the
+sentence is allowed to be. Without that, the same plain-form sentence gets labelled `true`
+in one item and `false` in another, and `detection_accuracy` and `over_correction_rate`
+both become a measure of which way the labeller happened to lean. The first 60 candidates
+did exactly this, which is why it is fixed here.
+
+**What sets the floor is the listener, not the scene.** 「トイレはどこ？」 is fine said to a
+colleague and needs correcting said to a shop assistant.
+
+| Tier | Listener | Floor | Scenes |
+|---|---|---|---|
+| **A** | A neighbour, a colleague | No polite marker needed | `greeting` `thanks` |
+| **B** | Someone just met, a shop assistant | **At least one of お / ください / です / ます** | `self_introduction` `simple_request` |
+| **C** | A colleague kept waiting, a manager | **です・ます required** | `delay_notice` `workplace_keigo` |
+
+- **The floor at B is one polite marker, not a fully polite sentence.** 「これ、ください」 and
+  「お名前は」 clear it and are `false`. 「トイレはどこ？」 and 「名前は？」 have none and are `true`
+- **Plain form is `true` at C** because, as in §3, these are the scenes where controlling
+  politeness actually starts to matter
+- **At A, politeness alone is never a reason to label `true`.** There, `true` comes only from
+  a grammatical error, a phrasing no native speaker would use, or an altered fixed phrase
+- **A fixed phrase aimed in the wrong direction is a misused fixed phrase, not a politeness
+  level.** Saying 「ご苦労さまです」 to a superior is `true` at tier A too
+- **C asks for です・ます, not for full honorific and humble forms.** 「少し考えます」 to a manager
+  is `false`
+- **「あなた」 is never itself a reason to label `true`** (decided during verification on
+  2026-08-05). What actually reads as unnatural is usually the word order or the literal
+  translation, and that is what the reason should name. 「あなたはこの本を持っていますか」 is `false`
+
 ### Rule when uncertain
 
 **If you hesitate, label `false` and write the item's uncertainty in a note.** The system is
