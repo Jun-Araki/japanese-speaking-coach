@@ -28,9 +28,11 @@ japanese-speaking-coach/
 ├── dialogue/                  Conversation node
 │   ├── scenes.py              Scenes and levels. **glossary.md §3 and §4 are the source**
 │   └── reply.py               `reply()`. Partner prompt and the one-to-two sentence cap
+├── correction/                Correction node
+│   └── engine.py              `check()`. Parses the structured output **itself** and
+│                              also reports format compliance
 ├── tests/                     pytest. **No tests call the model** — generated Japanese
 │                              has no fixed right answer to assert against
-├── correction/                (planned) Correction node and validation
 ├── retrieval/                 (planned) Chroma indexing and search
 ├── nlp/                       (planned) SudachiPy tokenization, vocabulary level checks
 ├── evals/                     (planned) Evaluation scripts, baseline, run records

@@ -68,6 +68,25 @@ def build_chat_model(temperature: float) -> BaseChatModel:
     raise ValueError(f"Unknown LLM_PROVIDER: {provider!r}. Use 'gemini' or 'anthropic'.")
 
 
+def as_text(content: object) -> str:
+    """Flatten LangChain's message-content union down to plain text.
+
+    The union spans providers, so the flattening belongs next to the provider
+    choice rather than being repeated by every caller.
+    """
+    if isinstance(content, str):
+        return content
+    if isinstance(content, list):
+        parts = [part for part in content if isinstance(part, str)]
+        parts += [
+            str(part.get("text", ""))
+            for part in content
+            if isinstance(part, dict) and part.get("type") == "text"
+        ]
+        return "".join(parts)
+    return str(content)
+
+
 def _provider() -> str:
     return os.environ.get("LLM_PROVIDER", "gemini").strip().lower()
 

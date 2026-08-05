@@ -35,13 +35,18 @@ graph TB
 
 ## Screen flow
 
-One page only. It switches between two states; no second page is ever added.
+One page only. It switches between three states; no second page is ever added.
 
 ```
 Scene + level select ──▶ Conversation (record ▸ reply ▸ repeat) ──▶ Review
-                                        ▲                 │
-                                        └── "Say again" ───┘
+        ▲                              ▲                 │           │
+        │                              └── "Say again" ───┘           │
+        └──────────────── "Start another conversation" ───────────────┘
 ```
+
+The state is decided by which keys exist in `st.session_state`: `scene` means conversation,
+`review` means review, neither means selection. **Corrections accumulate during the
+conversation but are never rendered outside the review.**
 
 - The learner's own transcribed sentence is **always** shown, with a **Say again** button
   (never make them retype). The count of presses is a proxy for transcription quality.
@@ -84,7 +89,7 @@ implementation is measured on the same data, and the two are reported side by si
 `needs_correction: false` items carry no `corrected_sentence` or `reason_en`. The set is
 90 items needing correction and 30 already-natural items, so over-correction is measurable.
 
-### Correction result (structured output of the correction node)
+### Correction result (structured output of the correction node) — fixed 2026-08-04
 
 ```json
 {
@@ -95,8 +100,42 @@ implementation is measured on the same data, and the two are reported side by si
 }
 ```
 
+| Key | Type | Content |
+|---|---|---|
+| `needs_correction` | boolean | Required. Anything other than a boolean counts as a format failure |
+| `corrected_sentence` | string \| null | Required when `needs_correction` is true. **Repairs the sentence they wrote**; it is not a better sentence of the model's own |
+| `reason_en` | string \| null | Same. **One or two sentences of English.** Japanese quoted inside 「」 to point at a word is allowed |
+| `grounding_ids` | array of string | Always empty until week 2. **The key is carried from the start** — adding it later would mean rebuilding stored data |
+
+When `needs_correction` is false, `corrected_sentence` and `reason_en` are **normalised to
+null**. A sentence judged not to need changing has nothing to show, whatever the model chose
+to put there.
+
 Errors are **not categorised** by type (particle, conjugation, …). Beginners do not need it
 and it makes both implementation and evaluation heavier.
+
+**This JSON is parsed by us.** Provider-side constrained decoding (`with_structured_output`,
+`responseSchema`) is deliberately not used: it would make the JSON half of
+`format_compliance_rate` true by construction, **reporting as measured something that was
+never measured.** It also keeps the baseline and the real implementation on one parsing path,
+so there is only one scoring code path.
+
+### Correction call result — what the evaluation script counts
+
+One call to the correction engine returns the correction itself plus **what is needed to count
+format compliance**. Without it the denominator of `format_compliance_rate` cannot be built.
+
+| Field | Content |
+|---|---|
+| `learner_sentence` | The sentence that was judged |
+| `correction` | The structured output above. **Empty when both attempts were malformed** — meaning unjudgeable, not "no correction needed" |
+| `attempts` | 1, or 2 when it was retried |
+| `format_problems` | Any of `invalid_json` / `reason_not_english`. Empty means compliant |
+
+**`format_problems` describes the first attempt.** A retry that succeeded leaves it
+non-compliant — if a retry could erase a format failure, **that is the same lie as dropping
+the malformed cases from the denominator.** The correction itself may come from the retry
+(accuracy and format are recorded separately, per glossary §5).
 
 ### Session and turn (PostgreSQL)
 
@@ -117,7 +156,11 @@ at fault.
 |---|---|
 | Transcription fails or returns empty | Show "I could not hear that" in English and prompt **Say again**. Not recorded as a turn |
 | Correction JSON is malformed | **Retry once.** If still malformed, omit that sentence from the review — but **always count it in the denominator of `format_compliance_rate`** (hiding failures makes format compliance look better than it is) |
-| Reason comes back in Japanese | Use the output, but count it as non-compliant in `format_compliance_rate`. Accuracy metrics are unaffected |
+| How that retry is sent | **Send the first output back with what was wrong with it.** The correction runs at `temperature = 0`, so resending the same prompt returns the same malformed output and **the retry would be a retry in name only** |
+| Reason comes back in Japanese | Use the output, but count it as non-compliant in `format_compliance_rate`. Accuracy metrics are unaffected. **Not retried** — the judgement is sound, only the language is wrong |
+| Reason quotes Japanese inside it | Counts as compliant. "「は」 marks the topic" is how a particle gets explained, and a naive "contains Japanese, therefore non-compliant" rule **rejects the best reasons first**. Quoted spans are removed before the check |
+| The correction call itself fails (API error) | **The conversation continues.** The sentence is recorded as unjudgeable and does not appear in the review as a correction |
+| Unjudgeable sentences in the review | **Show the count** ("1 sentence could not be checked"). Dropping them silently reads as "these were fine", which is the one thing they are **not** known to be |
 | Dialogue API error | Show an error and a retry button. **Never paper over it with a canned reply** — the learner must not think the AI simply ignored them |
 | Still over level after regeneration | Use the reply as-is (one regeneration only) and record it as non-compliant in `level_compliance_rate` |
 | Retrieval returns nothing | Treat as ungrounded: **state nothing as certain in the reason**, and if the original sentence is already natural, fall back to "no correction needed" |

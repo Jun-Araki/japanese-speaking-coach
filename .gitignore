@@ -11,6 +11,9 @@
 # not be public. Kept locally; see docs/ for the public-facing documentation.
 PLAN.md
 
+# Personal working notes, kept locally. Not part of the project's documentation.
+interview-stories/
+
 # Reference material copied from books or articles. Not ours to publish.
 # The directory is currently empty; the rule stays so transcriptions made while
 # reading cannot be committed by accident.

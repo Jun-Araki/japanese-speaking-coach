@@ -24,8 +24,9 @@ japanese-speaking-coach/
 ├── dialogue/                  会話ノード
 │   ├── scenes.py              場面・レベルの定義。**glossary.md §3・§4 が正本**
 │   └── reply.py               `reply()`。相手役のプロンプトと1〜2文の制限
+├── correction/                訂正ノード
+│   └── engine.py              `check()`。構造化出力を**自前で解析**し、書式の適合も返す
 ├── tests/                     pytest。**モデルを呼ぶテストは書かない**（生成文には固定の正解がない）
-├── correction/                (予定) 訂正ノードと検証
 ├── retrieval/                 (予定) Chroma への登録と検索
 ├── nlp/                       (予定) SudachiPy の分かち書き、語彙レベル判定
 ├── evals/                     (予定) 評価スクリプト、ベースライン、実行記録

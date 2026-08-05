@@ -162,7 +162,7 @@ Applied by hand to 40 items; 20 of them are rated independently by a second nati
 | **Dev split** (`dev`) | 80 items. Prompts and thresholds are tuned against these, freely |
 | **Test split** (`test`) | 40 items. Touched at the start and at the end of August, never in between. Tuning against these would make every number self-graded and worthless |
 | **Baseline** (`baseline`) | The naive implementation: one LLM call saying "correct this Japanese and explain why". Measured **before** the real implementation exists, so the comparison table is honest |
-| **Run record** (`run_record`) | JSON written on every evaluation run: model name, prompt version, date, split. README numbers cite which run they came from |
+| **Run record** (`run_record`) | JSON written on every evaluation run: model name, prompt version, date, split, **item count (`n`)**. README numbers cite which run they came from. **Without `n` there is no way to recover later how large a measurement a given README figure came from** (§5 requires `n` alongside every published figure) |
 | **Rewrite-too-far** (書き換えすぎ) | A "correction" whose edit distance from the original exceeds the threshold. It is a different sentence, not a correction, and is discarded by the validation node |
 | **Improvement cycle** | One documented loop of: measured a number, changed something specific, measured again. At least one is required in the README |
 

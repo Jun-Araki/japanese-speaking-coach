@@ -1,12 +1,12 @@
 """The conversation screen.
 
-One screen with two states, as fixed in docs/ja/functional-design.md: pick a scene
-and a level, then talk. Week 1 is text only -- voice arrives in week 3, and putting
-it in before the corrections are any good would make a bad number impossible to
-attribute to either the transcription or the correction.
+One screen with three states, as fixed in docs/ja/functional-design.md: pick a
+scene and a level, talk, then look back at it. Week 1 is text only -- voice arrives
+in week 3, and putting it in before the corrections are any good would make a bad
+number impossible to attribute to either the transcription or the correction.
 
-Corrections are deliberately absent from this screen. They are computed per turn
-and shown only after the session ends (day 3), never during the conversation.
+Corrections run on every turn but nothing about them reaches the conversation
+state. They are collected out of sight and only the review renders them.
 """
 
 from __future__ import annotations
@@ -20,11 +20,14 @@ from dotenv import load_dotenv
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
+from correction import CorrectionResult, check  # noqa: E402
 from dialogue import LEVELS, SCENES, Utterance, opening_line, reply  # noqa: E402
 
 load_dotenv()
 
 st.set_page_config(page_title="Japanese Speaking Coach", page_icon="🗣️")
+
+SESSION_KEYS = ("scene", "level", "history", "failure", "corrections")
 
 
 def history() -> list[Utterance]:
@@ -34,16 +37,41 @@ def history() -> list[Utterance]:
     return result
 
 
+def corrections() -> list[CorrectionResult]:
+    if "corrections" not in st.session_state:
+        st.session_state["corrections"] = []
+    result: list[CorrectionResult] = st.session_state["corrections"]
+    return result
+
+
 def start_session(scene: str, level: str) -> None:
+    st.session_state.pop("review", None)
     st.session_state["scene"] = scene
     st.session_state["level"] = level
     st.session_state["failure"] = None
     st.session_state["history"] = [Utterance("partner", opening_line(scene))]
+    st.session_state["corrections"] = []
 
 
 def end_session() -> None:
-    for key in ("scene", "level", "history", "failure"):
+    st.session_state["review"] = corrections()
+    for key in SESSION_KEYS:
         st.session_state.pop(key, None)
+
+
+def record_correction(sentence: str, scene: str, level: str) -> None:
+    """Judge one learner sentence and put the result away until the review.
+
+    A correction that fails must not interrupt the conversation: the learner is
+    mid-sentence and the result is not due until they finish. The sentence is still
+    recorded, with nothing attached, so a failure shows up as a gap in the review
+    instead of vanishing.
+    """
+    try:
+        result = check(sentence, scene, level)
+    except Exception:
+        result = CorrectionResult(sentence, correction=None, attempts=0, format_problems=())
+    corrections().append(result)
 
 
 def render_setup() -> None:
@@ -90,6 +118,7 @@ def render_conversation() -> None:
     failure: str | None = st.session_state.get("failure")
 
     if awaiting_reply and failure is None:
+        learner_sentence = history()[-1].text
         with st.chat_message("assistant"), st.spinner("…"):
             try:
                 answer = reply(scene, level, history())
@@ -99,6 +128,10 @@ def render_conversation() -> None:
             else:
                 history().append(Utterance("partner", answer))
                 st.write(answer)
+                # After the reply is on screen, and never rendered: the whole point
+                # of a separate correction call is that the learner does not see it
+                # until they have stopped talking.
+                record_correction(learner_sentence, scene, level)
 
     if failure is not None:
         # A canned Japanese line here would read as a reply and teach the learner
@@ -114,9 +147,56 @@ def render_conversation() -> None:
         st.rerun()
 
     st.divider()
-    # Day 3 puts the review between this button and the setup screen.
     if st.button("End the conversation"):
         end_session()
+        st.rerun()
+
+
+def render_review() -> None:
+    results: list[CorrectionResult] = st.session_state["review"]
+    checked = [result for result in results if result.correction is not None]
+    to_change = [
+        result
+        for result in checked
+        if result.correction is not None and result.correction.needs_correction
+    ]
+
+    st.title("Review")
+
+    if not results:
+        st.write("You did not say anything this time, so there is nothing to look back at.")
+    else:
+        st.write(
+            f"You said {len(results)} "
+            f"{'sentence' if len(results) == 1 else 'sentences'}. "
+            f"{len(to_change)} of them would sound better said another way."
+        )
+
+    for result in results:
+        answer = result.correction
+        if answer is None:
+            continue
+        with st.container(border=True):
+            st.markdown(f"**{result.learner_sentence}**")
+            if not answer.needs_correction:
+                st.write("This one is fine as it is.")
+            else:
+                st.write(f"→ {answer.corrected_sentence}")
+                if answer.reason_en:
+                    st.caption(answer.reason_en)
+
+    unchecked = len(results) - len(checked)
+    if unchecked:
+        # Saying nothing at all would read as "these were fine", which is the one
+        # thing they are not known to be.
+        st.caption(
+            f"{unchecked} of your sentences could not be checked, so they are not "
+            "listed above. That is a failure on our side, not on yours."
+        )
+
+    st.divider()
+    if st.button("Start another conversation", type="primary"):
+        st.session_state.pop("review", None)
         st.rerun()
 
 
@@ -128,5 +208,7 @@ if not os.environ.get("GEMINI_API_KEY") and not os.environ.get("ANTHROPIC_API_KE
     )
 elif "scene" in st.session_state:
     render_conversation()
+elif "review" in st.session_state:
+    render_review()
 else:
     render_setup()

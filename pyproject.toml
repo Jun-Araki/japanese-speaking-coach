@@ -42,3 +42,6 @@ warn_unreachable = true
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-q"
+# The modules under test sit at the repository root, not in a src/ package, so the
+# root has to be importable whether pytest is run as `pytest` or as `python -m pytest`.
+pythonpath = ["."]

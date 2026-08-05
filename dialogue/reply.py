@@ -20,7 +20,7 @@ from typing import Final, Literal
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 
 from dialogue.scenes import level_brief, scene_brief
-from llm import build_chat_model
+from llm import as_text, build_chat_model
 
 # Recorded in every run record. Bump it whenever the wording below changes, or
 # measurements taken weeks apart stop being comparable.
@@ -98,7 +98,7 @@ def reply(scene: str, level: str, history: list[Utterance]) -> str:
             messages.append(AIMessage(utterance.text))
 
     answer = build_chat_model(temperature=TEMPERATURE).invoke(messages)
-    return limit_sentences(_as_text(answer.content).strip())
+    return limit_sentences(as_text(answer.content).strip())
 
 
 def limit_sentences(text: str, maximum: int = MAX_SENTENCES) -> str:
@@ -120,18 +120,3 @@ def limit_sentences(text: str, maximum: int = MAX_SENTENCES) -> str:
         # No sentence ending at all -- one unpunctuated line, keep it whole.
         return text
     return "".join(kept)
-
-
-def _as_text(content: object) -> str:
-    """Flatten LangChain's content union down to plain text."""
-    if isinstance(content, str):
-        return content
-    if isinstance(content, list):
-        parts = [part for part in content if isinstance(part, str)]
-        parts += [
-            str(part.get("text", ""))
-            for part in content
-            if isinstance(part, dict) and part.get("type") == "text"
-        ]
-        return "".join(parts)
-    return str(content)
