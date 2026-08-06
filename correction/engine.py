@@ -22,6 +22,7 @@ from typing import Any, Final, Literal
 
 from langchain_core.messages import AIMessage, BaseMessage, HumanMessage, SystemMessage
 
+from config import threshold
 from dialogue.scenes import level_brief, scene_brief
 from llm import as_text, build_chat_model
 
@@ -144,6 +145,10 @@ _JAPANESE: Final = re.compile(r"[぀-ヿ㐀-䶿一-鿿ｦ-ﾟ]")
 
 _QUOTED: Final = re.compile(r"「[^」]*」|\"[^\"]*\"|'[^']*'|“[^”]*”")
 
+# How much Japanese may remain outside the quotes before the reason stops being an
+# English explanation. See config/thresholds.toml for the measurements behind it.
+_JAPANESE_RATIO_MAX: Final[float] = threshold("reason_language", "japanese_ratio_max")
+
 
 def check(sentence: str, scene: str, level: str) -> CorrectionResult:
     """Judge one learner sentence.
@@ -176,7 +181,7 @@ def check(sentence: str, scene: str, level: str) -> CorrectionResult:
             continue
 
         if attempt == 1:
-            first_problems = _format_problems(correction)
+            first_problems = format_problems(correction)
         return CorrectionResult(sentence, correction, attempt, first_problems)
 
     raise AssertionError("the loop above always returns")
@@ -225,17 +230,38 @@ def reason_is_english(reason: str) -> bool:
     """Whether the explanation itself is in English.
 
     Quoted Japanese is expected — pointing at 「は」 is how you explain a particle —
-    so quotes are removed before looking for Japanese. Anything left is the model
-    explaining in the wrong language, which docs/ja/glossary.md §5 counts as a
-    format failure rather than a wrong judgement.
+    so quotes are removed first. What is left is judged by proportion rather than
+    by presence: an English sentence that names a Japanese word inline ("the
+    masu-stem of the verb (遅れ)") is in English, and counting it as a language
+    failure would report a model as answering in Japanese when it never did. A
+    reason genuinely written in Japanese has almost no Latin letters and fails.
+
+    The threshold and the measurements behind it are in config/thresholds.toml.
     """
     outside_quotes = _QUOTED.sub(" ", reason)
-    if _JAPANESE.search(outside_quotes):
+    japanese = len(_JAPANESE.findall(outside_quotes))
+    latin = len(re.findall(r"[A-Za-z]", outside_quotes))
+    if latin == 0:
         return False
-    return bool(re.search(r"[A-Za-z]", outside_quotes))
+    return japanese / (japanese + latin) <= _JAPANESE_RATIO_MAX
 
 
-def _format_problems(correction: Correction) -> tuple[FormatProblem, ...]:
+def japanese_left_unquoted(reason: str) -> bool:
+    """Whether any Japanese sits outside quotes, however little.
+
+    Not a format failure — see reason_is_english — but recorded per item in the run
+    record, because the correction prompt asks for 「」 and the baseline prompt does
+    not, and that difference should be visible rather than inferred.
+    """
+    return bool(_JAPANESE.search(_QUOTED.sub(" ", reason)))
+
+
+def format_problems(correction: Correction) -> tuple[FormatProblem, ...]:
+    """What is wrong with the FORM of a parsed correction, if anything.
+
+    Shared with the baseline so that both sides of the comparison table have their
+    format compliance judged by the same code.
+    """
     if correction.reason_en is not None and not reason_is_english(correction.reason_en):
         return ("reason_not_english",)
     return ()

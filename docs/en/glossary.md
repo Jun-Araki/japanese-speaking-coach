@@ -166,6 +166,22 @@ correction engine**, bypassing the app, the microphone, and transcription.
 exact matching would report far below true performance. Only the binary label is machine-scored;
 the quality of the phrasing and reason is judged by eye (§6).
 
+**"The reason came back in English" is decided by proportion, not by presence (decided
+2026-08-06).** Japanese inside quotes (「」 or quotation marks) is removed first, and what
+remains counts as English if little Japanese is left. `The masu-stem of the verb (遅れ) cannot
+end a sentence.` is English; `これは丁寧な言い方ではありません` is not. The threshold is
+`reason_language` in [`config/thresholds.toml`](../../config/thresholds.toml) (§7).
+
+- **The first implementation flagged any Japanese at all outside quotes, and it did not hold
+  up.** On the day 4 baseline run (`test`, n=20) it flagged nine items, and **all nine were
+  English explanations**; not one answer came back in Japanese. `format_compliance_rate` read
+  55%, which a README reader takes to mean "45% answered in Japanese". None did
+- **Quoting style must not be measured under the name of a language metric.** That is the
+  "language mix-up" trap from the llm-jp-eval critique, pointed the other way (PLAN.md §2-4)
+- Items that left Japanese outside quotes are still recorded per item in the run record
+  (`japanese_left_unquoted`) but **never counted** in the metric: the correction prompt asks
+  for 「」 and the baseline prompt does not, so the difference stays visible
+
 **Every published number carries `n` and an error margin** — e.g. "92% (n=40, ±8pt)".
 On a 40-item test split the margin is roughly ±8 points, and stating that plainly earns more
 trust than a large number does.
@@ -193,7 +209,7 @@ Applied by hand to 40 items; 20 of them are rated independently by a second nati
 | **Dev split** (`dev`) | 80 items. Prompts and thresholds are tuned against these, freely |
 | **Test split** (`test`) | 40 items. Touched at the start and at the end of August, never in between. Tuning against these would make every number self-graded and worthless |
 | **Baseline** (`baseline`) | The naive implementation: one LLM call saying "correct this Japanese and explain why". Measured **before** the real implementation exists, so the comparison table is honest |
-| **Run record** (`run_record`) | JSON written on every evaluation run: model name, prompt version, date, split, **item count (`n`)**. README numbers cite which run they came from. **Without `n` there is no way to recover later how large a measurement a given README figure came from** (§5 requires `n` alongside every published figure) |
+| **Run record** (`run_record`) | JSON written on every evaluation run: model name, prompt version, **scorer version (`scorer_version`)**, date, split, **item count (`n`)**. README numbers cite which run they came from. **Without `n` there is no way to recover later how large a measurement a given README figure came from** (§5 requires `n` alongside every published figure). **The scorer version is needed too** — a number that moved because a scoring rule changed reads as a change in the model if only the prompt version is recorded (added 2026-08-06) |
 | **Rewrite-too-far** (書き換えすぎ) | A "correction" whose edit distance from the original exceeds the threshold. It is a different sentence, not a correction, and is discarded by the validation node |
 | **Improvement cycle** | One documented loop of: measured a number, changed something specific, measured again. At least one is required in the README |
 
@@ -206,6 +222,7 @@ each. **Never inline them in code.** Current state:
 |---|---|---|
 | Rewrite-too-far, normalised edit distance | `0.65` | Provisional — confirm against the dev split in Week 2 |
 | Rewrite-too-far, short-sentence absolute distance | `6` chars, applied below 8 chars | Provisional |
+| **Reason language: share of Japanese left outside quotes** | `0.25` | **Set from day 4 observations** (decided against nine real cases out of 20). Reconfirm against the dev split in Week 2 |
 | Over-level content-word ratio | `0.2` | Provisional |
 | Absolute tier gap rejected outright | `2` tiers | Provisional |
 | Maximum regenerations per reply | `1` | Fixed — an unbounded loop would stall the conversation |

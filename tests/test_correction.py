@@ -16,6 +16,7 @@ from typing import Any
 
 import pytest
 
+from config import threshold
 from correction import engine
 from correction.engine import (
     MAX_ATTEMPTS,
@@ -23,6 +24,7 @@ from correction.engine import (
     Correction,
     CorrectionFormatError,
     check,
+    japanese_left_unquoted,
     parse_correction,
     reason_is_english,
 )
@@ -137,6 +139,16 @@ class TestReasonIsEnglish:
         # Pointing at a word is how a particle gets explained; it is not a failure.
         assert reason_is_english("「は」 marks the topic, so 「が」 sounds odd here.")
 
+    def test_english_naming_japanese_without_quotes_passes(self) -> None:
+        # The metric asks whether the answer came back in English. This one did.
+        # Counting it as a language failure reports a model as answering in
+        # Japanese when it never did — the day 4 baseline run had nine of these.
+        assert reason_is_english(
+            "The original sentence uses the masu-stem of the verb (遅れ) to end the "
+            "sentence, and a verb stem cannot end a sentence on its own. Add です "
+            "to make it a complete polite sentence."
+        )
+
     def test_japanese_fails(self) -> None:
         assert not reason_is_english("「ありがとう」は友達に使う言い方です。")
 
@@ -145,6 +157,23 @@ class TestReasonIsEnglish:
 
     def test_an_empty_reason_is_not_english(self) -> None:
         assert not reason_is_english("   ")
+
+    def test_the_threshold_is_not_inlined(self) -> None:
+        # A threshold that can be tuned in a source file produces README numbers
+        # nobody can reproduce (docs/ja/glossary.md §7).
+        assert threshold("reason_language", "japanese_ratio_max") == engine._JAPANESE_RATIO_MAX
+
+
+class TestJapaneseLeftUnquoted:
+    def test_quoted_japanese_is_not_flagged(self) -> None:
+        assert not japanese_left_unquoted("「は」 marks the topic here.")
+
+    def test_unquoted_japanese_is_flagged_even_when_the_reason_is_english(self) -> None:
+        # Recorded next to the correction, never counted against it: the correction
+        # prompt asks for 「」 and the baseline prompt does not.
+        reason = "The masu-stem of the verb (遅れ) cannot end a sentence on its own."
+        assert japanese_left_unquoted(reason)
+        assert reason_is_english(reason)
 
 
 class TestCheck:

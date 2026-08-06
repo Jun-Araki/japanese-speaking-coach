@@ -1,0 +1,297 @@
+"""Scoring: run one implementation over one split and write a run record.
+
+Only `needs_correction` is scored by machine. The corrected sentence is never
+compared for equality — natural phrasing is not unique, and exact-match scoring
+would report a system far worse than it is (docs/ja/glossary.md §5, and the
+llm-jp-eval critique this project is copying its cautions from). How good the
+phrasing and the reason actually are is judged by eye, on the scale in §6.
+
+Format compliance is recorded ALONGSIDE the accuracy numbers and never folded into
+them. A reason that came back in Japanese is a formatting failure, not a wrong
+judgement, and mixing the two produces a number that cannot be acted on.
+
+Nothing here goes through the app. The items are handed to the correction engine as
+text, so that the speech stage cannot silently repair a learner's mistake and make
+a correct engine look wrong (docs/ja/glossary.md §5).
+
+Run:  .venv/bin/python -m evals.score --implementation baseline --split test
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+from collections.abc import Callable
+from dataclasses import dataclass
+from datetime import datetime
+from pathlib import Path
+from typing import Any, Final
+
+from correction import PROMPT_VERSION as ENGINE_PROMPT_VERSION
+from correction import baseline_check, check
+from correction.baseline import PROMPT_VERSION as BASELINE_PROMPT_VERSION
+from correction.engine import CorrectionResult, japanese_left_unquoted
+from dialogue.scenes import LEVELS
+from evals.dataset import ITEMS_PATH, Item, Split, load_items
+from llm import active_model_name
+
+RUNS_DIR: Final = Path("evals/runs")
+
+# Bumped whenever a rule in this file changes what counts as a hit — the language
+# rule, the denominators, the treatment of an unusable verdict. The prompt version
+# alone cannot explain a number that moved because the scorer changed, and a
+# scoring bug that nobody can date is the last item in the llm-jp-eval table of
+# traps this project copied its cautions from (PLAN.md §2-4).
+SCORER_VERSION: Final = "score-v1"
+
+# The dataset carries a scene per item but no level: the level describes a learner,
+# and these sentences are not attributed to one. Measurement fixes it at beginner —
+# the level the testers in Bangalore are actually at — and records it, because the
+# level is part of the prompt and a run measured at another level is not comparable.
+MEASUREMENT_LEVEL: Final = "beginner"
+
+# Five items are re-checked by hand after every run, as fixed in design.md. A
+# scoring bug and a bad model produce the same disappointing number, and this is
+# the only step that tells them apart.
+MANUAL_CHECK_SAMPLE: Final = 5
+
+# One learner sentence, one scene, one level, in and a judgement out. Both
+# implementations have this shape so that the scoring path is the same for both.
+Judge = Callable[[str, str, str], CorrectionResult]
+
+IMPLEMENTATIONS: Final[dict[str, tuple[Judge, str]]] = {
+    "baseline": (baseline_check, BASELINE_PROMPT_VERSION),
+    "engine": (check, ENGINE_PROMPT_VERSION),
+}
+
+
+@dataclass(frozen=True)
+class Outcome:
+    """What one implementation did with one item."""
+
+    item: Item
+    # None when the answer never parsed. Kept distinct from False: "said nothing
+    # usable" and "said this is fine" are different failures, and collapsing them
+    # would hide the first one inside a metric that looks merely mediocre.
+    predicted: bool | None
+    format_compliant: bool
+    # What was wrong with the first answer's form, if anything. Kept per item so a
+    # low format_compliance_rate can be read without re-running the measurement.
+    format_problems: tuple[str, ...]
+    # Recorded, not counted: the correction prompt asks for 「」 and the baseline
+    # prompt does not, so this shows where that difference actually lands.
+    japanese_left_unquoted: bool
+    attempts: int
+    corrected_sentence: str | None
+    reason_en: str | None
+
+    @property
+    def agrees(self) -> bool:
+        return self.predicted is self.item.needs_correction
+
+
+@dataclass(frozen=True)
+class ScoreReport:
+    """The three week-1 numbers, and the counts they were computed from."""
+
+    outcomes: list[Outcome]
+
+    @property
+    def detection_accuracy(self) -> float | None:
+        """Of the items labelled `true`, the share the system also called `true`.
+
+        An item with no usable verdict counts against this: the system did not say
+        the sentence needed correcting, and the learner would not have been told.
+        """
+        return _ratio(
+            sum(1 for o in self.labelled(True) if o.predicted is True),
+            len(self.labelled(True)),
+        )
+
+    @property
+    def over_correction_rate(self) -> float | None:
+        """Of the items labelled `false`, the share the system wrongly called `true`.
+
+        Lower is better. An item with no usable verdict is not counted as an over-
+        correction — nothing was proposed — which is the generous reading, so
+        `unusable_verdicts` is reported next to it rather than left implicit.
+        """
+        return _ratio(
+            sum(1 for o in self.labelled(False) if o.predicted is True),
+            len(self.labelled(False)),
+        )
+
+    @property
+    def format_compliance_rate(self) -> float | None:
+        """Share of items whose FIRST answer was usable JSON with an English reason.
+
+        First answer, even where a retry repaired it: a retry that could erase a
+        format failure would be the same lie as dropping the broken items from the
+        denominator (docs/ja/glossary.md §5).
+        """
+        return _ratio(sum(1 for o in self.outcomes if o.format_compliant), len(self.outcomes))
+
+    @property
+    def unusable_verdicts(self) -> int:
+        return sum(1 for o in self.outcomes if o.predicted is None)
+
+    def labelled(self, needs_correction: bool) -> list[Outcome]:
+        """The outcomes for the items carrying one label — the two denominators."""
+        return [o for o in self.outcomes if o.item.needs_correction is needs_correction]
+
+
+def score(items: list[Item], judge: Judge, level: str = MEASUREMENT_LEVEL) -> ScoreReport:
+    """Run one implementation over the items, in the order they were given."""
+    return ScoreReport([_judge_item(item, judge, level) for item in items])
+
+
+def manual_check_sample(outcomes: list[Outcome], size: int = MANUAL_CHECK_SAMPLE) -> list[Outcome]:
+    """Pick items to re-check by hand, spread evenly through the run.
+
+    Evenly spaced rather than random: the sample has to be reproducible from the
+    run record, and taking the first five would only ever inspect one scene.
+    """
+    if size >= len(outcomes):
+        return list(outcomes)
+    step = len(outcomes) / size
+    return [outcomes[int(index * step)] for index in range(size)]
+
+
+def run_record(
+    report: ScoreReport,
+    implementation: str,
+    prompt_version: str,
+    split: Split,
+    level: str,
+    run_id: str,
+) -> dict[str, Any]:
+    """The JSON written for every measurement.
+
+    `n` and `split` are mandatory and are the reason this file exists. Without them
+    a number in the README cannot be traced back to the measurement it came from —
+    and week 1 deliberately measures twice, on 20 items and then on 40, so "which
+    run is this?" is a question that will actually be asked (design.md).
+    """
+    sample_ids = [outcome.item.id for outcome in manual_check_sample(report.outcomes)]
+    return {
+        "run_id": run_id,
+        "implementation": implementation,
+        "model": active_model_name(),
+        "prompt_version": prompt_version,
+        "scorer_version": SCORER_VERSION,
+        "n": len(report.outcomes),
+        "split": split,
+        "level": level,
+        "date": run_id[:8],
+        "detection_accuracy": report.detection_accuracy,
+        "over_correction_rate": report.over_correction_rate,
+        "format_compliance_rate": report.format_compliance_rate,
+        "unusable_verdicts": report.unusable_verdicts,
+        "manual_check_ids": sample_ids,
+        "results": [
+            {
+                "id": outcome.item.id,
+                "scene": outcome.item.scene,
+                "learner_sentence": outcome.item.learner_sentence,
+                "expected": outcome.item.needs_correction,
+                "predicted": outcome.predicted,
+                "format_compliant": outcome.format_compliant,
+                "format_problems": list(outcome.format_problems),
+                "japanese_left_unquoted": outcome.japanese_left_unquoted,
+                "attempts": outcome.attempts,
+                "corrected_sentence": outcome.corrected_sentence,
+                "reason_en": outcome.reason_en,
+            }
+            for outcome in report.outcomes
+        ],
+    }
+
+
+def _judge_item(item: Item, judge: Judge, level: str) -> Outcome:
+    result = judge(item.learner_sentence, item.scene, level)
+    correction = result.correction
+    reason = None if correction is None else correction.reason_en
+    return Outcome(
+        item=item,
+        predicted=None if correction is None else correction.needs_correction,
+        format_compliant=result.format_compliant,
+        format_problems=tuple(result.format_problems),
+        japanese_left_unquoted=reason is not None and japanese_left_unquoted(reason),
+        attempts=result.attempts,
+        corrected_sentence=None if correction is None else correction.corrected_sentence,
+        reason_en=None if correction is None else correction.reason_en,
+    )
+
+
+def _ratio(numerator: int, denominator: int) -> float | None:
+    # None, not 0.0: an empty group was not measured, and a zero here would be read
+    # as a measured zero — which for over_correction_rate is the best possible score.
+    if denominator == 0:
+        return None
+    return numerator / denominator
+
+
+def _percent(value: float | None) -> str:
+    return "not measured" if value is None else f"{value:.1%}"
+
+
+def _print_summary(report: ScoreReport, implementation: str, split: str) -> None:
+    needs = report.labelled(True)
+    natural = report.labelled(False)
+    print(f"\n{implementation} on {split}, n={len(report.outcomes)}")
+    print(f"  detection_accuracy      {_percent(report.detection_accuracy)}  (n={len(needs)})")
+    print(f"  over_correction_rate    {_percent(report.over_correction_rate)}  (n={len(natural)})")
+    print(f"  format_compliance_rate  {_percent(report.format_compliance_rate)}")
+    print(f"  unusable verdicts       {report.unusable_verdicts}")
+    unquoted = sum(1 for o in report.outcomes if o.japanese_left_unquoted)
+    print(f"  japanese left unquoted  {unquoted}  (recorded, not counted)")
+
+
+def _print_manual_check(report: ScoreReport) -> None:
+    print(f"\nCheck these {MANUAL_CHECK_SAMPLE} by hand before believing the numbers above:")
+    for outcome in manual_check_sample(report.outcomes):
+        item = outcome.item
+        print(f"\n  {item.id}  {item.scene}")
+        print(f"    learner   {item.learner_sentence}")
+        print(f"    label     {item.needs_correction}    system  {outcome.predicted}")
+        if outcome.corrected_sentence:
+            print(f"    system's  {outcome.corrected_sentence}")
+            print(f"    reason    {outcome.reason_en}")
+        if item.needs_correction:
+            print(f"    yours     {item.corrected_sentence}")
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--implementation", choices=sorted(IMPLEMENTATIONS), required=True)
+    parser.add_argument(
+        "--split",
+        choices=["dev", "test"],
+        required=True,
+        help="test is touched at the start and at the end of August, and nowhere between",
+    )
+    parser.add_argument("--level", choices=sorted(LEVELS), default=MEASUREMENT_LEVEL)
+    parser.add_argument("--items", type=Path, default=ITEMS_PATH)
+    args = parser.parse_args()
+
+    judge, prompt_version = IMPLEMENTATIONS[args.implementation]
+    items = [item for item in load_items(args.items) if item.split == args.split]
+    if not items:
+        raise SystemExit(f"no {args.split} items in {args.items}")
+
+    print(f"{args.implementation} over {len(items)} {args.split} items...")
+    report = score(items, judge, args.level)
+
+    run_id = datetime.now().strftime("%Y%m%d-%H%M")
+    record = run_record(report, args.implementation, prompt_version, args.split, args.level, run_id)
+    RUNS_DIR.mkdir(parents=True, exist_ok=True)
+    path = RUNS_DIR / f"{run_id}-{args.implementation}-{args.split}.json"
+    path.write_text(json.dumps(record, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+    _print_summary(report, args.implementation, args.split)
+    _print_manual_check(report)
+    print(f"\nrun record -> {path}")
+
+
+if __name__ == "__main__":
+    main()

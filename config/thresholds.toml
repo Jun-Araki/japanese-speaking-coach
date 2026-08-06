@@ -4,6 +4,34 @@
 # against the dev split and records the final values in docs/glossary.md §7.
 # Never inline these numbers in code — read them from here.
 
+[reason_language]
+# format_compliance_rate asks whether the explanation came back IN ENGLISH
+# (docs/ja/glossary.md §5). Naming a Japanese word inside an English sentence is
+# not the failure that metric is looking for.
+#
+# Quoted Japanese is removed first — pointing at 「は」 is how a particle gets
+# explained. What is left is measured as: Japanese characters / (Japanese
+# characters + Latin letters).
+#
+# WHY A RATIO AND NOT ZERO — measured on the day 4 baseline run (test, n=20):
+# nine reasons were flagged, and every one of them was an English explanation that
+# named a Japanese word without quoting it ("the masu-stem of the verb (遅れ)",
+# "add です"). A zero-tolerance rule reported the baseline as 55% compliant, which
+# a reader takes to mean it answered in Japanese 45% of the time. It did not
+# once. Measuring quoting style under the name of a language metric is exactly the
+# "language mix-up" trap in the llm-jp-eval critique (PLAN.md §2-4), pointed the
+# other way.
+#
+# 0.25 sits far above the observed inline mentions (a few characters in 200-800)
+# and far below a reason actually written in Japanese ("This is 丁寧な言い方では
+# ありません。" scores 0.67).
+japanese_ratio_max = 0.25
+
+# Reasons that keep Japanese out of quotes are still worth seeing: the correction
+# prompt asks for 「」 and the baseline prompt does not. It is recorded per item in
+# the run record and deliberately does NOT count against format_compliance_rate —
+# one metric, one meaning.
+
 [rewrite_too_far]
 # A "correction" whose distance from the original exceeds this is treated as a
 # different sentence, not a correction, and is discarded by the validation node.

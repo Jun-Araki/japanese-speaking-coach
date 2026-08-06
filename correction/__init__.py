@@ -5,12 +5,14 @@ is unambiguously the function named in docs/ja/functional-design.md rather than 
 submodule that happens to share its name.
 """
 
+from correction.baseline import baseline_check
 from correction.engine import (
     PROMPT_VERSION,
     Correction,
     CorrectionFormatError,
     CorrectionResult,
     check,
+    format_problems,
     parse_correction,
 )
 
@@ -19,6 +21,8 @@ __all__ = [
     "Correction",
     "CorrectionFormatError",
     "CorrectionResult",
+    "baseline_check",
     "check",
+    "format_problems",
     "parse_correction",
 ]

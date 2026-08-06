@@ -124,13 +124,26 @@ Day 0（8/2 日）は数えない。**Day 7（8/9）だけは朝2h ＋ 会場3h 
 
 ## Day 4（8/6 木）— ベースラインの配管を通す（`n=20` の暫定値）
 
-- [ ] 採点スクリプトの骨組み（`needs_correction` の一致のみ機械採点）
-- [ ] `format_compliance_rate` を精度と**別に**記録
-- [ ] 採点スクリプトの pytest
-- [ ] `correction.baseline_check()`（1回呼び出し、作り込まない）
-- [ ] **この時点の評価用20件で測定 → 数字が1つ出る**
-- [ ] 実行記録を `evals/runs/` に保存。**`n` と `split` を必ず書く**
-- [ ] **評価用から5件を手で照合**
+- [x] 採点スクリプトの骨組み（`needs_correction` の一致のみ機械採点）— [evals/score.py](../../evals/score.py)
+      **判定不能（JSON が2回とも壊れた）件の扱いを決めた**：`detection_accuracy` では
+      「検出できなかった」に数え、`over_correction_rate` では「余計に直していない」に数える。
+      後者は自分に甘い側なので、**`unusable_verdicts` を実行記録と画面に必ず並べて出す**
+- [x] `format_compliance_rate` を精度と**別に**記録
+- [x] 採点スクリプトの pytest（41 → 60件）
+- [x] `correction.baseline_check()`（1回呼び出し、作り込まない）— [correction/baseline.py](../../correction/baseline.py)
+      **場面とレベルは本実装と同じものを渡す**（design.md 末尾）。出力の JSON も同じ形にして
+      採点経路を1本に保つ
+- [x] **この時点の評価用20件で測定 → 数字が1つ出る**
+      — `detection_accuracy` **100%**（n=13）／`over_correction_rate` **57.1%**（n=7）／
+        `format_compliance_rate` **100%**（n=20）。**素朴版は自然な文の半分以上を直しに行った**
+- [x] 実行記録を `evals/runs/` に保存。**`n` と `split` を必ず書く**
+      — [20260806-0724-baseline-test.json](../../evals/runs/20260806-0724-baseline-test.json)。
+        **`scorer_version` を追加した**（Day 4 に採点規則を1つ変えたため。glossary §7 に書き戻し済み）
+- [x] **評価用から5件を手で照合** — 5件とも採点結果とラベルが一致。
+      照合対象は実行記録の `manual_check_ids` に残す（等間隔で採るので再現できる）
+- [x] **英語判定の規則を割合方式に変えた**（当初のタスクには無い。測定して初めて分かった）
+      — 「日本語が1文字でもあれば不適合」だと20件中9件が不適合になり、**9件すべてが英語の説明文**だった。
+        `config/thresholds.toml` に閾値を出し、glossary §5・§7 を ja → en の順で更新
 
 > **ここで出るのは `n=20` の暫定値。** 評価用が最終形（40件）になるのは Day 6 なので、
 > **README に載せる数字はこれではない**（正式値は第2週初日に test 40 で測る。末尾の節）。
@@ -286,9 +299,9 @@ Day 0（8/2 日）は数えない。**Day 7（8/9）だけは朝2h ＋ 会場3h 
 
 | 項目 | 結果 |
 |---|---|
-| ベースライン `detection_accuracy` | 　（n=20 暫定） |
-| ベースライン `over_correction_rate` | 　（n=20 暫定） |
-| ベースライン `format_compliance_rate` | 　（n=20 暫定） |
+| ベースライン `detection_accuracy` | **100%**（n=20 暫定。うち `true` は13件） |
+| ベースライン `over_correction_rate` | **57.1%**（n=20 暫定。うち `false` は7件） |
+| ベースライン `format_compliance_rate` | **100%**（n=20 暫定） |
 | `rater_agreement`（dev 20件） | |
 | 音声疎通確認 | 成功 / 失敗 → 判断： |
 | 第二採点者 | 確保できた / できなかった → その場で採点： 済 / 後日 |
