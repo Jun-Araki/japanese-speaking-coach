@@ -1,0 +1,81 @@
+{
+  "batch": 2,
+  "generated_on": "2026-08-07",
+  "model": "gemini/gemini-2.5-flash",
+  "prompt_version": "generate-items-v2",
+  "verified": false,
+  "candidates": [
+    {
+      "scene": "thanks",
+      "learner_sentence": "持って、ありがとう。",
+      "intended_label": "needs_correction",
+      "corrected_sentence": "持ってくれてありがとう。",
+      "reason_en": "To express thanks for an action, the te-form of the verb should be followed by 「くれて」 when thanking someone for doing something for you.",
+      "note_en": "Tests the common particle omission after a te-form for expressing gratitude."
+    },
+    {
+      "scene": "thanks",
+      "learner_sentence": "それ、重いですだった。",
+      "intended_label": "needs_correction",
+      "corrected_sentence": "それ、重かったよ。",
+      "reason_en": "The past tense of the i-adjective 「重い」 is 「重かった」. Combining 「です」 with 「だった」 is incorrect.",
+      "note_en": "Identifies a common conjugation error with i-adjectives and inappropriate use of 「です」 in informal contexts."
+    },
+    {
+      "scene": "thanks",
+      "learner_sentence": "とても助けでした。",
+      "intended_label": "needs_correction",
+      "corrected_sentence": "とても助かった。",
+      "reason_en": "「助け」 is a noun meaning 'help'. To express that something *was* helpful, you should use the verb 「助かる」 in its past form, like 「助かった」 (casual) or 「助かりました」 (polite).",
+      "note_en": "Highlights the confusion between a noun and its related verb form when expressing an outcome."
+    },
+    {
+      "scene": "thanks",
+      "learner_sentence": "あなたが助かった。",
+      "intended_label": "needs_correction",
+      "corrected_sentence": "助かったよ。",
+      "reason_en": "The verb 「助かる」 means 'to be saved' or 'to be helped'. Here, 「あなた」 is marked as the subject, so the sentence means 'You were saved/helped'. If the speaker was helped, the subject is typically implied or stated as 「私」.",
+      "note_en": "Tests understanding of subject marking and the passive/intransitive nature of 「助かる」."
+    },
+    {
+      "scene": "thanks",
+      "learner_sentence": "重い、持て。",
+      "intended_label": "needs_correction",
+      "corrected_sentence": "重かったね、持ってくれてありがとう。",
+      "reason_en": "「持て」 is the plain imperative form of 「持つ」 (to carry), which sounds like a blunt order. It is inappropriate for thanking a colleague. If the intention was to thank, a phrase like 「持ってくれてありがとう」 is suitable.",
+      "note_en": "Demonstrates a polite interaction error by using a blunt imperative instead of a thankful expression."
+    },
+    {
+      "scene": "thanks",
+      "learner_sentence": "私はあなたの手伝いに感謝します。",
+      "intended_label": "needs_correction",
+      "corrected_sentence": "手伝ってくれてありがとう。",
+      "reason_en": "While grammatically correct, this is a very literal translation of 'I appreciate your help' and sounds unnatural in spoken Japanese. More natural expressions for thanks include 「助かりました」 or 「手伝ってくれてありがとう」.",
+      "note_en": "Exposes common awkwardness from direct English translation of formal expressions of gratitude."
+    },
+    {
+      "scene": "thanks",
+      "learner_sentence": "あなたは良い手助けだった。",
+      "intended_label": "needs_correction",
+      "corrected_sentence": "助かったよ、ありがとう。",
+      "reason_en": "This is a word-for-word translation of 'You were a good help' and is unnatural in Japanese. Japanese would express appreciation for the help itself, not characterize the person as 'a good help'.",
+      "note_en": "Reveals another instance of direct English translation leading to an unnatural Japanese construction."
+    },
+    {
+      "scene": "thanks",
+      "learner_sentence": "これ、大変だったね。",
+      "intended_label": "natural",
+      "corrected_sentence": null,
+      "reason_en": null,
+      "note_en": "A casual and empathetic way to acknowledge the effort required, with thanks often implied by the situation."
+    },
+    {
+      "scene": "thanks",
+      "learner_sentence": "ありがとうね。",
+      "intended_label": "natural",
+      "corrected_sentence": null,
+      "reason_en": null,
+      "note_en": "A common, casual, and friendly way to express thanks, often used when the gratitude is implicitly understood."
+    }
+  ]
+}

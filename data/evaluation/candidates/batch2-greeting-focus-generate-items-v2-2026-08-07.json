@@ -1,0 +1,42 @@
+{
+  "batch": 2,
+  "generated_on": "2026-08-07",
+  "model": "gemini/gemini-2.5-flash",
+  "prompt_version": "generate-items-v2",
+  "focus": "NEGATIVE forms (〜ません / 〜くない / まだ〜ていない) and COUNTERS (助数詞: 一つ / 一人 / 一本 / 一枚). Every sentence must be wrong in the negative form or in the counter itself. Do NOT write a particle mistake, a politeness mistake, or a です-on-a-plain-verb mistake.",
+  "verified": false,
+  "candidates": [
+    {
+      "scene": "greeting",
+      "learner_sentence": "疲れありません。",
+      "intended_label": "needs_correction",
+      "corrected_sentence": "疲れていません。",
+      "reason_en": "「疲れる」 is a verb, and to express the state of being tired, one uses 「疲れている」. 「疲れありません」 incorrectly negates the noun 「疲れ」 (fatigue) or misapplies the negation of 「ある」 or 「です」 to the verb. It is not a natural Japanese expression for 'I'm not tired'.",
+      "note_en": "This tests the correct formation of the negative for a verb expressing a state."
+    },
+    {
+      "scene": "greeting",
+      "learner_sentence": "荷物が二枚ですね。",
+      "intended_label": "needs_correction",
+      "corrected_sentence": "荷物が二つですね。",
+      "reason_en": "「枚」 is a counter for flat, thin objects like sheets of paper, shirts, or plates. 「荷物」 (luggage/item) is not a flat object, so 「枚」 is an incorrect counter here.",
+      "note_en": "This tests the correct usage of common counters for general items."
+    },
+    {
+      "scene": "greeting",
+      "learner_sentence": "今日、暑いじゃないですか。",
+      "intended_label": "needs_correction",
+      "corrected_sentence": "今日、暑くないですか。",
+      "reason_en": "To negate an i-adjective like 「暑い」, the correct form is to replace the final 「い」 with 「くない」. Using 「暑いじゃない」 is an incorrect negation.",
+      "note_en": "This tests the correct negation of i-adjectives."
+    },
+    {
+      "scene": "greeting",
+      "learner_sentence": "朝ごはんを二食べました。",
+      "intended_label": "needs_correction",
+      "corrected_sentence": "朝ごはんを二回食べました。",
+      "reason_en": "The number 「二」 requires a counter (e.g., 「回」 for frequency, 「つ」 or 「個」 for general items) when quantifying a verb or an object. Using 「二」 directly without a counter in this context is ungrammatical.",
+      "note_en": "This tests the necessity and correct placement of counters when quantifying actions or objects."
+    }
+  ]
+}

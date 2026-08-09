@@ -1,0 +1,489 @@
+{
+  "batch": 2,
+  "generated_on": "2026-08-07",
+  "model": "gemini/gemini-2.5-flash",
+  "prompt_version": "generate-items-v1",
+  "verified": false,
+  "candidates": [
+    {
+      "scene": "greeting",
+      "learner_sentence": "私は散歩が行きます。",
+      "intended_label": "needs_correction",
+      "corrected_sentence": "私は散歩に行きます。",
+      "reason_en": "The particle 「が」 is incorrect here. When expressing the purpose or destination of movement like 'going for a walk,' the particle 「に」 is typically used before the verb 「行きます」.",
+      "note_en": "This helps learners understand the correct particle usage for activities followed by movement verbs."
+    },
+    {
+      "scene": "greeting",
+      "learner_sentence": "お仕事に行きましょ？",
+      "intended_label": "needs_correction",
+      "corrected_sentence": "お仕事に行きますか？",
+      "reason_en": "The conjugation 「〜ましょ」 means 'Let's do X' (invitation or suggestion), not 'Are you going to X?'. To ask about someone's intention or action, use the polite question form 「〜ますか」.",
+      "note_en": "This targets a common conjugation error with 「〜ましょ」 versus 「〜ますか」 for questions."
+    },
+    {
+      "scene": "greeting",
+      "learner_sentence": "今日も元気。",
+      "intended_label": "needs_correction",
+      "corrected_sentence": "今日も元気ですね。",
+      "reason_en": "This sentence is missing a copula. In Japanese, when making a statement or observation, especially a polite one, a copula like 「です」 or 「ですね」 is required at the end.",
+      "note_en": "This item teaches the essential use of copulas in observations."
+    },
+    {
+      "scene": "greeting",
+      "learner_sentence": "おはよう。仕事？",
+      "intended_label": "needs_correction",
+      "corrected_sentence": "おはようございます。お仕事ですか？",
+      "reason_en": "While casual, this level of politeness is generally too blunt for a casual greeting with a neighbor. Adding 「ございます」 to 「おはよう」 and 「ですか」 to 「仕事」 makes it appropriately polite and natural.",
+      "note_en": "This addresses politeness levels appropriate for different social situations."
+    },
+    {
+      "scene": "greeting",
+      "learner_sentence": "おはようございます、あなた。",
+      "intended_label": "needs_correction",
+      "corrected_sentence": "おはようございます。",
+      "reason_en": "Using 「あなた」 to address someone whose name is known (or even a familiar neighbor) is generally considered rude or distant in Japanese. It's usually omitted or their name is used.",
+      "note_en": "This highlights the cultural nuance of avoiding 「あなた」 when addressing familiar individuals."
+    },
+    {
+      "scene": "greeting",
+      "learner_sentence": "あなたの朝は元気です。",
+      "intended_label": "needs_correction",
+      "corrected_sentence": "あなたは朝から元気ですね。",
+      "reason_en": "This is a direct, word-for-word translation of 'Your morning is energetic' or 'healthy,' which sounds unnatural. A more idiomatic way to express 'You are energetic in the morning' is 「あなたは朝から元気ですね」.",
+      "note_en": "This helps learners move beyond literal translation to more natural Japanese expressions."
+    },
+    {
+      "scene": "greeting",
+      "learner_sentence": "お疲れ様だった。",
+      "intended_label": "needs_correction",
+      "corrected_sentence": "お疲れ様です。",
+      "reason_en": "The past tense 「だった」 is incorrect here. 「お疲れ様です」 is a standard greeting used for someone who is about to go to work or has been working; using the past tense suggests the effort is completely over, which doesn't fit the context of someone leaving for work now.",
+      "note_en": "This focuses on the correct usage and tense of a common fixed greeting."
+    },
+    {
+      "scene": "greeting",
+      "learner_sentence": "お仕事はもう終わりです。",
+      "intended_label": "needs_correction",
+      "corrected_sentence": "お仕事はもう終わりですか？",
+      "reason_en": "This sentence is missing the question particle 「か」 at the end. Without it, the sentence becomes a statement, not a question, even with rising intonation.",
+      "note_en": "This teaches the importance of the question particle 「か」 in polite interrogative sentences."
+    },
+    {
+      "scene": "greeting",
+      "learner_sentence": "私は毎日、早いです。",
+      "intended_label": "needs_correction",
+      "corrected_sentence": "私は毎日、早起きです。",
+      "reason_en": "「早いです」 means 'I am early,' but it doesn't convey the meaning of 'I wake up early.' The phrase 「早起きです」 or 「早く起きます」 more accurately expresses being an early riser.",
+      "note_en": "This addresses how to correctly express 'being an early riser' in Japanese."
+    },
+    {
+      "scene": "greeting",
+      "learner_sentence": "あ、もう出かけるの？",
+      "intended_label": "natural",
+      "corrected_sentence": null,
+      "reason_en": null,
+      "note_en": "This is a very common and natural casual question between familiar neighbors, though a strict teacher might prefer 「もう出かけるんですか？」."
+    },
+    {
+      "scene": "greeting",
+      "learner_sentence": "早いね、いつも。",
+      "intended_label": "natural",
+      "corrected_sentence": null,
+      "reason_en": null,
+      "note_en": "This casual and slightly blunt observation is natural in spoken Japanese, often shortened for brevity. A teacher might suggest 「いつも早いですね。」."
+    },
+    {
+      "scene": "greeting",
+      "learner_sentence": "おはよう。散歩？",
+      "intended_label": "natural",
+      "corrected_sentence": null,
+      "reason_en": null,
+      "note_en": "This is a very common, quick, and casual greeting and question between familiar neighbors who see each other regularly, even if a teacher might prefer more politeness."
+    },
+    {
+      "scene": "self_introduction",
+      "learner_sentence": "名前は何でございますか？",
+      "intended_label": "needs_correction",
+      "corrected_sentence": "お名前は何ですか？",
+      "reason_en": "`でございます` is an extremely formal and humble copula, not suitable for directly asking someone's name in a casual first meeting. `お名前は何ですか` is more appropriate.",
+      "note_en": "This tests the appropriate politeness level for a first meeting."
+    },
+    {
+      "scene": "self_introduction",
+      "learner_sentence": "名前が何ですか？",
+      "intended_label": "needs_correction",
+      "corrected_sentence": "名前は何ですか？",
+      "reason_en": "The particle `が` is generally used to identify the subject of new information, while `は` introduces the topic. For asking someone's name, `は` is the standard particle.",
+      "note_en": "This tests a fundamental particle usage distinction."
+    },
+    {
+      "scene": "self_introduction",
+      "learner_sentence": "どんな仕事を持っていますか？",
+      "intended_label": "needs_correction",
+      "corrected_sentence": "お仕事は何をされていますか？",
+      "reason_en": "This is a direct, word-for-word translation of 'What job do you have?' Japanese typically asks about one's occupation using expressions like `お仕事は何ですか` or `何をされていますか`.",
+      "note_en": "This tests for unidiomatic, direct English translations."
+    },
+    {
+      "scene": "self_introduction",
+      "learner_sentence": "お仕事はどんなに？",
+      "intended_label": "needs_correction",
+      "corrected_sentence": "お仕事は何ですか？",
+      "reason_en": "`どんなに` is an adverb used to ask 'how much' or 'to what extent' for adjectives and verbs. It cannot be used alone to ask 'what kind of' as a noun substitute.",
+      "note_en": "This tests the correct usage of interrogative adverbs versus nouns."
+    },
+    {
+      "scene": "self_introduction",
+      "learner_sentence": "あなたはどこで来ましたか？",
+      "intended_label": "needs_correction",
+      "corrected_sentence": "どちらから来ましたか？",
+      "reason_en": "The particle `で` marks the location where an action occurs, but `から` is used to indicate the starting point or origin of movement. `あなたは` is also often omitted in natural Japanese.",
+      "note_en": "This tests the correct particle for indicating origin."
+    },
+    {
+      "scene": "self_introduction",
+      "learner_sentence": "どこから参りましたか？",
+      "intended_label": "needs_correction",
+      "corrected_sentence": "どちらから来ましたか？",
+      "reason_en": "`参る` is a humble verb used to refer to one's own actions or those of one's in-group. It is inappropriate to use when asking about someone else's origin.",
+      "note_en": "This tests the appropriate use of humble/honorific language."
+    },
+    {
+      "scene": "self_introduction",
+      "learner_sentence": "お名前は何を言いますか？",
+      "intended_label": "needs_correction",
+      "corrected_sentence": "お名前は何ですか？",
+      "reason_en": "This is a literal translation of 'What does your name say?' Japanese does not use this expression to ask for someone's name.",
+      "note_en": "This tests for unidiomatic, direct English translations related to asking for names."
+    },
+    {
+      "scene": "self_introduction",
+      "learner_sentence": "お仕事は何をしますか？",
+      "intended_label": "needs_correction",
+      "corrected_sentence": "お仕事は何をされていますか？",
+      "reason_en": "While `何をしますか` can mean 'What do you do?', for asking about one's occupation, it usually implies a specific action. `何をされていますか` (polite, asking about an ongoing profession) or `お仕事は何ですか` (simple question about one's job) are more natural.",
+      "note_en": "This tests for idiomatic usage when inquiring about a person's profession."
+    },
+    {
+      "scene": "self_introduction",
+      "learner_sentence": "あなたはどこで住んでいますか？",
+      "intended_label": "needs_correction",
+      "corrected_sentence": "どちらに住んでいますか？",
+      "reason_en": "The particle `で` is used for the location where an action takes place, but for the static state of 'living in/at' a place, the particle `に` is used. `あなたは` is also often omitted.",
+      "note_en": "This tests the correct particle for indicating a static location."
+    },
+    {
+      "scene": "self_introduction",
+      "learner_sentence": "名前は何ですか？",
+      "intended_label": "natural",
+      "corrected_sentence": null,
+      "reason_en": null,
+      "note_en": "Grammatically correct and understandable, but `お名前は何ですか？` is often preferred for more natural politeness in a first meeting."
+    },
+    {
+      "scene": "self_introduction",
+      "learner_sentence": "お仕事、何？",
+      "intended_label": "natural",
+      "corrected_sentence": null,
+      "reason_en": null,
+      "note_en": "This is a common, slightly blunt but acceptable way to ask about someone's job in an informal setting."
+    },
+    {
+      "scene": "self_introduction",
+      "learner_sentence": "出身、どこですか？",
+      "intended_label": "natural",
+      "corrected_sentence": null,
+      "reason_en": null,
+      "note_en": "Grammatically correct and understandable, though `どちらのご出身ですか？` is more commonly used for politeness in a first meeting."
+    },
+    {
+      "scene": "thanks",
+      "learner_sentence": "私は荷物を運んで、ありがとうございました。",
+      "intended_label": "needs_correction",
+      "corrected_sentence": "荷物を運んでくれて、ありがとうございました。",
+      "reason_en": "The te-form of a verb, when followed by thanks for an action performed by someone else, typically requires 「くれて」 (or 「くださって」 for higher politeness) to indicate the action was done *for* the speaker.",
+      "note_en": "Tests the correct use of a particle to express gratitude for an action."
+    },
+    {
+      "scene": "thanks",
+      "learner_sentence": "本当に助けました。",
+      "intended_label": "needs_correction",
+      "corrected_sentence": "本当に助かりました。",
+      "reason_en": "「助ける」 is a transitive verb meaning 'to help someone,' but the learner intended to say 'I was helped' or 'it was helpful.' The intransitive verb 「助かる」 is appropriate here.",
+      "note_en": "Highlights the difference between transitive and intransitive verbs related to 'help'."
+    },
+    {
+      "scene": "thanks",
+      "learner_sentence": "大変、荷物でした。",
+      "intended_label": "needs_correction",
+      "corrected_sentence": "大変な荷物でした。",
+      "reason_en": "「大変」 (taihen) is an adjective/adverb. To modify a noun like 「荷物」 (nimotsu) directly, it needs to be in its adjectival form 「大変な」 (taihen na).",
+      "note_en": "Focuses on the correct adjectival form when modifying a noun."
+    },
+    {
+      "scene": "thanks",
+      "learner_sentence": "ありがとう、助けてくれた。",
+      "intended_label": "needs_correction",
+      "corrected_sentence": "助けてくれて、ありがとう。",
+      "reason_en": "While 「助けてくれた」 is grammatically correct, using the plain form directly as an explanation of thanks after 「ありがとう」 can sound too blunt or casual for a colleague. Adding 「くれて」 makes it a more natural and common expression of gratitude.",
+      "note_en": "Addresses politeness and naturalness in expressing gratitude to a colleague."
+    },
+    {
+      "scene": "thanks",
+      "learner_sentence": "あなたの助けは、私を助けました。",
+      "intended_label": "needs_correction",
+      "corrected_sentence": "助かりました。",
+      "reason_en": "This is a direct, word-for-word translation from English ('Your help helped me') that is not natural in Japanese. Japanese expresses similar gratitude more concisely, often with just 「助かりました」 (It was helpful/I was saved).",
+      "note_en": "Targets unnatural direct translation from English."
+    },
+    {
+      "scene": "thanks",
+      "learner_sentence": "私は感謝しています。",
+      "intended_label": "needs_correction",
+      "corrected_sentence": "ありがとうございます。",
+      "reason_en": "While grammatically correct for 'I am grateful,' 「私は感謝しています」 is a very direct and somewhat stiff translation from English. In this situation, directly thanking the person for their action, such as 「ありがとうございます」 or 「助かりました」, is much more natural.",
+      "note_en": "Illustrates how grammatical sentences can still be unnatural in context due to direct translation."
+    },
+    {
+      "scene": "thanks",
+      "learner_sentence": "感謝を言います。",
+      "intended_label": "needs_correction",
+      "corrected_sentence": "感謝します。",
+      "reason_en": "「感謝を言う」 is a literal translation of 'say thanks' and is not a natural Japanese expression. The verb 「感謝する」 (to be grateful/to thank) is typically used directly.",
+      "note_en": "Tests understanding of natural verb usage instead of literal translation."
+    },
+    {
+      "scene": "thanks",
+      "learner_sentence": "重かった、これ。ありがとう。",
+      "intended_label": "natural",
+      "corrected_sentence": null,
+      "reason_en": null,
+      "note_en": "A natural, casual expression of relief and thanks, common among colleagues, despite omitting particles."
+    },
+    {
+      "scene": "thanks",
+      "learner_sentence": "助かった、本当に。",
+      "intended_label": "natural",
+      "corrected_sentence": null,
+      "reason_en": null,
+      "note_en": "A concise and common way to express genuine gratitude and relief in a casual setting, using the plain form which a teacher might 'correct' for politeness."
+    },
+    {
+      "scene": "simple_request",
+      "learner_sentence": "これ、いくらをください。",
+      "intended_label": "needs_correction",
+      "corrected_sentence": "これ、いくらですか。",
+      "reason_en": "The particle 「を」 is incorrect after 「いくら」 when asking for the price. The phrase should be 「いくらですか」.",
+      "note_en": "Tests particle usage and basic question structure for asking price."
+    },
+    {
+      "scene": "simple_request",
+      "learner_sentence": "この時計、買う。",
+      "intended_label": "needs_correction",
+      "corrected_sentence": "この時計、買います。",
+      "reason_en": "The sentence is missing a polite verb ending 「ます」 or 「たいです」 for a customer speaking to a shop attendant. 「買う」 is the plain form.",
+      "note_en": "Tests basic verb conjugation for politeness in a transactional setting."
+    },
+    {
+      "scene": "simple_request",
+      "learner_sentence": "このカバン、見せて。",
+      "intended_label": "needs_correction",
+      "corrected_sentence": "このカバン、見せてください。",
+      "reason_en": "The plain imperative 「見せて」 is too direct and demanding when speaking to a shop attendant. Adding 「ください」 makes it a polite request.",
+      "note_en": "Tests appropriate politeness level for requests in a customer service context."
+    },
+    {
+      "scene": "simple_request",
+      "learner_sentence": "あなたはこのTシャツを持っていますか？",
+      "intended_label": "needs_correction",
+      "corrected_sentence": "このTシャツはありますか？",
+      "reason_en": "While grammatically possible, using 「あなた」 and 「持っていますか」 to ask if a shop stocks an item is an unnatural direct translation from English. The natural way to ask is 「〜はありますか？」.",
+      "note_en": "Tests idiomatic expressions for inquiring about stock in a shop, contrasting with direct English translation."
+    },
+    {
+      "scene": "simple_request",
+      "learner_sentence": "この傘を、どうもありがとうです。",
+      "intended_label": "needs_correction",
+      "corrected_sentence": "この傘を、どうもありがとうございます。",
+      "reason_en": "「どうもありがとうです」 is an unnatural combination of politeness levels. It should be either the casual 「どうもありがとう」 or the polite fixed expression 「どうもありがとうございます」.",
+      "note_en": "Tests proper usage of polite forms and fixed expressions for gratitude."
+    },
+    {
+      "scene": "simple_request",
+      "learner_sentence": "このリンゴ、甘い？",
+      "intended_label": "needs_correction",
+      "corrected_sentence": "このリンゴは甘いですか？",
+      "reason_en": "Asking 「甘い？」 in plain form is too casual when speaking to a shop attendant. It should be politely phrased with 「ですか？」.",
+      "note_en": "Tests appropriate politeness level for asking questions to shop staff."
+    },
+    {
+      "scene": "simple_request",
+      "learner_sentence": "支払いはどこですか？",
+      "intended_label": "needs_correction",
+      "corrected_sentence": "お会計はどちらですか？",
+      "reason_en": "While 「支払いはどこですか？」 is grammatically understandable, 「支払い」 (payment) is often less formal, and 「どこですか」 (where is it?) is a bit blunt for asking about the checkout counter. 「お会計はどちらですか？」 (Where is the register?) is the more common and polite way to ask where to pay.",
+      "note_en": "Tests idiomatic and polite phrasing for asking about the checkout counter."
+    },
+    {
+      "scene": "simple_request",
+      "learner_sentence": "これ、お願いします。",
+      "intended_label": "natural",
+      "corrected_sentence": null,
+      "reason_en": null,
+      "note_en": "This simple phrase is very common for requesting an item while pointing, and is perfectly natural for a beginner."
+    },
+    {
+      "scene": "simple_request",
+      "learner_sentence": "もう一つ、ありますか？",
+      "intended_label": "natural",
+      "corrected_sentence": null,
+      "reason_en": null,
+      "note_en": "A natural and concise way for a customer to ask if more of an item is available."
+    },
+    {
+      "scene": "delay_notice",
+      "learner_sentence": "どこが今ですか？",
+      "intended_label": "needs_correction",
+      "corrected_sentence": "今どこですか？",
+      "reason_en": "The particle 「が」 is incorrect here. To ask 'Where are you now?', 「今どこですか？」 is the natural and common way.",
+      "note_en": "This helps learners avoid direct English translation of 'where are you now'."
+    },
+    {
+      "scene": "delay_notice",
+      "learner_sentence": "私は待つ。",
+      "intended_label": "needs_correction",
+      "corrected_sentence": "待っています。",
+      "reason_en": "To express an ongoing action like 'I am waiting,' the -て形 + います (or -てる in casual speech) is used, not the plain form 「待つ」.",
+      "note_en": "Practices the correct conjugation for ongoing actions."
+    },
+    {
+      "scene": "delay_notice",
+      "learner_sentence": "到着、何時？",
+      "intended_label": "needs_correction",
+      "corrected_sentence": "到着は何時ですか？",
+      "reason_en": "The sentence is missing essential particles and a polite ending to form a natural question. Adding 「は」 and 「ですか？」 makes it complete and polite.",
+      "note_en": "Highlights the importance of particles and polite endings for forming questions."
+    },
+    {
+      "scene": "delay_notice",
+      "learner_sentence": "何時に到着されますか？",
+      "intended_label": "needs_correction",
+      "corrected_sentence": "何時に到着しますか？",
+      "reason_en": "The honorific verb ending 「されます」 is too formal when speaking to a colleague. The plain polite form 「到着しますか？」 is appropriate.",
+      "note_en": "Teaches appropriate politeness levels in professional but peer-to-peer contexts."
+    },
+    {
+      "scene": "delay_notice",
+      "learner_sentence": "あなたはいつ来ることを期待しますか？",
+      "intended_label": "needs_correction",
+      "corrected_sentence": "いつ来ますか？",
+      "reason_en": "While literally translating 'When do you expect to come?', the phrase 「来ることを期待しますか？」 is an unnatural Japanese expression. A native speaker would simply ask 「いつ来ますか？」 or 「何時に来ますか？」.",
+      "note_en": "Addresses common word-for-word translation errors that result in unnatural phrasing."
+    },
+    {
+      "scene": "delay_notice",
+      "learner_sentence": "時間を取ってください。",
+      "intended_label": "needs_correction",
+      "corrected_sentence": "焦らなくていいですよ。",
+      "reason_en": "「時間を取ってください」 is often used in the sense of 'please make time for this (appointment/task)'. To tell someone 'take your time' in the context of not rushing, 「焦らなくていいですよ」 is more natural.",
+      "note_en": "Corrects an altered fixed expression that doesn't convey the intended meaning."
+    },
+    {
+      "scene": "delay_notice",
+      "learner_sentence": "もうすぐで来ますか？",
+      "intended_label": "needs_correction",
+      "corrected_sentence": "もうすぐ来ますか？",
+      "reason_en": "The particle 「で」 is unnecessary after 「もうすぐ」 when asking about arrival time. 「もうすぐ来ますか？」 is the natural way to ask 'Are you coming soon?'.",
+      "note_en": "Focuses on the correct use (or non-use) of particles with adverbs of time."
+    },
+    {
+      "scene": "delay_notice",
+      "learner_sentence": "まだかな？",
+      "intended_label": "natural",
+      "corrected_sentence": null,
+      "reason_en": null,
+      "note_en": "This is a very common and natural way to express a mild, non-annoyed wonder about someone's arrival in a casual context."
+    },
+    {
+      "scene": "delay_notice",
+      "learner_sentence": "私、ここで待ってるね。",
+      "intended_label": "natural",
+      "corrected_sentence": null,
+      "reason_en": null,
+      "note_en": "This sentence is a common and natural way for a colleague to reassure someone running late that they are waiting patiently."
+    },
+    {
+      "scene": "workplace_keigo",
+      "learner_sentence": "会社でいます。",
+      "intended_label": "needs_correction",
+      "corrected_sentence": "会社にいます。",
+      "reason_en": "The particle 「で」 indicates an action taking place at a location, while 「に」 indicates existence at a location. You use 「に」 when stating where someone or something 'is'.",
+      "note_en": null
+    },
+    {
+      "scene": "workplace_keigo",
+      "learner_sentence": "新しいプロジェクトは面白います。",
+      "intended_label": "needs_correction",
+      "corrected_sentence": "新しいプロジェクトは面白いです。",
+      "reason_en": "「面白い」 is an i-adjective. To make a polite statement with an i-adjective, you simply attach 「です」 to it, rather than conjugating it like a verb.",
+      "note_en": null
+    },
+    {
+      "scene": "workplace_keigo",
+      "learner_sentence": "この件、確認ください。",
+      "intended_label": "needs_correction",
+      "corrected_sentence": "この件を確認してください。",
+      "reason_en": "When making a polite request for an action, the particle 「を」 is generally needed after the object, and the full polite request form 「してください」 is used.",
+      "note_en": null
+    },
+    {
+      "scene": "workplace_keigo",
+      "learner_sentence": "それ、手伝って。",
+      "intended_label": "needs_correction",
+      "corrected_sentence": "それ、手伝っていただけますか。",
+      "reason_en": "The plain 「〜て」 form is a casual command. In a business setting with a manager, a more polite request like 「〜ていただけますか」 is appropriate.",
+      "note_en": null
+    },
+    {
+      "scene": "workplace_keigo",
+      "learner_sentence": "私はあなたの助けに感謝します。",
+      "intended_label": "needs_correction",
+      "corrected_sentence": "助けていただいて感謝します。",
+      "reason_en": "While 「感謝します」 is grammatically correct, the phrase 「あなたの助けに」 to express 'for your help' is unnatural. It's more common to use the te-form of the verb followed by 「いただいて」 to express receiving a favor, such as 「助けていただいて」.",
+      "note_en": null
+    },
+    {
+      "scene": "workplace_keigo",
+      "learner_sentence": "お先に失礼しました。",
+      "intended_label": "needs_correction",
+      "corrected_sentence": "お先に失礼します。",
+      "reason_en": "「お先に失礼します」 is a fixed expression used when leaving the office before others. Using the past tense 「失礼しました」 suggests the act of leaving happened in the past, not in the present moment of speaking.",
+      "note_en": null
+    },
+    {
+      "scene": "workplace_keigo",
+      "learner_sentence": "終わりました。",
+      "intended_label": "natural",
+      "corrected_sentence": null,
+      "reason_en": null,
+      "note_en": "This is a concise and natural way to report task completion in a business setting, even if a more elaborate phrase might be taught in textbooks."
+    },
+    {
+      "scene": "workplace_keigo",
+      "learner_sentence": "ちょっと、いいですか？",
+      "intended_label": "natural",
+      "corrected_sentence": null,
+      "reason_en": null,
+      "note_en": "A common and natural way to politely ask if someone has a moment, even if it's less formal than textbook examples."
+    },
+    {
+      "scene": "workplace_keigo",
+      "learner_sentence": "会議、今日の午後です。",
+      "intended_label": "natural",
+      "corrected_sentence": null,
+      "reason_en": null,
+      "note_en": "This is a natural, concise way to state information about a meeting, common in everyday business communication."
+    }
+  ]
+}

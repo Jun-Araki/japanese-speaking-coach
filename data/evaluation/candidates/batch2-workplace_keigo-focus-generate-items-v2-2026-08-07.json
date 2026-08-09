@@ -1,0 +1,50 @@
+{
+  "batch": 2,
+  "generated_on": "2026-08-07",
+  "model": "gemini/gemini-2.5-flash",
+  "prompt_version": "generate-items-v2",
+  "focus": "the DIRECTION of keigo — 尊敬語 used about yourself, or 謙譲語 used about the manager. Not particles.",
+  "verified": false,
+  "candidates": [
+    {
+      "scene": "workplace_keigo",
+      "learner_sentence": "私はインド出身。",
+      "intended_label": "needs_correction",
+      "corrected_sentence": "私はインド出身です。",
+      "reason_en": "The sentence uses the plain form 「出身」 instead of the polite form 「出身です」 required when speaking to a manager.",
+      "note_en": "This item checks the use of 「です」 with a noun predicate in a polite context."
+    },
+    {
+      "scene": "workplace_keigo",
+      "learner_sentence": "この件、確認を作ります。",
+      "intended_label": "needs_correction",
+      "corrected_sentence": "この件、確認します。",
+      "reason_en": "The phrase 「確認を作ります」 is an unnatural word-for-word translation from English 'make confirmation'. The correct verb for 'to confirm' is 「確認します」.",
+      "note_en": "This item highlights an unnatural verb usage resulting from direct English translation."
+    },
+    {
+      "scene": "workplace_keigo",
+      "learner_sentence": "部長、お話を話したいです。",
+      "intended_label": "needs_correction",
+      "corrected_sentence": "部長、お話したいです。",
+      "reason_en": "The construction 「お話を話したいです」 is redundant. The polite form for 'I want to talk' is simply 「お話したいです」.",
+      "note_en": "This item tests the natural phrasing of wanting to speak, avoiding redundant verb usage."
+    },
+    {
+      "scene": "workplace_keigo",
+      "learner_sentence": "明日は自由です。",
+      "intended_label": "needs_correction",
+      "corrected_sentence": "明日は空いています。",
+      "reason_en": "While grammatically correct, 「自由です」 is not natural for expressing 'I am free' in the sense of having no appointments or being available. 「空いています」 or 「予定がありません」 are more common.",
+      "note_en": "This item highlights the difference between literal translation and natural Japanese phrasing for expressing availability."
+    },
+    {
+      "scene": "workplace_keigo",
+      "learner_sentence": "時間がないです。",
+      "intended_label": "needs_correction",
+      "corrected_sentence": "時間がありません。",
+      "reason_en": "While 「ないです」 is sometimes used in casual speech, the polite negative form of 「ある」 is 「ありません」.",
+      "note_en": "This item highlights the correct polite negative form of the verb 「ある」."
+    }
+  ]
+}

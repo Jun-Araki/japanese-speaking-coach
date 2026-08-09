@@ -21,6 +21,43 @@ SCENES: Final[dict[str, str]] = {
     "workplace_keigo": "Workplace keigo",
 }
 
+# How casual a sentence is allowed to be before politeness alone makes it wrong.
+# Fixed in docs/ja/glossary.md §2 on day 3, after 60 candidates split the same
+# degree of casualness across both labels. The floor is set by WHO IS LISTENING,
+# not by the scene: 「トイレはどこ？」 is fine to a colleague and wrong to a
+# shop assistant.
+#
+# It lives here, next to the scenes themselves, because it is the same kind of
+# fact: change it and every item already labelled under it has to be re-read.
+POLITENESS_FLOORS: Final[dict[str, tuple[str, str]]] = {
+    "greeting": ("A", "A neighbour or a colleague. No polite form is required."),
+    "thanks": ("A", "A neighbour or a colleague. No polite form is required."),
+    "self_introduction": (
+        "B",
+        "Someone met for the first time, or a shop assistant. The sentence has to end "
+        "in 「です」, 「ます」 or 「ください」, but it does not have to be polite throughout. "
+        "「お」 alone does NOT clear this floor — 「お仕事、何？」 needs correcting — unless "
+        "the sentence trails off instead of closing, as 「お名前は。」 does.",
+    ),
+    "simple_request": (
+        "B",
+        "Someone met for the first time, or a shop assistant. The sentence has to end "
+        "in 「です」, 「ます」 or 「ください」, but it does not have to be polite throughout. "
+        "「お」 alone does NOT clear this floor — 「お仕事、何？」 needs correcting — unless "
+        "the sentence trails off instead of closing, as 「お名前は。」 does.",
+    ),
+    "delay_notice": (
+        "C",
+        "A colleague being kept waiting, or a manager. 「です」/「ます」 is required. "
+        "Honorific and humble keigo are NOT required.",
+    ),
+    "workplace_keigo": (
+        "C",
+        "A colleague being kept waiting, or a manager. 「です」/「ます」 is required. "
+        "Honorific and humble keigo are NOT required.",
+    ),
+}
+
 # What the partner is, and what they open with. The partner always speaks first so
 # the learner has something to answer -- a beginner staring at an empty box writes
 # nothing, and a session with no learner sentence produces nothing to correct.
@@ -43,8 +80,7 @@ SCENE_BRIEFS: Final[dict[str, tuple[str, str]]] = {
         "いらっしゃいませ。何かお探しですか。",
     ),
     "delay_notice": (
-        "You are a colleague waiting for the learner, who is running late. "
-        "You are not annoyed.",
+        "You are a colleague waiting for the learner, who is running late. You are not annoyed.",
         "もしもし。今どちらですか。",
     ),
     "workplace_keigo": (
@@ -76,6 +112,13 @@ LEVEL_BRIEFS: Final[dict[str, str]] = {
         "normal connected sentences."
     ),
 }
+
+
+def politeness_floor(scene: str) -> tuple[str, str]:
+    """Return the scene's politeness tier and what it requires."""
+    if scene not in POLITENESS_FLOORS:
+        raise ValueError(f"Unknown scene: {scene!r}")
+    return POLITENESS_FLOORS[scene]
 
 
 def scene_brief(scene: str) -> tuple[str, str]:

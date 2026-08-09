@@ -29,11 +29,14 @@ japanese-speaking-coach/
 ├── tests/                     pytest。**モデルを呼ぶテストは書かない**（生成文には固定の正解がない）
 ├── retrieval/                 (予定) Chroma への登録と検索
 ├── nlp/                       (予定) SudachiPy の分かち書き、語彙レベル判定
-├── evals/                     (予定) 評価スクリプト、ベースライン、実行記録
+├── evals/                     評価スクリプト、ベースライン、実行記録
+│   ├── runs/                  測定1回ぶんの実行記録 JSON
+│   └── rater/                 第二採点者の採点キットと採点結果
 ├── api/                       (予定) FastAPI アプリケーション
-└── data/                      (予定)
+└── data/
     ├── evaluation/            評価データ120件の JSON — 公開成果物
-    ├── grammar/               自作の文法リファレンス10本
+    │   └── candidates/        検証前の候補。items.json の材料であって正本ではない
+    ├── grammar/               自作の文法リファレンス8本
     ├── recordings/            学習者の音声 — git 管理外、個人情報
     └── sessions/              セッションの書き出し — git 管理外、個人情報
 ```

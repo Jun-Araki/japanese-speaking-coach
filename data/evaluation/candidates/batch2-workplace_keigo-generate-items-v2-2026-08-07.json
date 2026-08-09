@@ -1,0 +1,81 @@
+{
+  "batch": 2,
+  "generated_on": "2026-08-07",
+  "model": "gemini/gemini-2.5-flash",
+  "prompt_version": "generate-items-v2",
+  "verified": false,
+  "candidates": [
+    {
+      "scene": "workplace_keigo",
+      "learner_sentence": "これを確認が必要です。",
+      "intended_label": "needs_correction",
+      "corrected_sentence": "これの確認が必要です。",
+      "reason_en": "The particle 「を」 is incorrect here. When a noun is the direct object of a 'necessity' statement like 「必要です」, it should typically be marked with 「の」 or the verb phrase should be restructured (e.g., 「これを確認する必要があります」).",
+      "note_en": "This tests the correct particle usage with 「必要です」 when referring to a noun."
+    },
+    {
+      "scene": "workplace_keigo",
+      "learner_sentence": "会議に参加するです。",
+      "intended_label": "needs_correction",
+      "corrected_sentence": "会議に参加します。",
+      "reason_en": "Using the dictionary form of a verb followed by 「です」 is informal. For polite speech, the masu-form (「ます」) is required.",
+      "note_en": "This targets a common beginner mistake of incorrectly forming polite verbs by attaching 「です」 to the dictionary form."
+    },
+    {
+      "scene": "workplace_keigo",
+      "learner_sentence": "報告書読みます。",
+      "intended_label": "needs_correction",
+      "corrected_sentence": "報告書を読みます。",
+      "reason_en": "The direct object particle 「を」 is missing between 「報告書」 (report) and the verb 「読みます」 (read).",
+      "note_en": "This highlights the omission of a necessary particle for the direct object of a verb."
+    },
+    {
+      "scene": "workplace_keigo",
+      "learner_sentence": "この仕事、難しい。",
+      "intended_label": "needs_correction",
+      "corrected_sentence": "この仕事は難しいです。",
+      "reason_en": "The sentence is below the politeness floor. For polite speech in this context, the copula 「です」 is required at the end of the sentence, especially after an i-adjective.",
+      "note_en": "This tests the learner's awareness of the politeness level required in a professional setting."
+    },
+    {
+      "scene": "workplace_keigo",
+      "learner_sentence": "質問を持っています。",
+      "intended_label": "needs_correction",
+      "corrected_sentence": "質問があります。",
+      "reason_en": "Using 「持っています」 for abstract concepts like 'having a question' is unnatural and sounds like a word-for-word translation from English. The natural Japanese expression is 「質問があります」.",
+      "note_en": "This addresses an unnatural, English-influenced translation for expressing possession of abstract concepts."
+    },
+    {
+      "scene": "workplace_keigo",
+      "learner_sentence": "ご迷惑をします。",
+      "intended_label": "needs_correction",
+      "corrected_sentence": "ご迷惑をおかけします。",
+      "reason_en": "「ご迷惑をします」 is an altered fixed expression. The correct fixed phrase for 'causing trouble' or 'inconveniencing' someone is 「ご迷惑をおかけします」.",
+      "note_en": "This item checks the learner's knowledge of common fixed expressions in business Japanese."
+    },
+    {
+      "scene": "workplace_keigo",
+      "learner_sentence": "資料はコピーしました。",
+      "intended_label": "natural",
+      "corrected_sentence": null,
+      "reason_en": null,
+      "note_en": "This is a direct, polite statement of a completed action, common for a learner reporting progress."
+    },
+    {
+      "scene": "workplace_keigo",
+      "learner_sentence": "今、別の作業をしています。",
+      "intended_label": "natural",
+      "corrected_sentence": null,
+      "reason_en": null,
+      "note_en": "This is a simple and polite way to state one's current activity, suitable for a beginner."
+    },
+    {
+      "scene": "workplace_keigo",
+      "learner_sentence": "そうだと思います。",
+      "intended_label": "natural",
+      "corrected_sentence": null,
+      "reason_en": null,
+      "note_en": "This is a common and polite way to express an opinion or agreement without being overly assertive."
+    }
+  ]
+}

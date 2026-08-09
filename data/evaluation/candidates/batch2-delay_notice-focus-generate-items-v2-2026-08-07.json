@@ -1,0 +1,42 @@
+{
+  "batch": 2,
+  "generated_on": "2026-08-07",
+  "model": "gemini/gemini-2.5-flash",
+  "prompt_version": "generate-items-v2",
+  "focus": "NEGATIVE forms (〜ません / 〜くない) and COUNTERS (助数詞: 五分 / 一本 / 一台). Every sentence must be wrong in the negative form or in the counter itself. Do NOT write a particle mistake and do NOT write a politeness-floor mistake.",
+  "verified": false,
+  "candidates": [
+    {
+      "scene": "delay_notice",
+      "learner_sentence": "私はまだ待機しています。",
+      "intended_label": "needs_correction",
+      "corrected_sentence": "私はまだ待っています。",
+      "reason_en": "「待機する」 (taiki suru) means to be on standby or to wait for specific instructions, often in a formal or military context. For simply waiting for a person, 「待つ」 (matsu) is the natural verb.",
+      "note_en": "This item identifies a common misuse of a formal word in a casual context, a frequent error for learners."
+    },
+    {
+      "scene": "delay_notice",
+      "learner_sentence": "もう着くです。",
+      "intended_label": "needs_correction",
+      "corrected_sentence": "もう着きます。",
+      "reason_en": "The polite ending 「です」 (desu) cannot directly attach to a plain verb form like 「着く」 (tsuku). It should be attached to the polite form of the verb, which is 「着きます」 (tsukimasu).",
+      "note_en": "This targets a common grammatical mistake where learners incorrectly attach 「です」 to plain verb forms."
+    },
+    {
+      "scene": "delay_notice",
+      "learner_sentence": "待つ時間を過ごします。",
+      "intended_label": "needs_correction",
+      "corrected_sentence": "待ちます。",
+      "reason_en": "「待つ時間を過ごす」 (matsu jikan o sugosu) is a word-for-word translation of \"spend time waiting\" and is unnatural in Japanese for simply stating that one will wait. A Japanese speaker would typically just say 「待ちます」 (machimasu) or 「待っています」 (matte imasu).",
+      "note_en": "This highlights an unnatural, literal translation from English into Japanese."
+    },
+    {
+      "scene": "delay_notice",
+      "learner_sentence": "私は遅くになります。",
+      "intended_label": "needs_correction",
+      "corrected_sentence": "私は遅れます。",
+      "reason_en": "「遅くなる」 (osoku naru) describes something *becoming* late or delayed, or the time getting late. For expressing \"I will be late\" as a personal action, the verb 「遅れる」 (okureru) is used.",
+      "note_en": "This helps distinguish between the impersonal 'becoming late' and the personal 'being late'."
+    }
+  ]
+}

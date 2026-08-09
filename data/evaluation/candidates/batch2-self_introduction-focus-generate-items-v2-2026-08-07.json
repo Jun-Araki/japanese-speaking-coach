@@ -1,0 +1,50 @@
+{
+  "batch": 2,
+  "generated_on": "2026-08-07",
+  "model": "gemini/gemini-2.5-flash",
+  "prompt_version": "generate-items-v2",
+  "focus": "the DIRECTION of honorific and humble language — using humble forms about the listener or honorific forms about yourself — and negative forms. Not particles.",
+  "verified": false,
+  "candidates": [
+    {
+      "scene": "self_introduction",
+      "learner_sentence": "お仕事、何でいますか？",
+      "intended_label": "needs_correction",
+      "corrected_sentence": "お仕事は何ですか？",
+      "reason_en": "The verb 「います」 is used for animate beings or existence at a location, not for stating what something *is*. 「です」 should be used here.",
+      "note_en": "Tests the correct use of 「です」 for stating attributes, vs. 「います」 for existence."
+    },
+    {
+      "scene": "self_introduction",
+      "learner_sentence": "どちらから来た。",
+      "intended_label": "needs_correction",
+      "corrected_sentence": "どちらから来ましたか？",
+      "reason_en": "The sentence is in plain form and lacks the required polite ending 「です」 or 「ます」 for a first meeting in a polite context (Tier B).",
+      "note_en": "Highlights the necessity of polite forms when speaking to someone for the first time."
+    },
+    {
+      "scene": "self_introduction",
+      "learner_sentence": "あなたの名前は何と呼ばれますか？",
+      "intended_label": "needs_correction",
+      "corrected_sentence": "あなたの名前は何ですか？",
+      "reason_en": "While 「呼ばれますか」 is grammatically the passive form of 'to call,' it is not used to ask for someone's name in Japanese. The natural and standard way is to ask 「何ですか？」.",
+      "note_en": "Addresses the unnatural use of passive voice for asking a name, a common literal translation from English."
+    },
+    {
+      "scene": "self_introduction",
+      "learner_sentence": "よろしくください。",
+      "intended_label": "needs_correction",
+      "corrected_sentence": "よろしくお願いします。",
+      "reason_en": "「よろしく」 is commonly followed by 「お願いします」 (or more polite variations) to form a polite request for goodwill, not 「ください」 directly.",
+      "note_en": "Addresses the common beginner error of combining polite elements incorrectly with fixed expressions."
+    },
+    {
+      "scene": "self_introduction",
+      "learner_sentence": "お仕事しますか？",
+      "intended_label": "needs_correction",
+      "corrected_sentence": "お仕事は何ですか？",
+      "reason_en": "While 「お仕事」 uses an honorific prefix, 「しますか」 here sounds like asking 'Do you do work?' rather than 'What is your occupation?' A more appropriate verb like 「ですか」 is needed to ask about one's profession.",
+      "note_en": "Addresses the incorrect phrasing for inquiring about someone's occupation, often a direct translation from English."
+    }
+  ]
+}

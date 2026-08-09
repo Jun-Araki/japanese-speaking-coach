@@ -78,8 +78,17 @@ colleague and needs correcting said to a shop assistant.
 | **B** | Someone just met, a shop assistant | **At least one of お / ください / です / ます** | `self_introduction` `simple_request` |
 | **C** | A colleague kept waiting, a manager | **です・ます required** | `delay_notice` `workplace_keigo` |
 
-- **The floor at B is one polite marker, not a fully polite sentence.** 「これ、ください」 and
-  「お名前は」 clear it and are `false`. 「トイレはどこ？」 and 「名前は？」 have none and are `true`
+- **The floor at B is です, ます or ください — not a fully polite sentence.** 「これ、ください」
+  clears it and is `false`. 「トイレはどこ？」 and 「名前は？」 have none and are `true`
+- **「お」 on its own does not clear the floor at B (revised 2026-08-08).** The floor first read
+  "one of お / ください / です / ます", and verification did not bear that out. **「お仕事、何？」 has
+  「お」 and is `true`**, corrected to 「お仕事は何でしょうか？」. **「お」 makes a word polite; it does
+  not make the sentence polite** — the ending does.
+  - **The exception is a sentence left unfinished.** 「お名前は。」 trails off rather than closing,
+    and that form is polite in itself, so it clears the floor (this is eval-022's correction).
+    **Closing on 「何？」 is not that form and does not clear it.**
+  - **No label moved because of this revision** — only the verdict on 「お仕事、何？」 and the
+    wording of the floor.
 - **Plain form is `true` at C** because, as in §3, these are the scenes where controlling
   politeness actually starts to matter
 - **At A, politeness alone is never a reason to label `true`.** There, `true` comes only from
@@ -88,6 +97,17 @@ colleague and needs correcting said to a shop assistant.
   level.** Saying 「ご苦労さまです」 to a superior is `true` at tier A too
 - **C asks for です・ます, not for full honorific and humble forms.** 「少し考えます」 to a manager
   is `false`
+- **But at C, です・ます is only enough for the SPEAKER'S OWN action (decided 2026-08-08). A
+  sentence that asks a manager to do something, or asks whether they will, needs an honorific
+  or a request form (`ご〜ください` / `〜ていただけますか`), not just です・ます.**
+  「この資料、確認しますか」 is `true`, and the correction is 「この資料をご確認いただけますか」. 「少し考えます」
+  above stays `false` because that is the speaker's own action; the two rules do not conflict
+  - **Without this distinction, the same politeness level in the same scene lands on both
+    labels.** That is what happened: the machine pre-screen read §2 literally ("です・ます is
+    enough") and put 「この資料、確認しますか」 on `false`; native verification overturned it
+  - **Corrections for requests go up to the same level.** 「資料を見せて」 is corrected to
+    「資料を見せていただけますか」, not 「資料を見せてください」 — 「ください」 still commands the listener's
+    action, which is not enough for a manager
 - **「あなた」 is never itself a reason to label `true`** (decided during verification on
   2026-08-05). What actually reads as unnatural is usually the word order or the literal
   translation, and that is what the reason should name. 「あなたはこの本を持っていますか」 is `false`
@@ -166,6 +186,24 @@ correction engine**, bypassing the app, the microphone, and transcription.
 exact matching would report far below true performance. Only the binary label is machine-scored;
 the quality of the phrasing and reason is judged by eye (§6).
 
+**The 20 items for `rater_agreement` are taken from `dev` (decided 2026-08-08).** The
+definition above does not say which split. Taking them from `test` would mean the author reading
+test items in order to rate them, and **every prompt adjustment from week 2 onward would be
+contaminated by that memory** (§7). Agreement asks whether two people read the scale the same
+way, and `dev` carries that just as well.
+
+- **Choose from the items where the baseline returned `needs_correction: true` and produced
+  both a corrected sentence and an English reason.** The §6 scale looks at exactly those two
+  things, so an item missing either **cannot be rated at all**. Including one leaves that item
+  blank on both raters' forms and then counts as agreement
+- **Spread the choice across the scenes.** The run record is ordered by scene, so the first 20
+  run out inside the earlier scenes and **never reach `delay_notice` or `workplace_keigo`**.
+  Those two are tier C (§2), and **the politeness floor — the part two raters most easily read
+  differently — would then never be measured**
+- **The rater sees neither the label nor the reference correction.** Showing either measures how
+  well they can read the evaluation data. What they get is the learner's sentence, the system's
+  correction, the system's reason, and **the situation the system itself was given**
+
 **"The reason came back in English" is decided by proportion, not by presence (decided
 2026-08-06).** Japanese inside quotes (「」 or quotation marks) is removed first, and what
 remains counts as English if little Japanese is left. `The masu-stem of the verb (遅れ) cannot
@@ -190,7 +228,12 @@ trust than a large number does.
 
 ## 6. Correction validity rating scale
 
-Applied by hand to 40 items; 20 of them are rated independently by a second native speaker.
+`correction_validity` is applied by hand to 40 `test` items.
+
+**The 20 items rated by a second native speaker are not a subset of those 40; they are chosen
+separately from `dev`** (decided 2026-08-08 — the reasoning is in §5). Hand-rating therefore
+covers 60 items in total. **This corrects an earlier "20 of them"** — once `rater_agreement`
+was fixed to `dev`, the 20 stopped being a subset of the 40.
 
 | Rating | Meaning |
 |---|---|

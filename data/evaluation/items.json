@@ -5,7 +5,7 @@
     "learner_sentence": "スーパーに買い物します。",
     "needs_correction": true,
     "corrected_sentence": "スーパーで買い物をします。",
-    "reason_en": "The place where an action happens takes 「で」, not 「に」, and 「買い物」 takes 「を」 before します.",
+    "reason_en": "The place where an action happens takes 「で」, not 「に」. 「買い物をします」 and 「買い物します」 are both ordinary.",
     "split": "dev"
   },
   {
@@ -186,7 +186,7 @@
     "learner_sentence": "名前は？",
     "needs_correction": true,
     "corrected_sentence": "お名前は。",
-    "reason_en": "Asking someone you have just met for their name takes the polite 「お」. Without it the question is blunt.",
+    "reason_en": "Asked of someone you have just met, this needs a polite ending. 「お名前は。」 trails off instead of closing, and that form is polite in itself; 「名前は？」 closes bluntly.",
     "split": "dev"
   },
   {
@@ -209,7 +209,7 @@
     "learner_sentence": "私を助けて、ありがとう。",
     "needs_correction": true,
     "corrected_sentence": "助けてくれてありがとう。",
-    "reason_en": "Thanking someone for what they did is the fixed 「〜てくれてありがとう」. 「私を」 does not belong in it.",
+    "reason_en": "Thanking someone for what they did needs the て-form plus 「くれて」. 「私を助けてくれてありがとう。」 is also fine — what was missing is the 「くれて」.",
     "split": "dev"
   },
   {
@@ -464,8 +464,8 @@
     "scene": "workplace_keigo",
     "learner_sentence": "資料を見せて。",
     "needs_correction": true,
-    "corrected_sentence": "資料を見せてください。",
-    "reason_en": "「見せて」 on its own is an order. To a manager it needs 「ください」.",
+    "corrected_sentence": "資料を見せていただけますか。",
+    "reason_en": "「見せて」 is 「見せてください」 with the ending dropped, and even 「ください」 still tells a manager what to do. Asking them takes 「〜ていただけますか」.",
     "split": "dev"
   },
   {
@@ -506,6 +506,516 @@
     "id": "eval-060",
     "scene": "workplace_keigo",
     "learner_sentence": "少し考えます。",
+    "needs_correction": false,
+    "split": "test"
+  },
+  {
+    "id": "eval-061",
+    "scene": "greeting",
+    "learner_sentence": "どこで行きますか？",
+    "needs_correction": true,
+    "corrected_sentence": "どこに行きますか？",
+    "reason_en": "The place you are heading for takes 「に」. 「で」 marks where an action happens, not where it is aimed.",
+    "split": "dev"
+  },
+  {
+    "id": "eval-062",
+    "scene": "greeting",
+    "learner_sentence": "早く起きるです。",
+    "needs_correction": true,
+    "corrected_sentence": "早く起きます。",
+    "reason_en": "です cannot be attached to a plain verb. The polite form of 「起きる」 is 「起きます」.",
+    "split": "dev"
+  },
+  {
+    "id": "eval-063",
+    "scene": "greeting",
+    "learner_sentence": "仕事行き？",
+    "needs_correction": true,
+    "corrected_sentence": "仕事行く？",
+    "reason_en": "「行き」 cannot end a sentence. A casual question uses the plain form 「行く」.",
+    "split": "test"
+  },
+  {
+    "id": "eval-064",
+    "scene": "greeting",
+    "learner_sentence": "行ってらっしゃいを。",
+    "needs_correction": true,
+    "corrected_sentence": "行ってらっしゃい。",
+    "reason_en": "「行ってらっしゃい」 is a fixed phrase and takes no particle after it.",
+    "split": "dev"
+  },
+  {
+    "id": "eval-065",
+    "scene": "greeting",
+    "learner_sentence": "毎日で走る。",
+    "needs_correction": true,
+    "corrected_sentence": "毎日走る。",
+    "reason_en": "「毎日」 attaches straight to the verb and does not take 「で」.",
+    "split": "dev"
+  },
+  {
+    "id": "eval-066",
+    "scene": "greeting",
+    "learner_sentence": "疲れありません。",
+    "needs_correction": true,
+    "corrected_sentence": "疲れていません。",
+    "reason_en": "「疲れ」 is a noun, and negating it does not say you are not tired. Being in that state is 「疲れている」, so the negative is 「疲れていません」.",
+    "split": "test"
+  },
+  {
+    "id": "eval-067",
+    "scene": "greeting",
+    "learner_sentence": "私は散歩が行きます。",
+    "needs_correction": true,
+    "corrected_sentence": "私は散歩に行きます。",
+    "reason_en": "What you are going to go and do takes 「に」 before 「行きます」.",
+    "split": "dev"
+  },
+  {
+    "id": "eval-068",
+    "scene": "greeting",
+    "learner_sentence": "あなたの朝は元気です。",
+    "needs_correction": true,
+    "corrected_sentence": "朝から元気ですね。",
+    "reason_en": "\"Your morning is energetic\" translated word for word. It is the person who is 「元気」, not their morning.",
+    "split": "dev"
+  },
+  {
+    "id": "eval-069",
+    "scene": "greeting",
+    "learner_sentence": "お疲れ様だった。",
+    "needs_correction": true,
+    "corrected_sentence": "お疲れ様でした。",
+    "reason_en": "This fixed phrase does not take the plain past. It is 「お疲れ様でした」, or just 「お疲れ」 between friends.",
+    "split": "test"
+  },
+  {
+    "id": "eval-070",
+    "scene": "greeting",
+    "learner_sentence": "もう仕事？",
+    "needs_correction": false,
+    "split": "dev"
+  },
+  {
+    "id": "eval-071",
+    "scene": "greeting",
+    "learner_sentence": "今日は暑いね。",
+    "needs_correction": false,
+    "split": "dev"
+  },
+  {
+    "id": "eval-072",
+    "scene": "greeting",
+    "learner_sentence": "毎日、走るんだ。",
+    "needs_correction": false,
+    "split": "test"
+  },
+  {
+    "id": "eval-073",
+    "scene": "self_introduction",
+    "learner_sentence": "仕事は何？",
+    "needs_correction": true,
+    "corrected_sentence": "仕事は何ですか？",
+    "reason_en": "Asked of someone you have just met, this needs one polite element. 「ですか」 is enough.",
+    "split": "dev"
+  },
+  {
+    "id": "eval-074",
+    "scene": "self_introduction",
+    "learner_sentence": "お仕事はどこでですか。",
+    "needs_correction": true,
+    "corrected_sentence": "お仕事はどこですか。",
+    "reason_en": "「どこで」 needs a verb to go with it. Asking where the workplace is, the question ends at 「どこですか」.",
+    "split": "dev"
+  },
+  {
+    "id": "eval-075",
+    "scene": "self_introduction",
+    "learner_sentence": "どちらから来た。",
+    "needs_correction": true,
+    "corrected_sentence": "どちらから来ましたか？",
+    "reason_en": "Asked of someone you have just met, this needs one polite element. The plain past 「来た」 has none.",
+    "split": "test"
+  },
+  {
+    "id": "eval-076",
+    "scene": "self_introduction",
+    "learner_sentence": "名前は何でございますか？",
+    "needs_correction": true,
+    "corrected_sentence": "お名前は何ですか？",
+    "reason_en": "Asked about the person in front of you, the copula is 「です」. 「でございます」 states what something is on your own side, so it cannot describe their name.",
+    "split": "dev"
+  },
+  {
+    "id": "eval-077",
+    "scene": "self_introduction",
+    "learner_sentence": "よろしくください。",
+    "needs_correction": true,
+    "corrected_sentence": "よろしくお願いします。",
+    "reason_en": "The fixed phrase is 「よろしくお願いします」. 「ください」 cannot be swapped into it.",
+    "split": "dev"
+  },
+  {
+    "id": "eval-078",
+    "scene": "self_introduction",
+    "learner_sentence": "どこから参りましたか？",
+    "needs_correction": true,
+    "corrected_sentence": "どこから来ましたか？",
+    "reason_en": "「参る」 is humble and is only used about yourself. Asking where someone else came from, it is 「来ましたか」.",
+    "split": "test"
+  },
+  {
+    "id": "eval-079",
+    "scene": "self_introduction",
+    "learner_sentence": "あなたはどこで住んでいますか？",
+    "needs_correction": true,
+    "corrected_sentence": "あなたはどこに住んでいますか？",
+    "reason_en": "Where someone lives takes 「に」. 「で」 marks where an action happens.",
+    "split": "dev"
+  },
+  {
+    "id": "eval-080",
+    "scene": "self_introduction",
+    "learner_sentence": "お仕事はどんなに？",
+    "needs_correction": true,
+    "corrected_sentence": "どんなお仕事ですか？",
+    "reason_en": "「どんな」 has to be followed by the noun it describes, so the question cannot end there. 「どんなに」 means \"how much\" and does not fit.",
+    "split": "dev"
+  },
+  {
+    "id": "eval-081",
+    "scene": "self_introduction",
+    "learner_sentence": "お仕事、何？",
+    "needs_correction": true,
+    "corrected_sentence": "お仕事は何でしょうか？",
+    "reason_en": "Asked of someone you have just met, 「お」 on its own is not enough. The question needs 「です」 — or 「でしょうか」, which is softer.",
+    "split": "test"
+  },
+  {
+    "id": "eval-082",
+    "scene": "self_introduction",
+    "learner_sentence": "名前は何ですか？",
+    "needs_correction": false,
+    "split": "dev"
+  },
+  {
+    "id": "eval-083",
+    "scene": "self_introduction",
+    "learner_sentence": "あなたは田中さんですか？",
+    "needs_correction": false,
+    "split": "dev"
+  },
+  {
+    "id": "eval-084",
+    "scene": "self_introduction",
+    "learner_sentence": "出身、どこですか？",
+    "needs_correction": false,
+    "split": "test"
+  },
+  {
+    "id": "eval-085",
+    "scene": "thanks",
+    "learner_sentence": "手伝いにありがとう。",
+    "needs_correction": true,
+    "corrected_sentence": "手伝ってくれてありがとう。",
+    "reason_en": "Thanking someone for what they did uses the て-form and 「くれて」. 「手伝いに」 points at a purpose instead.",
+    "split": "dev"
+  },
+  {
+    "id": "eval-086",
+    "scene": "thanks",
+    "learner_sentence": "感謝を感じます。",
+    "needs_correction": true,
+    "corrected_sentence": "感謝しています。",
+    "reason_en": "\"I feel gratitude\" translated word for word. 「感謝」 is something you do, with 「しています」.",
+    "split": "dev"
+  },
+  {
+    "id": "eval-087",
+    "scene": "thanks",
+    "learner_sentence": "私は荷物を運んで、ありがとうございました。",
+    "needs_correction": true,
+    "corrected_sentence": "荷物を運んでくれて、ありがとうございました。",
+    "reason_en": "As written, the speaker is the one who carried it. 「くれて」 makes it something the other person did for them.",
+    "split": "test"
+  },
+  {
+    "id": "eval-088",
+    "scene": "thanks",
+    "learner_sentence": "本当に助けました。",
+    "needs_correction": true,
+    "corrected_sentence": "本当に助かりました。",
+    "reason_en": "「助ける」 is helping someone else. Being the one who was helped is 「助かる」.",
+    "split": "dev"
+  },
+  {
+    "id": "eval-089",
+    "scene": "thanks",
+    "learner_sentence": "大変、荷物でした。",
+    "needs_correction": true,
+    "corrected_sentence": "荷物、大変でしたね。",
+    "reason_en": "「大変」 describes how it was, so it belongs with 「でした」. In front of 「荷物」 it would need 「な」, and that says the luggage itself was enormous.",
+    "split": "dev"
+  },
+  {
+    "id": "eval-090",
+    "scene": "thanks",
+    "learner_sentence": "助けします、ありがとう。",
+    "needs_correction": true,
+    "corrected_sentence": "助かりました、ありがとう。",
+    "reason_en": "There is no verb 「助けする」. The verb is 「助ける」, and the person who was helped says 「助かりました」.",
+    "split": "test"
+  },
+  {
+    "id": "eval-091",
+    "scene": "thanks",
+    "learner_sentence": "あなたのお手伝いはとても大きかった。",
+    "needs_correction": true,
+    "corrected_sentence": "手伝ってくれて、本当に助かった。",
+    "reason_en": "\"Your help was very big\" translated word for word. 「大きい」 is about size; help that mattered is 「助けになった」.",
+    "split": "dev"
+  },
+  {
+    "id": "eval-092",
+    "scene": "thanks",
+    "learner_sentence": "これ、重かったね。助かったよ。",
+    "needs_correction": false,
+    "split": "dev"
+  },
+  {
+    "id": "eval-093",
+    "scene": "thanks",
+    "learner_sentence": "ありがとう！大変だったでしょう？",
+    "needs_correction": false,
+    "split": "test"
+  },
+  {
+    "id": "eval-094",
+    "scene": "simple_request",
+    "learner_sentence": "このサイズは大きい過ぎます。",
+    "needs_correction": true,
+    "corrected_sentence": "このサイズは大きすぎます。",
+    "reason_en": "An い-adjective drops its final 「い」 before 「すぎる」.",
+    "split": "dev"
+  },
+  {
+    "id": "eval-095",
+    "scene": "simple_request",
+    "learner_sentence": "水が欲しい。",
+    "needs_correction": true,
+    "corrected_sentence": "水が欲しいです。",
+    "reason_en": "Said to a shop assistant, this needs one polite element. 「です」 is enough.",
+    "split": "dev"
+  },
+  {
+    "id": "eval-096",
+    "scene": "simple_request",
+    "learner_sentence": "コーヒーに飲みたいです。",
+    "needs_correction": true,
+    "corrected_sentence": "コーヒーを飲みたいです。",
+    "reason_en": "What you drink takes 「を」. 「に」 points at a destination.",
+    "split": "test"
+  },
+  {
+    "id": "eval-097",
+    "scene": "simple_request",
+    "learner_sentence": "払うたいです。",
+    "needs_correction": true,
+    "corrected_sentence": "払いたいです。",
+    "reason_en": "「〜たい」 attaches to the ます-stem, so 「払う」 becomes 「払い」.",
+    "split": "dev"
+  },
+  {
+    "id": "eval-098",
+    "scene": "simple_request",
+    "learner_sentence": "これを買いたい、ください。",
+    "needs_correction": true,
+    "corrected_sentence": "これを買いたいです。",
+    "reason_en": "「ください」 follows a noun with 「を」 or a て-form verb, so it cannot come after 「買いたい」. Say either 「これを買いたいです」 or 「これをください」.",
+    "split": "dev"
+  },
+  {
+    "id": "eval-099",
+    "scene": "simple_request",
+    "learner_sentence": "これ、いくらをください。",
+    "needs_correction": true,
+    "corrected_sentence": "これ、いくらですか。",
+    "reason_en": "「ください」 asks for a thing, so it cannot follow 「いくら」. Asking the price is 「いくらですか」.",
+    "split": "test"
+  },
+  {
+    "id": "eval-100",
+    "scene": "simple_request",
+    "learner_sentence": "このリンゴ、甘い？",
+    "needs_correction": true,
+    "corrected_sentence": "このリンゴ、甘いですか？",
+    "reason_en": "A question put to a shop assistant needs 「ですか」.",
+    "split": "dev"
+  },
+  {
+    "id": "eval-101",
+    "scene": "simple_request",
+    "learner_sentence": "見てもいいですか？",
+    "needs_correction": false,
+    "split": "dev"
+  },
+  {
+    "id": "eval-102",
+    "scene": "simple_request",
+    "learner_sentence": "支払いはどこですか？",
+    "needs_correction": false,
+    "split": "test"
+  },
+  {
+    "id": "eval-103",
+    "scene": "delay_notice",
+    "learner_sentence": "もうすぐ着く。",
+    "needs_correction": true,
+    "corrected_sentence": "もうすぐ着きます。",
+    "reason_en": "You are keeping a colleague waiting, so this needs です・ます.",
+    "split": "dev"
+  },
+  {
+    "id": "eval-104",
+    "scene": "delay_notice",
+    "learner_sentence": "大丈夫か？",
+    "needs_correction": true,
+    "corrected_sentence": "大丈夫ですか？",
+    "reason_en": "Put to a colleague, the question needs 「ですか」. 「か」 on the plain form is blunt.",
+    "split": "dev"
+  },
+  {
+    "id": "eval-105",
+    "scene": "delay_notice",
+    "learner_sentence": "今、あなたはどこにありますか？",
+    "needs_correction": true,
+    "corrected_sentence": "今、あなたはどこにいますか？",
+    "reason_en": "People and animals take 「います」. 「あります」 is for things.",
+    "split": "test"
+  },
+  {
+    "id": "eval-106",
+    "scene": "delay_notice",
+    "learner_sentence": "すみません、遅れるします。",
+    "needs_correction": true,
+    "corrected_sentence": "すみません、遅れます。",
+    "reason_en": "「遅れる」 is already a verb. Its polite form is 「遅れます」; 「します」 cannot be added to it.",
+    "split": "dev"
+  },
+  {
+    "id": "eval-107",
+    "scene": "delay_notice",
+    "learner_sentence": "到着、何時？",
+    "needs_correction": true,
+    "corrected_sentence": "到着、何時ですか？",
+    "reason_en": "To a colleague this needs です・ます. Dropping 「は」 after 「到着、」 is not the problem.",
+    "split": "dev"
+  },
+  {
+    "id": "eval-108",
+    "scene": "delay_notice",
+    "learner_sentence": "あなたはいつ来ることを期待しますか？",
+    "needs_correction": true,
+    "corrected_sentence": "あなたはいつ来ますか？",
+    "reason_en": "\"When do you expect to come\" translated word for word. Japanese asks 「いつ来ますか」 and nothing else.",
+    "split": "test"
+  },
+  {
+    "id": "eval-109",
+    "scene": "delay_notice",
+    "learner_sentence": "私は待ちます。",
+    "needs_correction": true,
+    "corrected_sentence": "私は待っています。",
+    "reason_en": "You are waiting right now, so the verb takes 「〜ています」. 「待ちます」 sounds like something you will do later.",
+    "split": "dev"
+  },
+  {
+    "id": "eval-110",
+    "scene": "delay_notice",
+    "learner_sentence": "電車、遅れていましたか？",
+    "needs_correction": false,
+    "split": "dev"
+  },
+  {
+    "id": "eval-111",
+    "scene": "delay_notice",
+    "learner_sentence": "まだですか？",
+    "needs_correction": false,
+    "split": "test"
+  },
+  {
+    "id": "eval-112",
+    "scene": "workplace_keigo",
+    "learner_sentence": "ご迷惑をします。",
+    "needs_correction": true,
+    "corrected_sentence": "ご迷惑をおかけします。",
+    "reason_en": "The fixed phrase is 「ご迷惑をおかけします」. 「ご迷惑をします」 is that phrase with its verb removed.",
+    "split": "dev"
+  },
+  {
+    "id": "eval-113",
+    "scene": "workplace_keigo",
+    "learner_sentence": "この件、確認を作ります。",
+    "needs_correction": true,
+    "corrected_sentence": "この件、確認します。",
+    "reason_en": "\"Make a confirmation\" translated word for word. 「確認」 is something you 「する」, not something you make.",
+    "split": "dev"
+  },
+  {
+    "id": "eval-114",
+    "scene": "workplace_keigo",
+    "learner_sentence": "部長、お話を話したいです。",
+    "needs_correction": true,
+    "corrected_sentence": "部長、少しお話ししたいです。",
+    "reason_en": "「お話」 and 「話す」 are the same word twice. The verb on its own is 「お話しする」.",
+    "split": "test"
+  },
+  {
+    "id": "eval-115",
+    "scene": "workplace_keigo",
+    "learner_sentence": "新しいプロジェクトは面白います。",
+    "needs_correction": true,
+    "corrected_sentence": "新しいプロジェクトは面白いです。",
+    "reason_en": "「面白い」 is an い-adjective and takes 「です」. It does not conjugate like a verb.",
+    "split": "dev"
+  },
+  {
+    "id": "eval-116",
+    "scene": "workplace_keigo",
+    "learner_sentence": "それ、手伝って。",
+    "needs_correction": true,
+    "corrected_sentence": "それ、手伝っていただけますか。",
+    "reason_en": "「手伝って」 is 「手伝ってください」 with the ending dropped. Asking a manager to do something takes 「〜ていただけますか」.",
+    "split": "dev"
+  },
+  {
+    "id": "eval-117",
+    "scene": "workplace_keigo",
+    "learner_sentence": "この資料、確認しますか。",
+    "needs_correction": true,
+    "corrected_sentence": "この資料をご確認いただけますか。",
+    "reason_en": "Asking a manager to do something takes 「ご〜ください」 or 「〜ていただけますか」. 「確認しますか」 asks whether they will, as if to an equal.",
+    "split": "test"
+  },
+  {
+    "id": "eval-118",
+    "scene": "workplace_keigo",
+    "learner_sentence": "資料はコピーしました。",
+    "needs_correction": false,
+    "split": "dev"
+  },
+  {
+    "id": "eval-119",
+    "scene": "workplace_keigo",
+    "learner_sentence": "今から、会議室に行きます。",
+    "needs_correction": false,
+    "split": "dev"
+  },
+  {
+    "id": "eval-120",
+    "scene": "workplace_keigo",
+    "learner_sentence": "今、別の作業をしています。",
     "needs_correction": false,
     "split": "test"
   }

@@ -19,6 +19,17 @@ native verdict is applied afterwards. The distinction matters more than it looks
     between `intended_label` and the native verdict are kept. How often the
     generator was wrong is itself a number worth reporting.
 
+WHAT CHANGED IN v2 (day 5): v1 was written before the labelling criteria existed.
+Verifying its day-5 batch overturned 14 of 60 candidates, and 12 of those 14 came
+from two rules the prompt had never been told about — the politeness floor per
+scene and the rule that 「あなた」 alone is not a defect (docs/ja/glossary.md §2,
+both fixed on day 3). The generator was being asked to hit a target it could not
+see. v2 states the criteria; the labelling authority does not move, because the
+model still never assigns a label.
+
+This does not touch how anything is measured. The correction prompt is unchanged,
+and a candidate is still only a proposal until a native speaker rules on it.
+
 Run:  .venv/bin/python -m evals.generate_items --batch 1
 """
 
@@ -33,11 +44,11 @@ from typing import Any, Final
 
 from langchain_core.messages import HumanMessage, SystemMessage
 
-from dialogue.scenes import SCENES, scene_brief
+from dialogue.scenes import SCENES, politeness_floor, scene_brief
 from evals.dataset import ITEMS_PATH, load_items
 from llm import active_model_name, as_text, build_chat_model
 
-PROMPT_VERSION: Final = "generate-items-v1"
+PROMPT_VERSION: Final = "generate-items-v2"
 
 CANDIDATES_DIR: Final = Path("data/evaluation/candidates")
 
@@ -90,13 +101,15 @@ you need to point at a word.
 USER_PROMPT: Final = """\
 Situation: {situation}
 
+How polite this listener has to be spoken to (tier {tier}): {floor}
+
 Write {needs_count} sentences labelled "needs_correction" and {natural_count} \
 sentences labelled "natural", for this situation.
 
 The "needs_correction" ones are wrong in one of these ways, and you should spread \
 them across the four:
 - a wrong particle, a wrong conjugation, or a missing required element
-- politeness that does not fit this situation
+- the sentence is below the politeness floor stated above
 - grammatical, but no Japanese speaker would say it — usually a word-for-word \
 translation from English
 - a fixed expression that has been altered
@@ -104,19 +117,47 @@ translation from English
 Each of them should be wrong in ONE way only. A sentence with three problems in \
 it cannot be a clean test of anything.
 
+Three rules decide whether a "needs_correction" sentence is usable at all:
+
+1. IT IS WRONG AS WRITTEN. Not wrong under a guess about what the learner meant. \
+A sentence that is fine Japanese but says something other than what you imagine \
+they intended is a natural sentence, and it will be relabelled.
+2. ABOVE THE FLOOR, POLITENESS IS NEVER THE PROBLEM. In a tier A situation, \
+casual speech is correct — such a sentence may only be wrong for grammar, for \
+being something no Japanese speaker says, or for altering a fixed expression. \
+Being *more* polite than the floor is never wrong either.
+3. 「あなた」 IS NOT A DEFECT. Do not write a sentence whose only problem is that \
+it uses 「あなた」. If it also reads as translated English, say that instead — the \
+word order or the translation is the reason, and 「あなた」 is not.
+
 The "natural" ones are the harder half, and they decide whether this dataset can \
 measure anything at all. They must be sentences a Japanese speaker would accept \
 without stopping, AND sentences that a strict teacher would be tempted to \
 "improve". Plain, blunt, short, or casual-but-real. Do not write polished model \
 answers: a dataset of textbook-perfect sentences cannot detect a system that \
-corrects things it should have left alone.
+corrects things it should have left alone. **They must still clear the politeness \
+floor above** — below it, the sentence is a "needs_correction" one.
 
 Vary the length, and vary how confident the learner sounds.
-{avoid_clause}"""
+{focus_clause}{avoid_clause}"""
+
+# Counting the finished dataset shows which mistakes it cannot see. Day 5 found
+# ten items turning on に versus で and none at all on counters, transitive pairs,
+# giving and receiving, or the direction of keigo — so `detection_accuracy` would
+# have been partly a measure of one particle. Asking for a replacement in the same
+# shape as the item it replaces is how that gets fixed without growing the set.
+_FOCUS_CLAUSE: Final = """
+This batch is replacing items the dataset already has too many of. Aim the \
+"needs_correction" sentences at this, and do not fall back on the mistakes you \
+would normally reach for: {focus}
+"""
 
 _AVOID_CLAUSE: Final = """
-Do not write any of these sentences again, and do not write near-duplicates of \
-them — a different particle in the same sentence frame is a duplicate:
+These sentences already exist. Do not write them again, and do not write a \
+near-duplicate of one. It counts as a near-duplicate if it keeps the same \
+sentence frame with a different word in it, OR if it tests the same mistake in \
+the same construction — 「私はオフィスでいます」 and 「会社でいます」 are one item, \
+not two, and so are 「ありがとうを言います」 and 「感謝を言います」:
 {sentences}
 """
 
@@ -127,14 +168,16 @@ class CandidateFormatError(ValueError):
     """The model's answer was not the JSON array the prompt asked for."""
 
 
-def generate_batch(batch: int, plan: dict[str, tuple[int, int]] | None = None) -> dict[str, Any]:
+def generate_batch(
+    batch: int, plan: dict[str, tuple[int, int]] | None = None, focus: str | None = None
+) -> dict[str, Any]:
     """Generate one batch of candidates for every scene in the plan."""
     plan = plan or BATCH_PLAN
     avoid = _existing_sentences()
     candidates: list[dict[str, Any]] = []
 
     for scene, (needs_count, natural_count) in plan.items():
-        scene_candidates = generate_for_scene(scene, needs_count, natural_count, avoid)
+        scene_candidates = generate_for_scene(scene, needs_count, natural_count, avoid, focus)
         candidates += scene_candidates
         # Later scenes are told about the sentences the earlier ones produced, so
         # the same "おはようです" does not arrive six times in one run.
@@ -145,16 +188,22 @@ def generate_batch(batch: int, plan: dict[str, tuple[int, int]] | None = None) -
         "generated_on": date.today().isoformat(),
         "model": active_model_name(),
         "prompt_version": PROMPT_VERSION,
+        "focus": focus,
         "verified": False,
         "candidates": candidates,
     }
 
 
 def generate_for_scene(
-    scene: str, needs_count: int, natural_count: int, avoid: list[str]
+    scene: str,
+    needs_count: int,
+    natural_count: int,
+    avoid: list[str],
+    focus: str | None = None,
 ) -> list[dict[str, Any]]:
     """Ask for one scene's candidates and return them tagged with the scene."""
     situation, _ = scene_brief(scene)
+    tier, floor = politeness_floor(scene)
     model = build_chat_model(temperature=TEMPERATURE)
     answer = as_text(
         model.invoke(
@@ -163,8 +212,11 @@ def generate_for_scene(
                 HumanMessage(
                     USER_PROMPT.format(
                         situation=situation,
+                        tier=tier,
+                        floor=floor,
                         needs_count=needs_count,
                         natural_count=natural_count,
+                        focus_clause=_focus_clause(focus),
                         avoid_clause=_avoid_clause(avoid),
                     )
                 ),
@@ -213,6 +265,12 @@ def parse_candidates(answer: str) -> list[dict[str, Any]]:
     return rows
 
 
+def _focus_clause(focus: str | None) -> str:
+    if not focus:
+        return ""
+    return _FOCUS_CLAUSE.format(focus=focus)
+
+
 def _avoid_clause(avoid: list[str]) -> str:
     if not avoid:
         return ""
@@ -254,14 +312,44 @@ def main() -> None:
         choices=sorted(SCENES),
         help="generate one scene only, for when a scene has to be redone",
     )
+    parser.add_argument(
+        "--needs",
+        type=int,
+        help="override how many needs_correction candidates to ask for (with --scene)",
+    )
+    parser.add_argument(
+        "--natural",
+        type=int,
+        help="override how many natural candidates to ask for (with --scene)",
+    )
+    parser.add_argument(
+        "--focus",
+        help="what kind of mistake this batch should aim at, for replacing over-represented items",
+    )
     args = parser.parse_args()
 
-    plan = {args.scene: BATCH_PLAN[args.scene]} if args.scene else None
-    result = generate_batch(args.batch, plan)
+    plan = None
+    if args.scene:
+        needs, natural = BATCH_PLAN[args.scene]
+        plan = {
+            args.scene: (
+                args.needs if args.needs is not None else needs,
+                args.natural if args.natural is not None else natural,
+            )
+        }
+    result = generate_batch(args.batch, plan, args.focus)
 
     CANDIDATES_DIR.mkdir(parents=True, exist_ok=True)
     suffix = f"-{args.scene}" if args.scene else ""
-    path = CANDIDATES_DIR / f"batch{args.batch}{suffix}-{result['generated_on']}.json"
+    if args.focus:
+        suffix += "-focus"
+    # The prompt version is in the filename, not only inside the file: day 5
+    # regenerated a batch after changing the prompt, and a run that silently
+    # overwrites the candidates it is being compared against cannot report the
+    # comparison. Different prompt, different file.
+    path = (
+        CANDIDATES_DIR / f"batch{args.batch}{suffix}-{PROMPT_VERSION}-{result['generated_on']}.json"
+    )
     path.write_text(json.dumps(result, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     print(f"{len(result['candidates'])} candidates -> {path}")
 

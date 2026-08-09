@@ -1,0 +1,66 @@
+{
+  "batch": 2,
+  "generated_on": "2026-08-07",
+  "model": "gemini/gemini-2.5-flash",
+  "prompt_version": "generate-items-v2",
+  "focus": "counters (助数詞) such as 一つ / 一個 / 一人 / 一枚, and negative forms. Not particles.",
+  "verified": false,
+  "candidates": [
+    {
+      "scene": "simple_request",
+      "learner_sentence": "聞きたい。",
+      "intended_label": "needs_correction",
+      "corrected_sentence": "聞きたいです。",
+      "reason_en": "The sentence is too casual for a shop assistant; a polite ending like 「です」 is required to meet the politeness floor.",
+      "note_en": "Tests basic politeness by requiring a polite sentence ending."
+    },
+    {
+      "scene": "simple_request",
+      "learner_sentence": "違うサイズを持っていますか？",
+      "intended_label": "needs_correction",
+      "corrected_sentence": "違うサイズがありますか？",
+      "reason_en": "The verb 「持つ」 (to hold) is used incorrectly here. 「ある」 (to exist) is the appropriate verb for asking about the existence of an item in a shop.",
+      "note_en": "Highlights a common English-Japanese translation mistake with 'have'."
+    },
+    {
+      "scene": "simple_request",
+      "learner_sentence": "払うたいです。",
+      "intended_label": "needs_correction",
+      "corrected_sentence": "払いたいです。",
+      "reason_en": "The volitional form 「〜たい」 (want to) should be attached to the ます-stem of the verb, which for 「払う」 is 「払い」.",
+      "note_en": "Tests correct verb conjugation for expressing desire."
+    },
+    {
+      "scene": "simple_request",
+      "learner_sentence": "プレゼントを探します。",
+      "intended_label": "needs_correction",
+      "corrected_sentence": "プレゼントを探しています。",
+      "reason_en": "When describing an ongoing action like 'looking for', the ています form is generally used instead of the plain ます form.",
+      "note_en": "Focuses on the correct use of the ています form for continuous actions."
+    },
+    {
+      "scene": "simple_request",
+      "learner_sentence": "これを買いたい、ください。",
+      "intended_label": "needs_correction",
+      "corrected_sentence": "これを買いたいです。",
+      "reason_en": "The sentence awkwardly combines a statement of desire 「買いたい」 with a direct request 「ください」. 「買いたいです」 is sufficient to express the desire to purchase.",
+      "note_en": "Addresses awkward phrasing resulting from miscombining common expressions."
+    },
+    {
+      "scene": "simple_request",
+      "learner_sentence": "これ、お願いします。",
+      "intended_label": "natural",
+      "corrected_sentence": null,
+      "reason_en": null,
+      "note_en": "A common and natural way to request an item in a shop."
+    },
+    {
+      "scene": "simple_request",
+      "learner_sentence": "カードで払えますか？",
+      "intended_label": "natural",
+      "corrected_sentence": null,
+      "reason_en": null,
+      "note_en": "A natural and polite way to ask about payment methods."
+    }
+  ]
+}

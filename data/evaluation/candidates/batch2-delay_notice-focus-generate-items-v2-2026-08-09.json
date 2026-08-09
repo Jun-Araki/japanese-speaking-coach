@@ -1,0 +1,50 @@
+{
+  "batch": 2,
+  "generated_on": "2026-08-09",
+  "model": "gemini/gemini-2.5-flash",
+  "prompt_version": "generate-items-v2",
+  "focus": "nothing — these are the natural ones",
+  "verified": false,
+  "candidates": [
+    {
+      "scene": "delay_notice",
+      "learner_sentence": "どのくらいかかりますか？",
+      "intended_label": "natural",
+      "corrected_sentence": null,
+      "reason_en": null,
+      "note_en": "A common, polite way to ask about an estimated time of arrival or completion."
+    },
+    {
+      "scene": "delay_notice",
+      "learner_sentence": "電車、遅れていましたか？",
+      "intended_label": "natural",
+      "corrected_sentence": null,
+      "reason_en": null,
+      "note_en": "A natural and understanding question to ask a late colleague, implying concern rather than impatience."
+    },
+    {
+      "scene": "delay_notice",
+      "learner_sentence": "急がなくて大丈夫ですよ。",
+      "intended_label": "natural",
+      "corrected_sentence": null,
+      "reason_en": null,
+      "note_en": "This sentence reassures the learner that there is no need to rush, fitting the 'not annoyed' tone perfectly."
+    },
+    {
+      "scene": "delay_notice",
+      "learner_sentence": "まだ、オフィスにいますか？",
+      "intended_label": "natural",
+      "corrected_sentence": null,
+      "reason_en": null,
+      "note_en": "A polite and direct question to confirm the learner's current location, often used when expecting them to have left already."
+    },
+    {
+      "scene": "delay_notice",
+      "learner_sentence": "ゆっくりで構いませんよ。",
+      "intended_label": "natural",
+      "corrected_sentence": null,
+      "reason_en": null,
+      "note_en": "A phrase showing understanding and patience, indicating that the speaker is not troubled by the delay."
+    }
+  ]
+}

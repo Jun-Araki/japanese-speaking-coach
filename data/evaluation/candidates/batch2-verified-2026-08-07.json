@@ -1,0 +1,552 @@
+{
+  "batch": 2,
+  "generated_on": "2026-08-07",
+  "model": "gemini/gemini-2.5-flash",
+  "prompt_version": "generate-items-v1+v2",
+  "verified": true,
+  "verification_note": "Native-verified. The machine pre-screen proposed every label; the native verdict overturned three of them (「私は待ちます。」「この資料、確認しますか。」「お仕事、何？」, all `false` -> `true`) and changed two corrections. Two of the three overturns forced a change to the labelling standard itself: docs/ja/glossary.md §2 now separates the speaker's own action from the listener's at tier C, and no longer counts 「お」 alone as clearing tier B. No previously labelled item changed label as a result — see .steering/20260802-week1-baseline/design.md.",
+  "candidates": [
+    {
+      "scene": "greeting",
+      "learner_sentence": "どこで行きますか？",
+      "needs_correction": true,
+      "corrected_sentence": "どこに行きますか？",
+      "reason_en": "The place you are heading for takes 「に」. 「で」 marks where an action happens, not where it is aimed.",
+      "source": "v2",
+      "native_check": null
+    },
+    {
+      "scene": "greeting",
+      "learner_sentence": "早く起きるです。",
+      "needs_correction": true,
+      "corrected_sentence": "早く起きます。",
+      "reason_en": "です cannot be attached to a plain verb. The polite form of 「起きる」 is 「起きます」.",
+      "source": "v2",
+      "native_check": null
+    },
+    {
+      "scene": "greeting",
+      "learner_sentence": "仕事行き？",
+      "needs_correction": true,
+      "corrected_sentence": "仕事行く？",
+      "reason_en": "「行き」 cannot end a sentence. A casual question uses the plain form 「行く」.",
+      "source": "v2",
+      "native_check": null
+    },
+    {
+      "scene": "greeting",
+      "learner_sentence": "行ってらっしゃいを。",
+      "needs_correction": true,
+      "corrected_sentence": "行ってらっしゃい。",
+      "reason_en": "「行ってらっしゃい」 is a fixed phrase and takes no particle after it.",
+      "source": "v2-focus",
+      "native_check": null
+    },
+    {
+      "scene": "greeting",
+      "learner_sentence": "毎日で走る。",
+      "needs_correction": true,
+      "corrected_sentence": "毎日走る。",
+      "reason_en": "「毎日」 attaches straight to the verb and does not take 「で」.",
+      "source": "v2",
+      "native_check": null
+    },
+    {
+      "scene": "greeting",
+      "learner_sentence": "疲れありません。",
+      "needs_correction": true,
+      "corrected_sentence": "疲れていません。",
+      "reason_en": "「疲れ」 is a noun, and negating it does not say you are not tired. Being in that state is 「疲れている」, so the negative is 「疲れていません」.",
+      "source": "v2-focus",
+      "native_check": "Replaces 「あなたは早い行きます。」, whose repaired form nobody would say to a neighbour either. Chosen to be a negative form: the audit found no item in any of the 120 whose defect is the negative."
+    },
+    {
+      "scene": "greeting",
+      "learner_sentence": "私は散歩が行きます。",
+      "needs_correction": true,
+      "corrected_sentence": "私は散歩に行きます。",
+      "reason_en": "What you are going to go and do takes 「に」 before 「行きます」.",
+      "source": "v1",
+      "native_check": null
+    },
+    {
+      "scene": "greeting",
+      "learner_sentence": "あなたの朝は元気です。",
+      "needs_correction": true,
+      "corrected_sentence": "朝から元気ですね。",
+      "reason_en": "\"Your morning is energetic\" translated word for word. It is the person who is 「元気」, not their morning.",
+      "source": "v1",
+      "native_check": "v1 wrote the reason as 「あなた」 being rude. Glossary §2 forbids that reason, so it was rewritten to name the translation. Check the sentence still earns `true` on those grounds alone."
+    },
+    {
+      "scene": "greeting",
+      "learner_sentence": "お疲れ様だった。",
+      "needs_correction": true,
+      "corrected_sentence": "お疲れ様でした。",
+      "reason_en": "This fixed phrase does not take the plain past. It is 「お疲れ様でした」, or just 「お疲れ」 between friends.",
+      "source": "v1",
+      "native_check": null
+    },
+    {
+      "scene": "greeting",
+      "learner_sentence": "もう仕事？",
+      "needs_correction": false,
+      "corrected_sentence": null,
+      "reason_en": null,
+      "source": "v2",
+      "native_check": null
+    },
+    {
+      "scene": "greeting",
+      "learner_sentence": "今日は暑いね。",
+      "needs_correction": false,
+      "corrected_sentence": null,
+      "reason_en": null,
+      "source": "v2",
+      "native_check": null
+    },
+    {
+      "scene": "greeting",
+      "learner_sentence": "毎日、走るんだ。",
+      "needs_correction": false,
+      "corrected_sentence": null,
+      "reason_en": null,
+      "source": "v2",
+      "native_check": "Deliberate minimal pair with 「毎日で走る。」 above — same content, one particle apart, opposite labels."
+    },
+    {
+      "scene": "self_introduction",
+      "learner_sentence": "仕事は何？",
+      "needs_correction": true,
+      "corrected_sentence": "仕事は何ですか？",
+      "reason_en": "Asked of someone you have just met, this needs one polite element. 「ですか」 is enough.",
+      "source": "v2",
+      "native_check": "Minimal pair with the natural item 「お仕事、何？」 below: that one clears the tier B floor on 「お」 alone, this one clears nothing. The pair is the whole point of the tier rule, so both labels have to be right."
+    },
+    {
+      "scene": "self_introduction",
+      "learner_sentence": "お仕事はどこでですか。",
+      "needs_correction": true,
+      "corrected_sentence": "お仕事はどこですか。",
+      "reason_en": "「どこで」 needs a verb to go with it. Asking where the workplace is, the question ends at 「どこですか」.",
+      "source": "v2",
+      "native_check": null
+    },
+    {
+      "scene": "self_introduction",
+      "learner_sentence": "どちらから来た。",
+      "needs_correction": true,
+      "corrected_sentence": "どちらから来ましたか？",
+      "reason_en": "Asked of someone you have just met, this needs one polite element. The plain past 「来た」 has none.",
+      "source": "v2-focus",
+      "native_check": "The corrected form is eval-023 「どちらから来ましたか。」, already in the dataset as `false` — a true/false pair one politeness step apart. Replaces 「お仕事、何でいますか？」, whose reason was inaccurate and whose correction collided with eval-014's."
+    },
+    {
+      "scene": "self_introduction",
+      "learner_sentence": "名前は何でございますか？",
+      "needs_correction": true,
+      "corrected_sentence": "お名前は何ですか？",
+      "reason_en": "Asked about the person in front of you, the copula is 「です」. 「でございます」 states what something is on your own side, so it cannot describe their name.",
+      "source": "v1",
+      "native_check": "The first reason claimed 「ございます」 is never used about the listener, which is wrong — 「ご質問はございますか」 is standard. Narrowed to the copula 「でございます」."
+    },
+    {
+      "scene": "self_introduction",
+      "learner_sentence": "名前は何ですか？",
+      "needs_correction": false,
+      "corrected_sentence": null,
+      "reason_en": null,
+      "source": "v1",
+      "native_check": "Swapped in when 「お仕事、何？」 became `true` and the batch went to 48:12. Clears tier B on 「です」 while a teacher still wants 「お名前は」 — the temptation `over_correction_rate` needs. Replaces 「お名前は何を言いますか？」, whose correction was identical to 「名前は何でございますか？」's, the last collision inside the batch."
+    },
+    {
+      "scene": "self_introduction",
+      "learner_sentence": "よろしくください。",
+      "needs_correction": true,
+      "corrected_sentence": "よろしくお願いします。",
+      "reason_en": "The fixed phrase is 「よろしくお願いします」. 「ください」 cannot be swapped into it.",
+      "source": "v2-focus",
+      "native_check": null
+    },
+    {
+      "scene": "self_introduction",
+      "learner_sentence": "どこから参りましたか？",
+      "needs_correction": true,
+      "corrected_sentence": "どこから来ましたか？",
+      "reason_en": "「参る」 is humble and is only used about yourself. Asking where someone else came from, it is 「来ましたか」.",
+      "source": "v1",
+      "native_check": null
+    },
+    {
+      "scene": "self_introduction",
+      "learner_sentence": "あなたはどこで住んでいますか？",
+      "needs_correction": true,
+      "corrected_sentence": "あなたはどこに住んでいますか？",
+      "reason_en": "Where someone lives takes 「に」. 「で」 marks where an action happens.",
+      "source": "v1",
+      "native_check": "「あなたは」 is left in the correction on purpose, the same way 「部長、」 was left in eval-052: glossary §2 says 「あなた」 is not the defect, so the smallest repair is the particle only."
+    },
+    {
+      "scene": "self_introduction",
+      "learner_sentence": "お仕事はどんなに？",
+      "needs_correction": true,
+      "corrected_sentence": "どんなお仕事ですか？",
+      "reason_en": "「どんな」 has to be followed by the noun it describes, so the question cannot end there. 「どんなに」 means \"how much\" and does not fit.",
+      "source": "v1",
+      "native_check": null
+    },
+    {
+      "scene": "self_introduction",
+      "learner_sentence": "あなたは田中さんですか？",
+      "needs_correction": false,
+      "corrected_sentence": null,
+      "reason_en": null,
+      "source": "v2",
+      "native_check": "v2 wrote this with a 〇〇 placeholder in it; a name was filled in. It is here because it puts the glossary §2 「あなた」 rule directly under measurement."
+    },
+    {
+      "scene": "self_introduction",
+      "learner_sentence": "お仕事、何？",
+      "needs_correction": true,
+      "corrected_sentence": "お仕事は何でしょうか？",
+      "reason_en": "Asked of someone you have just met, 「お」 on its own is not enough. The question needs 「です」 — or 「でしょうか」, which is softer.",
+      "source": "v1",
+      "native_check": "NATIVE VERDICT 2026-08-08. The pre-screen had this as `false` on glossary §2's tier B floor (\"one of お / ください / です / ます\"). Overturned: 「お」 alone does not clear it here. §2's floor and its 「お名前は」 example both need revisiting — see the steering note."
+    },
+    {
+      "scene": "self_introduction",
+      "learner_sentence": "出身、どこですか？",
+      "needs_correction": false,
+      "corrected_sentence": null,
+      "reason_en": null,
+      "source": "v1",
+      "native_check": null
+    },
+    {
+      "scene": "thanks",
+      "learner_sentence": "手伝いにありがとう。",
+      "needs_correction": true,
+      "corrected_sentence": "手伝ってくれてありがとう。",
+      "reason_en": "Thanking someone for what they did uses the て-form and 「くれて」. 「手伝いに」 points at a purpose instead.",
+      "source": "v2",
+      "native_check": "NATIVE VERDICT 2026-08-08: the day-5 audit had reduced this to 「手伝い、ありがとう。」 to avoid colliding with eval-026's correction; the native form is the one with 「くれて」. The collision with eval-026 「手伝う、ありがとう。」 therefore stands and has to be settled by dropping one of the two items."
+    },
+    {
+      "scene": "thanks",
+      "learner_sentence": "感謝を感じます。",
+      "needs_correction": true,
+      "corrected_sentence": "感謝しています。",
+      "reason_en": "\"I feel gratitude\" translated word for word. 「感謝」 is something you do, with 「しています」.",
+      "source": "v2",
+      "native_check": "Lands on the same corrected sentence as eval-027 「本当に感謝。」. The learner mistake differs (a wrong verb, not a missing one), but if you read them as one item, this is the one to drop."
+    },
+    {
+      "scene": "thanks",
+      "learner_sentence": "私は荷物を運んで、ありがとうございました。",
+      "needs_correction": true,
+      "corrected_sentence": "荷物を運んでくれて、ありがとうございました。",
+      "reason_en": "As written, the speaker is the one who carried it. 「くれて」 makes it something the other person did for them.",
+      "source": "v1",
+      "native_check": null
+    },
+    {
+      "scene": "thanks",
+      "learner_sentence": "本当に助けました。",
+      "needs_correction": true,
+      "corrected_sentence": "本当に助かりました。",
+      "reason_en": "「助ける」 is helping someone else. Being the one who was helped is 「助かる」.",
+      "source": "v1",
+      "native_check": null
+    },
+    {
+      "scene": "thanks",
+      "learner_sentence": "大変、荷物でした。",
+      "needs_correction": true,
+      "corrected_sentence": "荷物、大変でしたね。",
+      "reason_en": "「大変」 describes how it was, so it belongs with 「でした」. In front of 「荷物」 it would need 「な」, and that says the luggage itself was enormous.",
+      "source": "v1",
+      "native_check": "v1 corrected this to 「大変な荷物でした。」, which is grammatical but is not what someone says after being helped with heavy bags. Check the replacement reads naturally to you."
+    },
+    {
+      "scene": "thanks",
+      "learner_sentence": "助けします、ありがとう。",
+      "needs_correction": true,
+      "corrected_sentence": "助かりました、ありがとう。",
+      "reason_en": "There is no verb 「助けする」. The verb is 「助ける」, and the person who was helped says 「助かりました」.",
+      "source": "v2-focus",
+      "native_check": "v2 corrected this to the plain 「助かったよ」, which drops the ます the learner was reaching for. Kept polite."
+    },
+    {
+      "scene": "thanks",
+      "learner_sentence": "あなたのお手伝いはとても大きかった。",
+      "needs_correction": true,
+      "corrected_sentence": "手伝ってくれて、本当に助かった。",
+      "reason_en": "\"Your help was very big\" translated word for word. 「大きい」 is about size; help that mattered is 「助けになった」.",
+      "source": "v2-focus",
+      "native_check": "A whole-sentence translation has no smallest repair, the same as eval-018. The correction is what a speaker actually says here; 「とても助けになった」 kept the English skeleton."
+    },
+    {
+      "scene": "thanks",
+      "learner_sentence": "これ、重かったね。助かったよ。",
+      "needs_correction": false,
+      "corrected_sentence": null,
+      "reason_en": null,
+      "source": "v2",
+      "native_check": null
+    },
+    {
+      "scene": "thanks",
+      "learner_sentence": "ありがとう！大変だったでしょう？",
+      "needs_correction": false,
+      "corrected_sentence": null,
+      "reason_en": null,
+      "source": "v2-focus",
+      "native_check": null
+    },
+    {
+      "scene": "simple_request",
+      "learner_sentence": "このサイズは大きい過ぎます。",
+      "needs_correction": true,
+      "corrected_sentence": "このサイズは大きすぎます。",
+      "reason_en": "An い-adjective drops its final 「い」 before 「すぎる」.",
+      "source": "v2",
+      "native_check": null
+    },
+    {
+      "scene": "simple_request",
+      "learner_sentence": "水が欲しい。",
+      "needs_correction": true,
+      "corrected_sentence": "水が欲しいです。",
+      "reason_en": "Said to a shop assistant, this needs one polite element. 「です」 is enough.",
+      "source": "v2",
+      "native_check": null
+    },
+    {
+      "scene": "simple_request",
+      "learner_sentence": "コーヒーに飲みたいです。",
+      "needs_correction": true,
+      "corrected_sentence": "コーヒーを飲みたいです。",
+      "reason_en": "What you drink takes 「を」. 「に」 points at a destination.",
+      "source": "v2",
+      "native_check": null
+    },
+    {
+      "scene": "simple_request",
+      "learner_sentence": "払うたいです。",
+      "needs_correction": true,
+      "corrected_sentence": "払いたいです。",
+      "reason_en": "「〜たい」 attaches to the ます-stem, so 「払う」 becomes 「払い」.",
+      "source": "v2-focus",
+      "native_check": null
+    },
+    {
+      "scene": "simple_request",
+      "learner_sentence": "これを買いたい、ください。",
+      "needs_correction": true,
+      "corrected_sentence": "これを買いたいです。",
+      "reason_en": "「ください」 follows a noun with 「を」 or a て-form verb, so it cannot come after 「買いたい」. Say either 「これを買いたいです」 or 「これをください」.",
+      "source": "v2-focus",
+      "native_check": null
+    },
+    {
+      "scene": "simple_request",
+      "learner_sentence": "これ、いくらをください。",
+      "needs_correction": true,
+      "corrected_sentence": "これ、いくらですか。",
+      "reason_en": "「ください」 asks for a thing, so it cannot follow 「いくら」. Asking the price is 「いくらですか」.",
+      "source": "v1",
+      "native_check": null
+    },
+    {
+      "scene": "simple_request",
+      "learner_sentence": "このリンゴ、甘い？",
+      "needs_correction": true,
+      "corrected_sentence": "このリンゴ、甘いですか？",
+      "reason_en": "A question put to a shop assistant needs 「ですか」.",
+      "source": "v1",
+      "native_check": null
+    },
+    {
+      "scene": "simple_request",
+      "learner_sentence": "見てもいいですか？",
+      "needs_correction": false,
+      "corrected_sentence": null,
+      "reason_en": null,
+      "source": "v2",
+      "native_check": "Sits directly against eval-039 「これを見せてもいいですか。」, which is `true`. There the learner asks permission for what the assistant must do; here they ask permission for what they do themselves, which is correct."
+    },
+    {
+      "scene": "simple_request",
+      "learner_sentence": "支払いはどこですか？",
+      "needs_correction": false,
+      "corrected_sentence": null,
+      "reason_en": null,
+      "source": "v1",
+      "native_check": "Replaces 「カードで払えますか？」, which the audit called a dead item — nothing in it tempts a correction, so it would have made `over_correction_rate` look 3.3pt better for free. This one is tempting (「お会計はどちらですか」) while clearing tier B on 「です」. v1 asked for it as `true` on exactly that temptation."
+    },
+    {
+      "scene": "delay_notice",
+      "learner_sentence": "もうすぐ着く。",
+      "needs_correction": true,
+      "corrected_sentence": "もうすぐ着きます。",
+      "reason_en": "You are keeping a colleague waiting, so this needs です・ます.",
+      "source": "v2",
+      "native_check": null
+    },
+    {
+      "scene": "delay_notice",
+      "learner_sentence": "大丈夫か？",
+      "needs_correction": true,
+      "corrected_sentence": "大丈夫ですか？",
+      "reason_en": "Put to a colleague, the question needs 「ですか」. 「か」 on the plain form is blunt.",
+      "source": "v2",
+      "native_check": null
+    },
+    {
+      "scene": "delay_notice",
+      "learner_sentence": "電車、遅れていましたか？",
+      "needs_correction": false,
+      "corrected_sentence": null,
+      "reason_en": null,
+      "source": "v2-focus",
+      "native_check": "Swapped in to restore 7:2 in this scene. It drops the particle after 「電車」, which is what a dozen `true` items in the set are about — so it tests whether the engine has over-generalised particle insertion. Replaces 「今どこがいますか？」, a near-duplicate of 「今、あなたはどこにありますか？」."
+    },
+    {
+      "scene": "delay_notice",
+      "learner_sentence": "今、あなたはどこにありますか？",
+      "needs_correction": true,
+      "corrected_sentence": "今、あなたはどこにいますか？",
+      "reason_en": "People and animals take 「います」. 「あります」 is for things.",
+      "source": "v2-focus",
+      "native_check": "Second item in this scene about 「今どこ」. The mistakes are different (「が」 for 「に」 above, an inanimate verb here), but if that reads as one item to you, this is the one to drop."
+    },
+    {
+      "scene": "delay_notice",
+      "learner_sentence": "すみません、遅れるします。",
+      "needs_correction": true,
+      "corrected_sentence": "すみません、遅れます。",
+      "reason_en": "「遅れる」 is already a verb. Its polite form is 「遅れます」; 「します」 cannot be added to it.",
+      "source": "v2",
+      "native_check": "v2 corrected this to 「遅れそうです」, which is a different sentence. Reduced to the smallest repair, which also lands on eval-050 「すみません、遅れます。」 — already in the dataset as `false`."
+    },
+    {
+      "scene": "delay_notice",
+      "learner_sentence": "到着、何時？",
+      "needs_correction": true,
+      "corrected_sentence": "到着、何時ですか？",
+      "reason_en": "To a colleague this needs です・ます. Dropping 「は」 after 「到着、」 is not the problem.",
+      "source": "v1",
+      "native_check": null
+    },
+    {
+      "scene": "delay_notice",
+      "learner_sentence": "あなたはいつ来ることを期待しますか？",
+      "needs_correction": true,
+      "corrected_sentence": "あなたはいつ来ますか？",
+      "reason_en": "\"When do you expect to come\" translated word for word. Japanese asks 「いつ来ますか」 and nothing else.",
+      "source": "v1",
+      "native_check": null
+    },
+    {
+      "scene": "delay_notice",
+      "learner_sentence": "まだですか？",
+      "needs_correction": false,
+      "corrected_sentence": null,
+      "reason_en": null,
+      "source": "v2",
+      "native_check": null
+    },
+    {
+      "scene": "delay_notice",
+      "learner_sentence": "私は待ちます。",
+      "needs_correction": true,
+      "corrected_sentence": "私は待っています。",
+      "reason_en": "You are waiting right now, so the verb takes 「〜ています」. 「待ちます」 sounds like something you will do later.",
+      "source": "v2",
+      "native_check": "NATIVE VERDICT 2026-08-08, given without seeing the pre-screen's proposal. The pre-screen had this as `false` on the grounds that it is correct Japanese read on its own. It is not what a speaker says in this situation, which is glossary §2's third test."
+    },
+    {
+      "scene": "workplace_keigo",
+      "learner_sentence": "資料はコピーしました。",
+      "needs_correction": false,
+      "corrected_sentence": null,
+      "reason_en": null,
+      "source": "v2-topup",
+      "native_check": "Swapped in to restore 6:3 in this scene. The speaker's own action with ました, so tier C is met, while a teacher reaches for 「いたしました」. Replaces 「私は会議を持っています。」 — the fourth 「持つ」 literal translation across the 120."
+    },
+    {
+      "scene": "workplace_keigo",
+      "learner_sentence": "ご迷惑をします。",
+      "needs_correction": true,
+      "corrected_sentence": "ご迷惑をおかけします。",
+      "reason_en": "The fixed phrase is 「ご迷惑をおかけします」. 「ご迷惑をします」 is that phrase with its verb removed.",
+      "source": "v2-topup",
+      "native_check": null
+    },
+    {
+      "scene": "workplace_keigo",
+      "learner_sentence": "この件、確認を作ります。",
+      "needs_correction": true,
+      "corrected_sentence": "この件、確認します。",
+      "reason_en": "\"Make a confirmation\" translated word for word. 「確認」 is something you 「する」, not something you make.",
+      "source": "v2-focus",
+      "native_check": null
+    },
+    {
+      "scene": "workplace_keigo",
+      "learner_sentence": "部長、お話を話したいです。",
+      "needs_correction": true,
+      "corrected_sentence": "部長、少しお話ししたいです。",
+      "reason_en": "「お話」 and 「話す」 are the same word twice. The verb on its own is 「お話しする」.",
+      "source": "v2-focus",
+      "native_check": null
+    },
+    {
+      "scene": "workplace_keigo",
+      "learner_sentence": "新しいプロジェクトは面白います。",
+      "needs_correction": true,
+      "corrected_sentence": "新しいプロジェクトは面白いです。",
+      "reason_en": "「面白い」 is an い-adjective and takes 「です」. It does not conjugate like a verb.",
+      "source": "v1",
+      "native_check": null
+    },
+    {
+      "scene": "workplace_keigo",
+      "learner_sentence": "それ、手伝って。",
+      "needs_correction": true,
+      "corrected_sentence": "それ、手伝っていただけますか。",
+      "reason_en": "「手伝って」 is 「手伝ってください」 with the ending dropped. Asking a manager to do something takes 「〜ていただけますか」.",
+      "source": "v1",
+      "native_check": "Reverted 2026-08-08. The day-5 audit had this lowered to 「〜てください」 to match eval-055 and a literal reading of tier C; the native verdict on 「この資料、確認しますか。」 says that direction was wrong. eval-055 「資料を見せて。」→「資料を見せてください。」 is now the item that looks out of line — its LABEL is unaffected, only its correction."
+    },
+    {
+      "scene": "workplace_keigo",
+      "learner_sentence": "今から、会議室に行きます。",
+      "needs_correction": false,
+      "corrected_sentence": null,
+      "reason_en": null,
+      "source": "v2",
+      "native_check": null
+    },
+    {
+      "scene": "workplace_keigo",
+      "learner_sentence": "この資料、確認しますか。",
+      "needs_correction": true,
+      "corrected_sentence": "この資料をご確認いただけますか。",
+      "reason_en": "Asking a manager to do something takes 「ご〜ください」 or 「〜ていただけますか」. 「確認しますか」 asks whether they will, as if to an equal.",
+      "source": "v2",
+      "native_check": "NATIVE VERDICT 2026-08-08, given without seeing the pre-screen's proposal. The pre-screen had this as `false` because glossary §2 asks only for です・ます in tier C. That reading was too narrow: §2's 「少し考えます」 example is the SPEAKER's own action, and this is the LISTENER's. §2 needs the distinction written in."
+    },
+    {
+      "scene": "workplace_keigo",
+      "learner_sentence": "今、別の作業をしています。",
+      "needs_correction": false,
+      "corrected_sentence": null,
+      "reason_en": null,
+      "source": "v2-topup",
+      "native_check": null
+    }
+  ],
+  "verified_on": "2026-08-08",
+  "verified_by": "native speaker (project author)"
+}

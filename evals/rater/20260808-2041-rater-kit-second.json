@@ -1,0 +1,131 @@
+{
+  "kit_id": "20260808-2041-rater-kit",
+  "rater": "second",
+  "scale": [
+    "valid",
+    "insufficient",
+    "wrong"
+  ],
+  "ratings": [
+    {
+      "kit_no": 1,
+      "id": "eval-001",
+      "rating": null,
+      "note": ""
+    },
+    {
+      "kit_no": 2,
+      "id": "eval-013",
+      "rating": null,
+      "note": ""
+    },
+    {
+      "kit_no": 3,
+      "id": "eval-025",
+      "rating": null,
+      "note": ""
+    },
+    {
+      "kit_no": 4,
+      "id": "eval-034",
+      "rating": null,
+      "note": ""
+    },
+    {
+      "kit_no": 5,
+      "id": "eval-043",
+      "rating": null,
+      "note": ""
+    },
+    {
+      "kit_no": 6,
+      "id": "eval-052",
+      "rating": null,
+      "note": ""
+    },
+    {
+      "kit_no": 7,
+      "id": "eval-002",
+      "rating": null,
+      "note": ""
+    },
+    {
+      "kit_no": 8,
+      "id": "eval-014",
+      "rating": null,
+      "note": ""
+    },
+    {
+      "kit_no": 9,
+      "id": "eval-026",
+      "rating": null,
+      "note": ""
+    },
+    {
+      "kit_no": 10,
+      "id": "eval-035",
+      "rating": null,
+      "note": ""
+    },
+    {
+      "kit_no": 11,
+      "id": "eval-044",
+      "rating": null,
+      "note": ""
+    },
+    {
+      "kit_no": 12,
+      "id": "eval-053",
+      "rating": null,
+      "note": ""
+    },
+    {
+      "kit_no": 13,
+      "id": "eval-004",
+      "rating": null,
+      "note": ""
+    },
+    {
+      "kit_no": 14,
+      "id": "eval-016",
+      "rating": null,
+      "note": ""
+    },
+    {
+      "kit_no": 15,
+      "id": "eval-028",
+      "rating": null,
+      "note": ""
+    },
+    {
+      "kit_no": 16,
+      "id": "eval-036",
+      "rating": null,
+      "note": ""
+    },
+    {
+      "kit_no": 17,
+      "id": "eval-046",
+      "rating": null,
+      "note": ""
+    },
+    {
+      "kit_no": 18,
+      "id": "eval-055",
+      "rating": null,
+      "note": ""
+    },
+    {
+      "kit_no": 19,
+      "id": "eval-005",
+      "rating": null,
+      "note": ""
+    },
+    {
+      "kit_no": 20,
+      "id": "eval-017",
+      "rating": null,
+      "note": ""
+    }
+  ]
+}

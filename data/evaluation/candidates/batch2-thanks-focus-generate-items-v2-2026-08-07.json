@@ -1,0 +1,74 @@
+{
+  "batch": 2,
+  "generated_on": "2026-08-07",
+  "model": "gemini/gemini-2.5-flash",
+  "prompt_version": "generate-items-v2",
+  "focus": "the direction of giving and receiving (あげる / くれる / もらう), transitive and intransitive pairs, and negative forms. Not particles, and not another 〜てくれてありがとう.",
+  "verified": false,
+  "candidates": [
+    {
+      "scene": "thanks",
+      "learner_sentence": "荷物、重いだった。",
+      "intended_label": "needs_correction",
+      "corrected_sentence": "荷物、重かった。",
+      "reason_en": "「重い」 is an i-adjective, so its past form is 「重かった」, not 「重いだった」.",
+      "note_en": "This tests the correct past tense conjugation of i-adjectives."
+    },
+    {
+      "scene": "thanks",
+      "learner_sentence": "とても助かりますた。",
+      "intended_label": "needs_correction",
+      "corrected_sentence": "とても助かりました。",
+      "reason_en": "The past tense of the polite 「〜ます」 form is 「〜ました」, not 「〜ますた」.",
+      "note_en": "This tests the correct past tense conjugation for verbs in polite form."
+    },
+    {
+      "scene": "thanks",
+      "learner_sentence": "あなたのお手伝いはとても大きかった。",
+      "intended_label": "needs_correction",
+      "corrected_sentence": "あなたのお手伝いはとても助けになった。",
+      "reason_en": "「大きい」 refers to physical size. To express that help was 'great' or 'significant,' natural Japanese would use phrases like 「とても助けになった」 or simply 「とても助かった」.",
+      "note_en": "This highlights an unnatural literal translation from English when describing abstract concepts."
+    },
+    {
+      "scene": "thanks",
+      "learner_sentence": "私はあなたに感謝です。",
+      "intended_label": "needs_correction",
+      "corrected_sentence": "私はあなたに感謝しています。",
+      "reason_en": "「感謝です」 is grammatically awkward; 「感謝しています」 or 「感謝します」 is the correct way to express 'I am grateful' or 'I thank you.'",
+      "note_en": "This tests the correct verb form for expressing gratitude."
+    },
+    {
+      "scene": "thanks",
+      "learner_sentence": "助けします、ありがとう。",
+      "intended_label": "needs_correction",
+      "corrected_sentence": "助かったよ、ありがとう。",
+      "reason_en": "「助けする」 is not a correct verb form; the verb is 「助ける」. In this context, 「助かった」 (I was helped/saved) is natural.",
+      "note_en": "This tests the correct verb form and appropriate expression for 'to be helped'."
+    },
+    {
+      "scene": "thanks",
+      "learner_sentence": "重かった。",
+      "intended_label": "needs_correction",
+      "corrected_sentence": "重かったね。",
+      "reason_en": "While grammatically correct, simply stating 「重かった」 after someone has helped you carry something heavy can sound blunt and ungrateful. Adding 「ね」 makes it more empathetic.",
+      "note_en": "This tests the nuance of conveying empathy or gratitude in casual speech."
+    },
+    {
+      "scene": "thanks",
+      "learner_sentence": "これ、重かったね。助かったよ。",
+      "intended_label": "natural",
+      "corrected_sentence": null,
+      "reason_en": null,
+      "note_en": "This is a natural and empathetic way to express thanks for help with a heavy item, acknowledging its weight and the resulting relief."
+    },
+    {
+      "scene": "thanks",
+      "learner_sentence": "ありがとう！大変だったでしょう？",
+      "intended_label": "natural",
+      "corrected_sentence": null,
+      "reason_en": null,
+      "note_en": "This is a natural expression of gratitude followed by an empathetic question, acknowledging the effort the helper put in."
+    }
+  ]
+}

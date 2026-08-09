@@ -35,11 +35,14 @@ japanese-speaking-coach/
 │                              has no fixed right answer to assert against
 ├── retrieval/                 (planned) Chroma indexing and search
 ├── nlp/                       (planned) SudachiPy tokenization, vocabulary level checks
-├── evals/                     (planned) Evaluation scripts, baseline, run records
+├── evals/                     Evaluation scripts, baseline, run records
+│   ├── runs/                  One run record JSON per measurement
+│   └── rater/                 The second rater's kit and the returned ratings
 ├── api/                       (planned) FastAPI application
-└── data/                      (planned)
+└── data/
     ├── evaluation/            120 evaluation items as JSON — a public artefact
-    ├── grammar/               10 self-written grammar reference articles
+    │   └── candidates/        Unverified candidates: raw material for items.json, not the record
+    ├── grammar/               8 self-written grammar reference articles
     ├── recordings/            Learner audio — git-ignored, personal data
     └── sessions/              Session exports — git-ignored, personal data
 ```
