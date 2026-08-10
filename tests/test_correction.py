@@ -216,9 +216,7 @@ class TestCheck:
         assert result.format_problems == ("invalid_json",)
         assert len(model.calls) == MAX_ATTEMPTS
 
-    def test_a_japanese_reason_is_used_but_counted_as_non_compliant(
-        self, fake_model: Any
-    ) -> None:
+    def test_a_japanese_reason_is_used_but_counted_as_non_compliant(self, fake_model: Any) -> None:
         answer = json.dumps(
             {
                 "needs_correction": True,

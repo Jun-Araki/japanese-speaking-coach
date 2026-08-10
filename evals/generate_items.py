@@ -44,7 +44,7 @@ from typing import Any, Final
 
 from langchain_core.messages import HumanMessage, SystemMessage
 
-from dialogue.scenes import SCENES, politeness_floor, scene_brief
+from dialogue.scenes import SCENES, politeness_rule, scene_brief
 from evals.dataset import ITEMS_PATH, load_items
 from llm import active_model_name, as_text, build_chat_model
 
@@ -202,28 +202,46 @@ def generate_for_scene(
     focus: str | None = None,
 ) -> list[dict[str, Any]]:
     """Ask for one scene's candidates and return them tagged with the scene."""
-    situation, _ = scene_brief(scene)
-    tier, floor = politeness_floor(scene)
     model = build_chat_model(temperature=TEMPERATURE)
     answer = as_text(
         model.invoke(
             [
                 SystemMessage(SYSTEM_PROMPT),
-                HumanMessage(
-                    USER_PROMPT.format(
-                        situation=situation,
-                        tier=tier,
-                        floor=floor,
-                        needs_count=needs_count,
-                        natural_count=natural_count,
-                        focus_clause=_focus_clause(focus),
-                        avoid_clause=_avoid_clause(avoid),
-                    )
-                ),
+                HumanMessage(scene_prompt(scene, needs_count, natural_count, avoid, focus)),
             ]
         ).content
     )
     return [{"scene": scene, **entry} for entry in parse_candidates(answer)]
+
+
+def scene_prompt(
+    scene: str,
+    needs_count: int,
+    natural_count: int,
+    avoid: list[str],
+    focus: str | None = None,
+) -> str:
+    """The request for one scene's candidates, without sending it.
+
+    Separate from the call so what the generator is told can be asserted on. v1
+    stated none of the labelling criteria and 12 of its 14 overturned candidates
+    came from the two rules it had never been shown; the fix is only a fix while
+    the criteria are still in the prompt, and nothing else notices if they leave.
+    """
+    situation, _ = scene_brief(scene)
+    # The whole rule, worked cases included: this is labelling, and the generator is
+    # the one consumer that has to know how the borderline calls went. `politeness_floor`
+    # here would silently drop them (dialogue/scenes.py).
+    tier, floor = politeness_rule(scene)
+    return USER_PROMPT.format(
+        situation=situation,
+        tier=tier,
+        floor=floor,
+        needs_count=needs_count,
+        natural_count=natural_count,
+        focus_clause=_focus_clause(focus),
+        avoid_clause=_avoid_clause(avoid),
+    )
 
 
 def parse_candidates(answer: str) -> list[dict[str, Any]]:

@@ -4,8 +4,8 @@
     "scene": "greeting",
     "learner_sentence": "スーパーに買い物します。",
     "needs_correction": true,
-    "corrected_sentence": "スーパーで買い物をします。",
-    "reason_en": "The place where an action happens takes 「で」, not 「に」. 「買い物をします」 and 「買い物します」 are both ordinary.",
+    "corrected_sentence": "スーパーで買い物します。",
+    "reason_en": "The place where an action happens takes 「で」, not 「に」.",
     "split": "dev"
   },
   {
@@ -38,10 +38,10 @@
   {
     "id": "eval-005",
     "scene": "greeting",
-    "learner_sentence": "おはようございます、隣人さん。",
+    "learner_sentence": "日曜日は走りませんかった。",
     "needs_correction": true,
-    "corrected_sentence": "おはようございます。",
-    "reason_en": "Japanese does not address anyone as 「隣人さん」 — it is \"neighbour\" translated word for word. The greeting stands on its own.",
+    "corrected_sentence": "日曜日は走りませんでした。",
+    "reason_en": "The past of 「〜ません」 is 「〜ませんでした」. 「ませんかった」 borrows the ending an い-adjective takes.",
     "split": "dev"
   },
   {
@@ -93,19 +93,19 @@
   {
     "id": "eval-012",
     "scene": "greeting",
-    "learner_sentence": "寒いですね、今日。",
+    "learner_sentence": "雨が降るたら、行きません。",
     "needs_correction": true,
-    "corrected_sentence": "寒いですね、今日は。",
-    "reason_en": "「今日」 keeps its particle 「は」 when it is moved behind the main clause.",
+    "corrected_sentence": "雨が降ったら、行きません。",
+    "reason_en": "「〜たら」 attaches to the past form, so 「降る」 becomes 「降ったら」. 「降るたら」 is not a form the verb has.",
     "split": "dev"
   },
   {
     "id": "eval-013",
     "scene": "self_introduction",
-    "learner_sentence": "どちらへ来ましたか。",
+    "learner_sentence": "二年間前に来ました。",
     "needs_correction": true,
-    "corrected_sentence": "どちらから来ましたか。",
-    "reason_en": "「へ」 points at where you are going. Where you came from takes 「から」.",
+    "corrected_sentence": "二年前に来ました。",
+    "reason_en": "For years, months and days, 「〜前」 attaches to the bare number: 「二年前」. 「二年間」 is how long something lasted, not when it happened.",
     "split": "dev"
   },
   {
@@ -242,10 +242,10 @@
   {
     "id": "eval-029",
     "scene": "thanks",
-    "learner_sentence": "ありがとうを言います。",
+    "learner_sentence": "忙しいから、運んでくれてありがとう。",
     "needs_correction": true,
-    "corrected_sentence": "ありがとうございます。",
-    "reason_en": "\"I say thank you\" translated directly. In Japanese you say the thanks itself.",
+    "corrected_sentence": "忙しいのに、運んでくれてありがとう。",
+    "reason_en": "「から」 gives a cause. Thanking someone for doing something in spite of something else takes 「のに」.",
     "split": "dev"
   },
   {
@@ -369,10 +369,10 @@
   {
     "id": "eval-044",
     "scene": "delay_notice",
-    "learner_sentence": "私、ここで待つ。",
+    "learner_sentence": "タクシーで行く。",
     "needs_correction": true,
-    "corrected_sentence": "私、ここで待ちます。",
-    "reason_en": "You are keeping a colleague waiting, so the plain 「待つ」 is too blunt for this call.",
+    "corrected_sentence": "タクシーで行きます。",
+    "reason_en": "Said to the colleague who is waiting for you, the plain 「行く」 is too blunt. The polite form is 「行きます」.",
     "split": "dev"
   },
   {
@@ -403,10 +403,10 @@
   {
     "id": "eval-048",
     "scene": "delay_notice",
-    "learner_sentence": "もう少し時間要ります。",
+    "learner_sentence": "お待たせさせてすみませんでした。",
     "needs_correction": true,
-    "corrected_sentence": "もう少し時間が要ります。",
-    "reason_en": "With 「要る」, the thing needed takes 「が」.",
+    "corrected_sentence": "お待たせしてすみませんでした。",
+    "reason_en": "「お待たせします」 already means keeping someone waiting. Adding 「させ」 makes it causative a second time.",
     "split": "dev"
   },
   {
@@ -436,9 +436,7 @@
     "id": "eval-052",
     "scene": "workplace_keigo",
     "learner_sentence": "部長、話したいことあります。",
-    "needs_correction": true,
-    "corrected_sentence": "部長、話したいことがあります。",
-    "reason_en": "What exists takes 「が」 before 「あります」. Addressing them as 「部長、」 is fine.",
+    "needs_correction": false,
     "split": "dev"
   },
   {
@@ -496,10 +494,10 @@
   {
     "id": "eval-059",
     "scene": "workplace_keigo",
-    "learner_sentence": "今日、残業できます。",
+    "learner_sentence": "部長に呼びました。",
     "needs_correction": true,
-    "corrected_sentence": "今日は残業できます。",
-    "reason_en": "「今日」 needs 「は」 to set it against other days. Without the particle it is left hanging at the front of the sentence.",
+    "corrected_sentence": "部長に呼ばれました。",
+    "reason_en": "Being called by someone takes the passive 「呼ばれました」. 「呼びました」 says you did the calling.",
     "split": "dev"
   },
   {
@@ -716,19 +714,19 @@
   {
     "id": "eval-085",
     "scene": "thanks",
-    "learner_sentence": "手伝いにありがとう。",
+    "learner_sentence": "たくさんありがとうございます。",
     "needs_correction": true,
-    "corrected_sentence": "手伝ってくれてありがとう。",
-    "reason_en": "Thanking someone for what they did uses the て-form and 「くれて」. 「手伝いに」 points at a purpose instead.",
+    "corrected_sentence": "本当にありがとうございます。",
+    "reason_en": "「たくさん」 counts things. How much you mean it is 「本当に」 or 「どうも」.",
     "split": "dev"
   },
   {
     "id": "eval-086",
     "scene": "thanks",
-    "learner_sentence": "感謝を感じます。",
+    "learner_sentence": "今日はお世話しました。",
     "needs_correction": true,
-    "corrected_sentence": "感謝しています。",
-    "reason_en": "\"I feel gratitude\" translated word for word. 「感謝」 is something you do, with 「しています」.",
+    "corrected_sentence": "今日はお世話になりました。",
+    "reason_en": "「お世話する」 is what you do for someone else. Thanking someone who looked after you, it is 「お世話になりました」.",
     "split": "dev"
   },
   {
@@ -773,7 +771,7 @@
     "learner_sentence": "あなたのお手伝いはとても大きかった。",
     "needs_correction": true,
     "corrected_sentence": "手伝ってくれて、本当に助かった。",
-    "reason_en": "\"Your help was very big\" translated word for word. 「大きい」 is about size; help that mattered is 「助けになった」.",
+    "reason_en": "\"Your help was very big\" translated word for word. Japanese names what the person did rather than measuring it: 「手伝ってくれて助かった」.",
     "split": "dev"
   },
   {
@@ -802,10 +800,10 @@
   {
     "id": "eval-095",
     "scene": "simple_request",
-    "learner_sentence": "水が欲しい。",
+    "learner_sentence": "コーヒーを二枚ください。",
     "needs_correction": true,
-    "corrected_sentence": "水が欲しいです。",
-    "reason_en": "Said to a shop assistant, this needs one polite element. 「です」 is enough.",
+    "corrected_sentence": "コーヒーを二杯ください。",
+    "reason_en": "Cupfuls are counted with 「〜杯」. 「〜枚」 counts flat things such as sheets of paper and plates.",
     "split": "dev"
   },
   {
@@ -1001,8 +999,10 @@
   {
     "id": "eval-118",
     "scene": "workplace_keigo",
-    "learner_sentence": "資料はコピーしました。",
-    "needs_correction": false,
+    "learner_sentence": "よろしくお願います。",
+    "needs_correction": true,
+    "corrected_sentence": "よろしくお願いします。",
+    "reason_en": "The fixed phrase is 「よろしくお願いします」. 「お願います」 runs 「お願い」 and 「します」 together and loses the 「し」.",
     "split": "dev"
   },
   {

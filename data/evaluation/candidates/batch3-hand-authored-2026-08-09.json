@@ -1,0 +1,112 @@
+{
+  "batch": 3,
+  "generated_on": "2026-08-09",
+  "model": null,
+  "prompt_version": "hand-authored-during-audit",
+  "verified": true,
+  "verification_note": "NOT generated. These ten sentences were written by hand on 2026-08-09 while fixing what two rounds of independent audit found in the finished 120 items — the generator was asked first and returned the mistakes it always returns (see .steering/20260802-week1-baseline/design.md, `--focus` を足した). They are merged into data/evaluation/items.json under the ids below, all in `dev`, with no label, scene or split changed.\n\nNATIVE VERDICT 2026-08-09: all ten stand as written, and so do the two reason-only changes to eval-001 and eval-091 — no label, correction or reason was overturned. The verdict was given from .steering/20260802-week1-baseline/day7-native-recheck.md, which prints the scene wording, the politeness floor, the sentence, the repair and the reason, and deliberately withholds the `native_check` rationale below so the judgement is not anchored to it.",
+  "candidates": [
+    {
+      "id": "eval-005",
+      "scene": "greeting",
+      "learner_sentence": "日曜日は走りませんかった。",
+      "needs_correction": true,
+      "corrected_sentence": "日曜日は走りませんでした。",
+      "reason_en": "The past of 「〜ません」 is 「〜ませんでした」. 「ませんかった」 borrows the ending an い-adjective takes.",
+      "source": "hand-authored 2026-08-09",
+      "native_check": "replaced a duplicate repair (eval-008 repaired to the same sentence); negative past, a form no item used"
+    },
+    {
+      "id": "eval-012",
+      "scene": "greeting",
+      "learner_sentence": "雨が降るたら、行きません。",
+      "needs_correction": true,
+      "corrected_sentence": "雨が降ったら、行きません。",
+      "reason_en": "「〜たら」 attaches to the past form, so 「降る」 becomes 「降ったら」. 「降るたら」 is not a form the verb has.",
+      "source": "hand-authored 2026-08-09",
+      "native_check": "replaced a mislabel — a phrase moved behind the main clause drops its particle; conditional, a form no item used"
+    },
+    {
+      "id": "eval-013",
+      "scene": "self_introduction",
+      "learner_sentence": "二年間前に来ました。",
+      "needs_correction": true,
+      "corrected_sentence": "二年前に来ました。",
+      "reason_en": "For years, months and days, 「〜前」 attaches to the bare number: 「二年前」. 「二年間」 is how long something lasted, not when it happened.",
+      "source": "hand-authored 2026-08-09",
+      "native_check": "replaced a repair that differed from eval-075's only by its question mark; duration vs point in time"
+    },
+    {
+      "id": "eval-029",
+      "scene": "thanks",
+      "learner_sentence": "忙しいから、運んでくれてありがとう。",
+      "needs_correction": true,
+      "corrected_sentence": "忙しいのに、運んでくれてありがとう。",
+      "reason_en": "「から」 gives a cause. Thanking someone for doing something in spite of something else takes 「のに」.",
+      "source": "hand-authored 2026-08-09",
+      "native_check": "replaced a duplicate repair (eval-028 repaired to the same sentence); wrong connective joining two clauses"
+    },
+    {
+      "id": "eval-044",
+      "scene": "delay_notice",
+      "learner_sentence": "タクシーで行く。",
+      "needs_correction": true,
+      "corrected_sentence": "タクシーで行きます。",
+      "reason_en": "Said to the colleague who is waiting for you, the plain 「行く」 is too blunt. The polite form is 「行きます」.",
+      "source": "hand-authored 2026-08-09",
+      "native_check": "the old repair 「待ちます」 was eval-109's mistake, and the old sentence put the learner in the waiting role the scene gives the colleague"
+    },
+    {
+      "id": "eval-048",
+      "scene": "delay_notice",
+      "learner_sentence": "お待たせさせてすみませんでした。",
+      "needs_correction": true,
+      "corrected_sentence": "お待たせしてすみませんでした。",
+      "reason_en": "「お待たせします」 already means keeping someone waiting. Adding 「させ」 makes it causative a second time.",
+      "source": "hand-authored 2026-08-09",
+      "native_check": "the old repair 「時間が要ります」 is not what is said on a call about being late, and が-omission was already eval-052 and eval-054; causative doubling instead, a form no item used"
+    },
+    {
+      "id": "eval-059",
+      "scene": "workplace_keigo",
+      "learner_sentence": "部長に呼びました。",
+      "needs_correction": true,
+      "corrected_sentence": "部長に呼ばれました。",
+      "reason_en": "Being called by someone takes the passive 「呼ばれました」. 「呼びました」 says you did the calling.",
+      "source": "hand-authored 2026-08-09",
+      "native_check": "replaced a mislabel — 「今日」 is adverbial and needs no 「は」, as eval-107's own reason says; passive, a form no item used"
+    },
+    {
+      "id": "eval-085",
+      "scene": "thanks",
+      "learner_sentence": "たくさんありがとうございます。",
+      "needs_correction": true,
+      "corrected_sentence": "本当にありがとうございます。",
+      "reason_en": "「たくさん」 counts things. How much you mean it is 「本当に」 or 「どうも」.",
+      "source": "hand-authored 2026-08-09",
+      "native_check": "replaced a duplicate repair (eval-026 repaired to the same sentence, across batches)"
+    },
+    {
+      "id": "eval-086",
+      "scene": "thanks",
+      "learner_sentence": "今日はお世話しました。",
+      "needs_correction": true,
+      "corrected_sentence": "今日はお世話になりました。",
+      "reason_en": "「お世話する」 is what you do for someone else. Thanking someone who looked after you, it is 「お世話になりました」.",
+      "source": "hand-authored 2026-08-09",
+      "native_check": "replaced a repair contained in eval-027's; direction of お世話する / お世話になる"
+    },
+    {
+      "id": "eval-095",
+      "scene": "simple_request",
+      "learner_sentence": "コーヒーを二枚ください。",
+      "needs_correction": true,
+      "corrected_sentence": "コーヒーを二杯ください。",
+      "reason_en": "Cupfuls are counted with 「〜杯」. 「〜枚」 counts flat things such as sheets of paper and plates.",
+      "source": "hand-authored 2026-08-09",
+      "native_check": "the old repair 「水が欲しいです」 is not said to a shop assistant, and the first replacement shared its shape with eval-100 and eval-042; counter instead"
+    }
+  ],
+  "verified_on": "2026-08-09",
+  "verified_by": "native speaker (project author)"
+}

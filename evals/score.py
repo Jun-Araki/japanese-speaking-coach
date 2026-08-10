@@ -173,6 +173,7 @@ def run_record(
     run is this?" is a question that will actually be asked (design.md).
     """
     sample_ids = [outcome.item.id for outcome in manual_check_sample(report.outcomes)]
+    redacted = split == "test"
     return {
         "run_id": run_id,
         "implementation": implementation,
@@ -188,22 +189,41 @@ def run_record(
         "format_compliance_rate": report.format_compliance_rate,
         "unusable_verdicts": report.unusable_verdicts,
         "manual_check_ids": sample_ids,
-        "results": [
-            {
-                "id": outcome.item.id,
-                "scene": outcome.item.scene,
-                "learner_sentence": outcome.item.learner_sentence,
-                "expected": outcome.item.needs_correction,
-                "predicted": outcome.predicted,
-                "format_compliant": outcome.format_compliant,
-                "format_problems": list(outcome.format_problems),
-                "japanese_left_unquoted": outcome.japanese_left_unquoted,
-                "attempts": outcome.attempts,
-                "corrected_sentence": outcome.corrected_sentence,
-                "reason_en": outcome.reason_en,
-            }
-            for outcome in report.outcomes
-        ],
+        "results_redacted": redacted,
+        "results": [] if redacted else [_result_row(outcome) for outcome in report.outcomes],
+    }
+
+
+def _result_row(outcome: Outcome) -> dict[str, Any]:
+    """One item's row in a `dev` run record.
+
+    A `test` run writes no rows at all. The first attempt at this kept the format
+    columns, on the reasoning that they describe the shape of an answer rather than
+    whether it was right — and that was wrong twice over. `japanese_left_unquoted`
+    and `reason_not_english` can only be set when the model returned a reason, and a
+    reason only exists when it returned a correction, so either one says
+    `predicted is True`. Against a dataset that publishes `needs_correction` for
+    every item, that recovers the misses exactly: on the day-4 record the four
+    `false` items flagged unquoted Japanese ARE the four it got wrong, and
+    `over_correction_rate` of 4/7 confirms there are no others.
+
+    A column that only exists when there was an answer is a verdict column. What
+    remains for `test` is the aggregate — the score, and no way to see where it came
+    from, which is what §7 asks for. Nothing is lost: week 2's error analysis reads
+    the `dev` record, which is written in full.
+    """
+    return {
+        "id": outcome.item.id,
+        "scene": outcome.item.scene,
+        "learner_sentence": outcome.item.learner_sentence,
+        "expected": outcome.item.needs_correction,
+        "predicted": outcome.predicted,
+        "format_compliant": outcome.format_compliant,
+        "format_problems": list(outcome.format_problems),
+        "japanese_left_unquoted": outcome.japanese_left_unquoted,
+        "attempts": outcome.attempts,
+        "corrected_sentence": outcome.corrected_sentence,
+        "reason_en": outcome.reason_en,
     }
 
 
@@ -248,6 +268,13 @@ def _print_summary(report: ScoreReport, implementation: str, split: str) -> None
 
 
 def _print_manual_check(report: ScoreReport) -> None:
+    """Print the five hand-checked items in full, `test` included.
+
+    This is the one deliberate exception to the redaction above, and it is bounded:
+    five items, at the console, listed by id in `manual_check_ids` so the exception
+    is on the record. A scoring bug and a bad model produce the same disappointing
+    number, and nothing else tells them apart (design.md, day 4).
+    """
     print(f"\nCheck these {MANUAL_CHECK_SAMPLE} by hand before believing the numbers above:")
     for outcome in manual_check_sample(report.outcomes):
         item = outcome.item

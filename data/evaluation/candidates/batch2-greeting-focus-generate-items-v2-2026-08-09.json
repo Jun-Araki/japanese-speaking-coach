@@ -1,0 +1,58 @@
+{
+  "batch": 2,
+  "generated_on": "2026-08-09",
+  "model": "gemini/gemini-2.5-flash",
+  "prompt_version": "generate-items-v2",
+  "focus": "a wrong conditional form (〜たら / 〜ば / 〜と), or a wrong negative form (〜ない / 〜ません / 〜なかった). The dataset has no item of either kind at all.",
+  "verified": false,
+  "candidates": [
+    {
+      "scene": "greeting",
+      "learner_sentence": "走るに行きます。",
+      "intended_label": "needs_correction",
+      "corrected_sentence": "走りにいきます。",
+      "reason_en": "To express the purpose 'to go running,' the verb needs to be in its stem form (masu-stem) followed by 「に」. The plain form 「走る」 followed by 「に」 is incorrect.",
+      "note_en": "This tests the use of the 'verb stem + に' construction to express purpose."
+    },
+    {
+      "scene": "greeting",
+      "learner_sentence": "今日は暑くています。",
+      "intended_label": "needs_correction",
+      "corrected_sentence": "今日は暑いです。",
+      "reason_en": "I-adjectives like 「暑い」 do not conjugate with 「〜ています」 to describe a current state. To simply state that it is hot, use the plain form 「暑い」 or polite form 「暑いです」.",
+      "note_en": "This targets a common conjugation error when learners try to apply progressive forms to i-adjectives."
+    },
+    {
+      "scene": "greeting",
+      "learner_sentence": "私朝。",
+      "intended_label": "needs_correction",
+      "corrected_sentence": "私の朝。",
+      "reason_en": "The possessive particle 「の」 is required to connect 「私」 (I/me) and 「朝」 (morning) to form 'my morning.'",
+      "note_en": "This tests the essential use of the possessive particle 「の」 between nouns."
+    },
+    {
+      "scene": "greeting",
+      "learner_sentence": "あなたは良い朝を持っています。",
+      "intended_label": "needs_correction",
+      "corrected_sentence": "おはようございます。",
+      "reason_en": "This is a direct, word-for-word translation of the English greeting 'You have a good morning,' which is not a natural Japanese greeting. The standard greeting is 「おはようございます」 or 「おはよう」.",
+      "note_en": "This highlights the difference in common greetings between English and Japanese, targeting unnatural direct translation."
+    },
+    {
+      "scene": "greeting",
+      "learner_sentence": "おはよう、ご苦労様。",
+      "intended_label": "needs_correction",
+      "corrected_sentence": "おはよう。",
+      "reason_en": "「ご苦労様」 is typically used by a superior to a subordinate or among equals after a shared effort or task, usually at the end of the day or after work. It is unnatural and inappropriate as a general morning greeting to a neighbor.",
+      "note_en": "This tests the appropriate usage and context of common Japanese fixed expressions and greetings."
+    },
+    {
+      "scene": "greeting",
+      "learner_sentence": "私はここにあります。",
+      "intended_label": "needs_correction",
+      "corrected_sentence": "私はここにいます。",
+      "reason_en": "The verb 「あります」 is used for the existence of inanimate objects, while 「います」 is used for animate beings (people and animals). Since the subject is 'I' (「私」), 「います」 should be used.",
+      "note_en": "This targets the fundamental distinction between 「あります」 and 「います」 for existence."
+    }
+  ]
+}

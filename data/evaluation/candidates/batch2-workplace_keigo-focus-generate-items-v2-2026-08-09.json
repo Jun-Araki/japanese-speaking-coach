@@ -1,0 +1,58 @@
+{
+  "batch": 2,
+  "generated_on": "2026-08-09",
+  "model": "gemini/gemini-2.5-flash",
+  "prompt_version": "generate-items-v2",
+  "focus": "a wrong counter (〜枚 / 〜本 / 〜人 / 〜件 / 〜時間), or a wrong quantity or duration expression. The dataset has no item of either kind at all.",
+  "verified": false,
+  "candidates": [
+    {
+      "scene": "workplace_keigo",
+      "learner_sentence": "会議室に待っています。",
+      "intended_label": "needs_correction",
+      "corrected_sentence": "会議室で待っています。",
+      "reason_en": "The particle `に` is used for the location of existence, while `で` is used for the location where an action takes place. Since `待つ` (to wait) is an action, `で` is required.",
+      "note_en": "Tests the correct particle for the location of an action."
+    },
+    {
+      "scene": "workplace_keigo",
+      "learner_sentence": "報告書はまだ書きます。",
+      "intended_label": "needs_correction",
+      "corrected_sentence": "報告書はまだ書いていません。",
+      "reason_en": "To express that an action 'has not yet been completed,' the `まだ〜ていません` form is used. `まだ〜ます` implies 'still doing' or 'not yet (future action)', which doesn't fit the context of 'I haven't written it yet'.",
+      "note_en": "Tests the correct conjugation for expressing an uncompleted action."
+    },
+    {
+      "scene": "workplace_keigo",
+      "learner_sentence": "部長、時間ください。",
+      "intended_label": "needs_correction",
+      "corrected_sentence": "部長、時間をいただけますか？",
+      "reason_en": "`ください` is a direct command and is generally too blunt or casual when speaking to a manager. A more polite request form like `〜をいただけますか？` is appropriate. Also, the particle `を` is missing for `時間`.",
+      "note_en": "Tests appropriate politeness and particle usage for making a request to a manager."
+    },
+    {
+      "scene": "workplace_keigo",
+      "learner_sentence": "この仕事は私に難しいです。",
+      "intended_label": "needs_correction",
+      "corrected_sentence": "この仕事は私には難しいです。",
+      "reason_en": "While `私に` can sometimes indicate 'for me', when expressing something is difficult for someone, `私には` is the more natural and common phrasing. `私に難しい` sounds like a direct, unnatural translation from English 'difficult to me'.",
+      "note_en": "Tests a natural way to express 'difficult for me' in Japanese."
+    },
+    {
+      "scene": "workplace_keigo",
+      "learner_sentence": "お先に失礼をします。",
+      "intended_label": "needs_correction",
+      "corrected_sentence": "お先に失礼します。",
+      "reason_en": "`お先に失礼します` is a fixed expression meaning 'Excuse me for leaving ahead of you'. Adding the particle `を` makes it grammatically unnatural.",
+      "note_en": "Tests correct usage of a common fixed expression for leaving work."
+    },
+    {
+      "scene": "workplace_keigo",
+      "learner_sentence": "私はまだ着きません。",
+      "intended_label": "needs_correction",
+      "corrected_sentence": "私はまだ着いていません。",
+      "reason_en": "To convey the meaning 'I haven't arrived yet,' the correct form is `まだ着いていません`. `まだ着きません` implies 'I won't arrive yet' or 'I still don't arrive,' which isn't the intended meaning of an ongoing uncompleted action.",
+      "note_en": "Tests the proper expression for 'not yet arrived'."
+    }
+  ]
+}

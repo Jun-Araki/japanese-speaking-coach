@@ -24,15 +24,18 @@ from typing import Any
 import pytest
 
 from dialogue.scenes import politeness_floor, scene_brief
-from evals.dataset import Item, save_items
+from evals.dataset import ITEMS_PATH, Item, load_items, save_items
 from evals.rater_kit import (
     KIT_SIZE,
     SCALE,
     agreement,
+    build_kit,
     kit_markdown,
     kit_record,
+    refuse_if_graded,
     scoring_template,
     select,
+    whatsapp_message,
 )
 
 SCENE_ORDER = [
@@ -272,6 +275,250 @@ def test_the_kit_records_the_level_the_reasons_appeal_to(tmp_path: Path) -> None
 
     assert kit["level"] == "beginner"
     assert "beginner" in kit_markdown(kit)
+
+
+def built_kit(tmp_path: Path) -> dict[str, Any]:
+    results = gradable_run()
+    items = write_items(tmp_path / "items.json", results)
+    return kit_record(make_record(results), select(make_record(results), 20, items))
+
+
+def test_the_sent_message_shows_everything_the_scale_needs(tmp_path: Path) -> None:
+    """The chat version grades the same thing as the paper version, or neither counts.
+
+    The two are read by different people at different times and both feed one number,
+    so the message losing a reason — the half of §6 the paper form is careful to
+    print — would show up as agreement about corrections nobody was shown.
+    """
+    kit = built_kit(tmp_path)
+
+    sent = whatsapp_message(kit, "2026-08-16")
+
+    for item in kit["items"]:
+        assert item["learner_sentence"] in sent
+        assert item["corrected_sentence"] in sent
+        assert item["reason_en"] in sent
+    for _, meaning in SCALE.values():
+        assert meaning in sent
+    assert scene_brief("greeting")[0] in sent
+    assert politeness_floor("greeting")[1] in sent
+    assert "2026-08-16" in sent
+
+
+def test_the_sent_message_asks_for_the_grades_the_scoring_file_accepts(tmp_path: Path) -> None:
+    """Lower case, and one numbered blank per item.
+
+    `_graded` refuses "Valid" — the capitalisation on the paper tick boxes. Over chat
+    the reply is pasted straight into the scoring file, so anything the message asks
+    for that `agreement` would then reject is a transcription step reintroduced for
+    no reason.
+    """
+    kit = built_kit(tmp_path)
+
+    sent = whatsapp_message(kit, "2026-08-16")
+    template = sent.split("Copy from here")[1]
+
+    for key, (label, _) in SCALE.items():
+        assert key in template
+        assert label not in template
+    for item in kit["items"]:
+        assert f"\n{item['kit_no']}:" in template
+
+
+def test_a_free_text_reply_is_never_what_the_message_asks_for(tmp_path: Path) -> None:
+    """The twenty blanks are the point: prose would be assigned to grades by hand.
+
+    That assignment is done by the same person whose own grades are being compared,
+    which makes part of `rater_agreement` a measure of how they read the other rater.
+    """
+    kit = built_kit(tmp_path)
+
+    sent = whatsapp_message(kit, "2026-08-16")
+
+    assert sent.rstrip().endswith(f"{kit['n']}:")
+    assert sum(line.strip().endswith(":") and line[0].isdigit() for line in sent.splitlines()) == 20
+
+
+def test_both_forms_carry_the_convention_for_the_cases_the_grades_miss(tmp_path: Path) -> None:
+    """§6 requires the same convention on the paper form and in the message.
+
+    Two of the twenty items needed no correction and one was corrected further than
+    it needed to be, and the three grades name neither case. The author graded all
+    three before sealing; a second rater who is not told the convention disagrees on
+    them for a reason that is not a difference of judgement — which is the one thing
+    `rater_agreement` must not measure. Nothing else asserts this, so dropping the
+    paragraph from either renderer is otherwise a silent change.
+    """
+    kit = built_kit(tmp_path)
+
+    printed = kit_markdown(kit)
+    sent = whatsapp_message(kit, "2026-08-16")
+
+    for rendered in (printed, sent):
+        assert "already correct and needed no change at all" in rendered
+        assert "changed more than that" in rendered
+    assert "*Insufficient*" in printed and "*Wrong*" in printed
+    assert "*insufficient*" in sent and "*wrong*" in sent
+
+
+def test_the_message_never_names_a_number_of_grades_the_scale_does_not_have(
+    tmp_path: Path,
+) -> None:
+    """The paper form derives the grades from SCALE; the message has to as well.
+
+    §6 was nearly given a fourth box and was settled by convention instead, so a
+    fourth grade is a live possibility rather than a hypothetical. Written out by
+    hand, the message would keep saying "three words" next to four of them and keep
+    offering three in the reply template — a form that contradicts itself, sent to
+    someone who cannot ask.
+    """
+    kit = built_kit(tmp_path)
+
+    sent = whatsapp_message(kit, "2026-08-16")
+
+    assert "three words" not in sent
+    template = sent.split("Copy from here")[1]
+    for key in SCALE:
+        assert key in template
+
+
+def test_rebuilding_a_kit_will_not_erase_grades_already_on_a_form(tmp_path: Path) -> None:
+    """`--run` reprints the kit and both blank forms. The grades are not its to touch.
+
+    This happened: the kit was rebuilt after a wording fix and wrote nulls over the
+    author's twenty grades, which existed in no other copy and were not yet
+    committed. `rater_agreement` needs both forms, one of them is filled in by hand
+    before the other is sent, and the window between those two events is exactly when
+    the kit gets reprinted.
+    """
+    kit = built_kit(tmp_path)
+    form = tmp_path / "kit-jun.json"
+    filled = scoring_template(kit, "jun")
+    filled["ratings"][0]["rating"] = "valid"
+    form.write_text(json.dumps(filled, ensure_ascii=False), encoding="utf-8")
+
+    with pytest.raises(SystemExit, match="would be erased"):
+        refuse_if_graded(form)
+
+    assert json.loads(form.read_text(encoding="utf-8"))["ratings"][0]["rating"] == "valid"
+
+
+def test_rebuilding_the_whole_kit_stops_before_it_writes_anything(tmp_path: Path) -> None:
+    """The guard has to be wired into the command, not merely exist.
+
+    The accident was `--run` erasing a filled-in form, so a test that calls
+    `refuse_if_graded` directly leaves the failing path — the command forgetting to
+    call it — green. Rebuilding also has to be all-or-nothing: a kit half rewritten
+    around the one file it would not touch is a kit whose printed form and grades
+    describe different items.
+    """
+    results = gradable_run()
+    items = write_items(tmp_path / "items.json", results)
+    record = make_record(results)
+    out = tmp_path / "rater"
+    build_kit(record, items, out, ["jun", "second"])
+
+    kit_json = (out / "20260808-1000-rater-kit.json").read_text(encoding="utf-8")
+    (out / "20260808-1000-rater-kit.json").write_text("{}", encoding="utf-8")
+    form = out / "20260808-1000-rater-kit-jun.json"
+    filled = json.loads(form.read_text(encoding="utf-8"))
+    filled["ratings"][0]["rating"] = "valid"
+    form.write_text(json.dumps(filled, ensure_ascii=False), encoding="utf-8")
+
+    with pytest.raises(SystemExit, match="would be erased"):
+        build_kit(record, items, out, ["jun", "second"])
+
+    assert json.loads(form.read_text(encoding="utf-8"))["ratings"][0]["rating"] == "valid"
+    # Untouched too: the refusal came before the first write, not after two of them.
+    assert (out / "20260808-1000-rater-kit.json").read_text(encoding="utf-8") == "{}"
+    assert kit_json  # the real kit was written the first time round
+
+
+def test_an_untouched_blank_form_does_not_block_a_rebuild(tmp_path: Path) -> None:
+    """Otherwise a half-built kit could never be rebuilt without deleting files."""
+    kit = built_kit(tmp_path)
+    form = tmp_path / "kit-second.json"
+    form.write_text(
+        json.dumps(scoring_template(kit, "second"), ensure_ascii=False), encoding="utf-8"
+    )
+
+    refuse_if_graded(form)
+
+
+def _bare(text: str) -> str:
+    """Text with the punctuation and quoting that a citation drops."""
+    return "".join(ch for ch in text if ch not in "。、？！「」『』・…　 \n\t")
+
+
+def test_a_run_record_passed_as_a_kit_is_refused_by_name(tmp_path: Path) -> None:
+    """Both are JSON under evals/ holding the same ids; --whatsapp takes only one."""
+    with pytest.raises(ValueError, match="not a rater kit"):
+        whatsapp_message(make_record(gradable_run()), "2026-08-16")
+
+
+def test_no_form_quotes_an_evaluation_item_in_its_own_scaffolding(tmp_path: Path) -> None:
+    """The wording around the items must cite no sentence the dataset has labelled.
+
+    Both forms print the situation and the politeness floor so the rater can judge
+    "would a native say this here" (the day 6 finding: 「良い一日。」 → 「いってらっしゃい！」
+    is only right because the neighbour is leaving). On 8/9 the tier B floor grew
+    worked examples — 「お仕事、何？」 needs correcting, 「はじめまして」 is fine — and each
+    one is an evaluation item with the dataset's verdict attached. One of them,
+    eval-017, was item 20 of the kit already built, so its own answer was printed
+    four lines above it, and another was from `test`.
+
+    Checked by rendering a kit whose items carry placeholder text, which leaves only
+    the scaffolding: anything from `items.json` that survives got there through the
+    form, not through the item being graded.
+
+    Compared with the punctuation stripped, because a rule is written about a
+    sentence rather than quoting one — 「はじめまして」 in prose against 「はじめまして。」 in
+    the dataset. That is the same disclosure and it is the likelier spelling of it:
+    the first version of this test matched exactly and let the sentence back in.
+    """
+    results = gradable_run()
+    items = write_items(tmp_path / "items.json", results)
+    kit = kit_record(make_record(results), select(make_record(results), 20, items))
+    for item in kit["items"]:
+        item["learner_sentence"] = f"__learner_{item['kit_no']}__"
+        item["corrected_sentence"] = f"__corrected_{item['kit_no']}__"
+        item["reason_en"] = f"__reason_{item['kit_no']}__"
+
+    scaffolding = _bare(kit_markdown(kit) + whatsapp_message(kit, "2026-08-16"))
+
+    for real in load_items(ITEMS_PATH):
+        for field, sentence in (
+            ("learner sentence", real.learner_sentence),
+            ("own answer", real.corrected_sentence),
+            ("reason", real.reason_en),
+        ):
+            if sentence:
+                assert _bare(sentence) not in scaffolding, (
+                    f"{real.id} ({real.split}): the {field} is in the form the rater reads"
+                )
+
+
+def test_a_test_split_kit_is_never_rendered_for_sending(tmp_path: Path) -> None:
+    """Paper stayed in the room. A message does not come back.
+
+    `select` already refuses a test run, so this is the same rule one step later —
+    at the only point where items leave the project entirely (docs/ja/glossary.md §7).
+    """
+    kit = built_kit(tmp_path)
+    kit["split"] = "test"
+
+    with pytest.raises(ValueError, match="only a dev kit"):
+        whatsapp_message(kit, "2026-08-16")
+
+
+def test_the_sent_message_reproduces_the_reason_verbatim(tmp_path: Path) -> None:
+    """The reason is the object being graded, so it is not reflowed to render better."""
+    kit = built_kit(tmp_path)
+    kit["items"][0]["reason_en"] = "Use *で* here, not 'に' — it marks _where_ you act."
+
+    sent = whatsapp_message(kit, "2026-08-16")
+
+    assert "Use *で* here, not 'に' — it marks _where_ you act." in sent
 
 
 def make_form(

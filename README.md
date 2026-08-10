@@ -126,8 +126,11 @@ measured **before** the real implementation exists, so the comparison is honest.
 | Level compliance | ≥ 90% | — |
 | Testers | ≥ 5 | — |
 
-Every published figure will carry `n` and an error margin. On a 40-item test split that
-margin is roughly ±8 points, and it will be stated rather than hidden.
+Every published figure will carry `n` and an error margin — where `n` is that metric's own
+denominator, not the size of the split. The two accuracy figures do not share one: on the
+40-item test split `detection_accuracy` rests on the 27 items labelled as needing correction
+(±13 points) and `over_correction_rate` on the 13 that do not, where a single item moves the
+figure by 7.7 points. Both will be stated rather than hidden.
 
 ### The correction engine is measured on text, not through the app
 

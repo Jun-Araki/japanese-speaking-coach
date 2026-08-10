@@ -160,8 +160,15 @@ class TestManualCheckSample:
 
 
 class TestRunRecord:
-    def _record(self, report: ScoreReport) -> dict[str, Any]:
-        return run_record(report, "baseline", "baseline-v1", "test", "beginner", "20260806-0730")
+    def _record(self, report: ScoreReport, split: str = "test") -> dict[str, Any]:
+        return run_record(
+            report,
+            "baseline",
+            "baseline-v1",
+            split,  # type: ignore[arg-type]
+            "beginner",
+            "20260806-0730",
+        )
 
     def test_carries_n_and_split(self) -> None:
         # Week 1 measures the baseline twice, on 20 items and then on 40. Without
@@ -187,11 +194,11 @@ class TestRunRecord:
         # a change in the model.
         assert record["scorer_version"] == SCORER_VERSION
 
-    def test_keeps_every_item_level_result(self) -> None:
+    def test_keeps_every_item_level_result_on_dev(self) -> None:
         # Week 2's error analysis reads these rows; re-running to get them back
         # would cost another set of calls and would not be the same run.
         report = score([make_item("a", True), make_item("b", False)], FakeJudge(False, False))
-        results = self._record(report)["results"]
+        results = self._record(report, "dev")["results"]
 
         assert [row["id"] for row in results] == ["a", "b"]
         assert results[0]["expected"] is True
@@ -199,7 +206,43 @@ class TestRunRecord:
 
     def test_an_unusable_verdict_is_visible_in_the_record(self) -> None:
         report = score([make_item("a", True)], FakeJudge(None))
-        record = self._record(report)
+        record = self._record(report, "dev")
 
         assert record["unusable_verdicts"] == 1
         assert record["results"][0]["predicted"] is None
+
+    def test_a_test_run_leaves_nothing_per_item_to_recover_a_verdict_from(self) -> None:
+        """Two runs that disagree on every item must write the same rows.
+
+        Asserting that certain field NAMES are absent is a test of spelling, and the
+        first attempt at this redaction passed such a test while still giving up all
+        four of the day-4 misses: it kept `japanese_left_unquoted`, which is only ever
+        set when the model returned a reason, which only happens when it returned a
+        correction. Against published labels that is `predicted` under another name.
+
+        So the property, not the spelling: whatever a `test` record says per item, it
+        has to say the same thing when every verdict is inverted.
+        """
+        items = [make_item("a", True), make_item("b", False)]
+        all_right = self._record(score(items, FakeJudge(True, False)))
+        all_wrong = self._record(score(items, FakeJudge(False, True)))
+
+        assert all_right["results_redacted"] is True
+        assert all_right["results"] == all_wrong["results"]
+        # And the run is still worth having: the scores themselves differ.
+        assert all_right["detection_accuracy"] != all_wrong["detection_accuracy"]
+
+    def test_a_test_run_still_records_the_numbers(self) -> None:
+        """Redaction costs the per-item rows, not the measurement.
+
+        Week 2's error analysis reads the `dev` record, which is written in full; what
+        a `test` run is for is the number.
+        """
+        report = score([make_item("a", True), make_item("b", False)], FakeJudge(False, True))
+        record = self._record(report)
+
+        assert record["detection_accuracy"] == 0.0
+        assert record["over_correction_rate"] == 1.0
+        assert record["format_compliance_rate"] == 1.0
+        assert record["unusable_verdicts"] == 0
+        assert record["n"] == 2

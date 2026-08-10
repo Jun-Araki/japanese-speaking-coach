@@ -29,22 +29,22 @@ SCENES: Final[dict[str, str]] = {
 #
 # It lives here, next to the scenes themselves, because it is the same kind of
 # fact: change it and every item already labelled under it has to be re-read.
+#
+# Split in two on 2026-08-09. The floor proper says who is listening and where the
+# bar sits, and it is safe to show anybody. The worked cases below settle the
+# borderline calls by quoting evaluation items, and they are safe to show nobody.
 POLITENESS_FLOORS: Final[dict[str, tuple[str, str]]] = {
     "greeting": ("A", "A neighbour or a colleague. No polite form is required."),
     "thanks": ("A", "A neighbour or a colleague. No polite form is required."),
     "self_introduction": (
         "B",
         "Someone met for the first time, or a shop assistant. The sentence has to end "
-        "in 「です」, 「ます」 or 「ください」, but it does not have to be polite throughout. "
-        "「お」 alone does NOT clear this floor — 「お仕事、何？」 needs correcting — unless "
-        "the sentence trails off instead of closing, as 「お名前は。」 does.",
+        "in 「です」, 「ます」 or 「ください」, but it does not have to be polite throughout.",
     ),
     "simple_request": (
         "B",
         "Someone met for the first time, or a shop assistant. The sentence has to end "
-        "in 「です」, 「ます」 or 「ください」, but it does not have to be polite throughout. "
-        "「お」 alone does NOT clear this floor — 「お仕事、何？」 needs correcting — unless "
-        "the sentence trails off instead of closing, as 「お名前は。」 does.",
+        "in 「です」, 「ます」 or 「ください」, but it does not have to be polite throughout.",
     ),
     "delay_notice": (
         "C",
@@ -55,6 +55,28 @@ POLITENESS_FLOORS: Final[dict[str, tuple[str, str]]] = {
         "C",
         "A colleague being kept waiting, or a manager. 「です」/「ます」 is required. "
         "Honorific and humble keigo are NOT required.",
+    ),
+}
+
+# How the floor was applied to the cases that split the candidates, for whoever is
+# LABELLING data. Kept apart from the floor itself because every clause here names
+# an evaluation item — 「お仕事、何？」 is eval-081 and 「はじめまして」 is eval-017 — with
+# the verdict attached.
+#
+# That is the right thing to send a generator and the wrong thing to put in front of
+# a human rater: it hands them the dataset's answer to items they are being asked to
+# judge, and `rater_agreement` stops being a property of the scale (docs/ja/glossary.md
+# §5). Only tier B needed adjudicating; A and C never split.
+POLITENESS_ADJUDICATIONS: Final[dict[str, str]] = {
+    "self_introduction": (
+        "「お」 alone does NOT clear this floor — 「お仕事、何？」 needs correcting — unless "
+        "the sentence trails off instead of closing, as 「お名前は。」 does, or it is a fixed "
+        "greeting with no polite form of its own, as 「はじめまして」 is."
+    ),
+    "simple_request": (
+        "「お」 alone does NOT clear this floor — 「お仕事、何？」 needs correcting — unless "
+        "the sentence trails off instead of closing, as 「お名前は。」 does, or it is a fixed "
+        "greeting with no polite form of its own, as 「はじめまして」 is."
     ),
 }
 
@@ -115,10 +137,28 @@ LEVEL_BRIEFS: Final[dict[str, str]] = {
 
 
 def politeness_floor(scene: str) -> tuple[str, str]:
-    """Return the scene's politeness tier and what it requires."""
+    """Return the scene's politeness tier and what it requires.
+
+    Cites no evaluation item, so this is the form of the rule that may be shown to
+    someone who is about to judge one. Labelling wants `politeness_rule` instead.
+    """
     if scene not in POLITENESS_FLOORS:
         raise ValueError(f"Unknown scene: {scene!r}")
     return POLITENESS_FLOORS[scene]
+
+
+def politeness_rule(scene: str) -> tuple[str, str]:
+    """The floor plus the worked cases — the whole rule, for labelling data.
+
+    Everything `politeness_floor` returns, and then how the borderline calls were
+    settled. The examples name evaluation items, so this goes to the generator and
+    never onto a form a person fills in.
+    """
+    tier, floor = politeness_floor(scene)
+    adjudication = POLITENESS_ADJUDICATIONS.get(scene)
+    if adjudication is None:
+        return tier, floor
+    return tier, f"{floor} {adjudication}"
 
 
 def scene_brief(scene: str) -> tuple[str, str]:

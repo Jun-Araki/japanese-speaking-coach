@@ -1,0 +1,58 @@
+{
+  "batch": 2,
+  "generated_on": "2026-08-09",
+  "model": "gemini/gemini-2.5-flash",
+  "prompt_version": "generate-items-v2",
+  "focus": "a wrong passive or causative form (〜られる / 〜させる), or a wrong connective joining two clauses (〜ので / 〜から / 〜が / 〜のに). The dataset has no item of either kind, and every sentence in it so far is one short clause.",
+  "verified": false,
+  "candidates": [
+    {
+      "scene": "thanks",
+      "learner_sentence": "荷物持ってありがとう。",
+      "intended_label": "needs_correction",
+      "corrected_sentence": "荷物持ってくれてありがとう。",
+      "reason_en": "The particle `てくれて` is needed after the `て` form of the verb to express gratitude for an action someone did for you.",
+      "note_en": "This tests the common omission of `てくれて` when thanking someone for an action."
+    },
+    {
+      "scene": "thanks",
+      "learner_sentence": "荷物、運ぶました。",
+      "intended_label": "needs_correction",
+      "corrected_sentence": "荷物、運びました。",
+      "reason_en": "The correct `masu` form of the verb `運ぶ` is `運びます`, so the past tense is `運びました`. Using the plain form `運ぶ` directly with `ました` is incorrect.",
+      "note_en": "This tests a common conjugation mistake, mixing plain form with `masu` ending."
+    },
+    {
+      "scene": "thanks",
+      "learner_sentence": "あなたの助けに感謝です。",
+      "intended_label": "needs_correction",
+      "corrected_sentence": "あなたの助けに感謝しています。",
+      "reason_en": "`感謝です` is not a natural way to express gratitude; `感謝しています` (I am grateful) or `感謝します` (I express gratitude) is commonly used. The particle `に` with `あなたの助け` also sounds stiff, making the overall sentence unnatural.",
+      "note_en": "This tests unnatural phrasing stemming from a direct English translation of 'grateful for your help'."
+    },
+    {
+      "scene": "thanks",
+      "learner_sentence": "助けました、ありがとう。",
+      "intended_label": "needs_correction",
+      "corrected_sentence": "助かりました、ありがとう。",
+      "reason_en": "`助けました` means 'I helped' or 'someone helped.' To express 'I was helped' or 'it was a help (to me),' the passive/intransitive verb `助かる` (in its past form `助かりました`) is used.",
+      "note_en": "This tests the confusion between active ('I helped') and passive/intransitive ('I was helped') verb forms."
+    },
+    {
+      "scene": "thanks",
+      "learner_sentence": "おかげを言います。",
+      "intended_label": "needs_correction",
+      "corrected_sentence": "お礼を言います。",
+      "reason_en": "`おかげを言う` is not a standard Japanese expression for 'say thanks' or 'express gratitude.' The correct fixed expression for this is `お礼を言う`.",
+      "note_en": "This tests the misuse of `言う` with `おかげ`, similar to other common 'Xを言う' errors for expressions of gratitude."
+    },
+    {
+      "scene": "thanks",
+      "learner_sentence": "大変しました。",
+      "intended_label": "needs_correction",
+      "corrected_sentence": "大変でしたね。",
+      "reason_en": "`大変する` typically means 'to struggle/work hard' (e.g., `大変な目に遭う`), not 'it was tough' in the sense of the heavy load. The natural way to express 'it must have been tough [for you]' is `大変でしたね`.",
+      "note_en": "This tests the unnatural use of `大変する` in a context where an adjectival expression is expected."
+    }
+  ]
+}

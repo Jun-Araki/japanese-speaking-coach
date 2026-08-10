@@ -87,6 +87,14 @@ colleague and needs correcting said to a shop assistant.
   - **The exception is a sentence left unfinished.** 「お名前は。」 trails off rather than closing,
     and that form is polite in itself, so it clears the floor (this is eval-022's correction).
     **Closing on 「何？」 is not that form and does not clear it.**
+  - **The other exception is a fixed greeting (added 2026-08-09).** 「はじめまして」 ends in none of
+    です / ます / ください and does not trail off, but **it has no polite form of its own**, so the
+    floor cannot be asked of it. **This is eval-017's own correction** — until this was written
+    down, the floor rule contradicted the dataset's own answer.
+    - **Do not widen the exception.** Counting all 120 items, the only sentences at tiers B and C
+      that do not end in a polite form are 「はじめまして」 and 「お名前は」; tier C has none.
+      **"It is a set phrase" only excuses a word that has no polite form at all** — 「ごめん」 has
+      「すみません」, so it does not qualify.
   - **No label moved because of this revision** — only the verdict on 「お仕事、何？」 and the
     wording of the floor.
 - **Plain form is `true` at C** because, as in §3, these are the scenes where controlling
@@ -220,9 +228,27 @@ end a sentence.` is English; `これは丁寧な言い方ではありません` 
   (`japanese_left_unquoted`) but **never counted** in the metric: the correction prompt asks
   for 「」 and the baseline prompt does not, so the difference stays visible
 
-**Every published number carries `n` and an error margin** — e.g. "92% (n=40, ±8pt)".
-On a 40-item test split the margin is roughly ±8 points, and stating that plainly earns more
-trust than a large number does.
+**Every published number carries `n` and an error margin** — e.g. "92% (n=27, ±13pt)".
+Stating it plainly earns more trust than a large number does.
+
+**`n` is the metric's own denominator, not the size of the split (corrected 2026-08-09).**
+This said "on a 40-item test split the margin is roughly ±8 points", and **no metric here has
+40 in its denominator.** The two metrics are measured on different labels, so the split divides:
+
+| Metric | Denominator in `test` | One item is worth | Rough margin |
+|---|---|---|---|
+| `detection_accuracy` | 27 (`true`) | 3.7pt | ±13pt |
+| `over_correction_rate` | **13** (`false`) | **7.7pt** | **±19–27pt** |
+
+With 13 items behind it, one item moves `over_correction_rate` 7.7 points and the 15% target is
+really a two-item target. **Do not widen the denominator with `dev`.** Eighty of the 120 items
+are `dev` — the side §7 allows tuning against — so once week 2 tunes the prompt, a
+dev-inclusive figure rises by however much it was tuned. **Publish the `test` figure (`n=13`,
+±19–27pt) and publish the width with it.** A `dev` figure may sit beside it only if it is
+labelled as the tuned-on side, and the two are never added together.
+
+**The answer to a thin denominator is more `false` items, not a mixed one** — which is what
+the 250-item expansion in September is for.
 
 ---
 
@@ -242,6 +268,50 @@ was fixed to `dev`, the 20 stopped being a subset of the 40.
 | **Wrong** (誤り) | The corrected sentence is unnatural or changes the meaning, or the reason is factually incorrect |
 
 `correction_validity` counts **Valid** only.
+
+**The three grades assume a correction was needed (added 2026-08-09).** Rating the 20 items on
+8/9 turned up **two ways for that assumption to fail**. Neither has a box, and **left undefined
+each one splits raters between `Insufficient` and `Wrong`** — the corrected sentence itself is
+natural, which reads as Valid, while the AI touched something that did not need touching, which
+reads as Wrong.
+
+> **Which items these were is deliberately not recorded here — and that is not a safeguard**
+> (established 2026-08-09). The kit itself (`evals/rater/*.json`) **is already committed and
+> public**, and against `items.json` it gives up **exactly two** items labelled
+> `needs_correction: false` and exactly one matching case 2. **Keeping only the counts still
+> leaves the grades recoverable by anyone who follows the trail.** What is actually protecting
+> the number is that the second rater is unlikely to go looking, which is not a mechanism.
+> This could not be redacted after the fact, so it is written down as it is. **Next time, the
+> item text stays uncommitted until `rater_agreement` has been computed.**
+
+**Case 1: nothing needed correcting at all** (**2** of the 20 rated on 8/9).
+
+| When the original was already correct | Rating |
+|---|---|
+| The corrected sentence is natural in itself (a paraphrase) | **Insufficient** |
+| The corrected sentence is unnatural or changes the meaning | **Wrong** |
+
+**Case 2: something did need correcting, and the AI changed more than that** (**1** of the 20).
+
+| When the necessary correction is present | Rating |
+|---|---|
+| What it added is also natural and still a version of what the learner said | **Insufficient** |
+| What it added makes the sentence unnatural, or no longer a version of the learner's | **Wrong** |
+
+In shape: a sentence missing one particle gets the particle supplied **and its verb swapped for a
+different one**. **If the necessary correction is right, grade Insufficient** — punishing the
+surplus as Wrong turns the scale into a measure of how much was changed rather than of how good
+the correction is.
+
+**Settled by convention rather than by a fourth box.** A four-grade scale would no longer match
+the form printed on 8/8 or the copy in the second rater's hands. **The same wording is printed on
+the rater's instructions** (`scale_note()` in `evals/rater_kit.py`, which renders one source for
+both the paper form and the message; only the capitalisation of the grades differs).
+
+**Case 2 is invisible to `over_correction_rate`.** That metric counts only corrections made to
+items labelled `needs_correction: false`, and in case 2 the learner's sentence really was wrong.
+"Over-correction is already counted elsewhere, so the scale need not punish it twice" holds for
+case 1 only.
 
 ---
 

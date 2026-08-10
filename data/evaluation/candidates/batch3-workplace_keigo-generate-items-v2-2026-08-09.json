@@ -1,0 +1,61 @@
+{
+  "batch": 3,
+  "generated_on": "2026-08-09",
+  "model": "gemini/gemini-2.5-flash",
+  "prompt_version": "generate-items-v2",
+  "focus": null,
+  "verified": true,
+  "candidates": [
+    {
+      "scene": "workplace_keigo",
+      "learner_sentence": "会議室に待ちます。",
+      "intended_label": "needs_correction",
+      "corrected_sentence": "会議室で待ちます。",
+      "reason_en": "The particle 「に」 indicates the existence of something or movement towards a location, but for the location where an action takes place, the particle 「で」 should be used.",
+      "note_en": "This item tests the correct use of particles for the location of an action."
+    },
+    {
+      "scene": "workplace_keigo",
+      "learner_sentence": "この報告書を読みましたください。",
+      "intended_label": "needs_correction",
+      "corrected_sentence": "この報告書を読んでください。",
+      "reason_en": "To make a polite request with 「ください」, the verb must be in its te-form (e.g., 「読んで」), not the past tense (e.g., 「読みました」).",
+      "note_en": "This item checks the correct conjugation of verbs when making a polite request using 「ください」."
+    },
+    {
+      "scene": "workplace_keigo",
+      "learner_sentence": "資料は後で送る。",
+      "intended_label": "needs_correction",
+      "corrected_sentence": "資料は後で送ります。",
+      "reason_en": "When speaking to a manager in a business setting, plain form verbs like 「送る」 are too casual. The polite 「です/ます」 form is required.",
+      "note_en": "This item ensures the learner uses the appropriate politeness level for a professional setting."
+    },
+    {
+      "scene": "workplace_keigo",
+      "learner_sentence": "質問を聞きたいです。",
+      "intended_label": "needs_correction",
+      "corrected_sentence": "質問したいです。",
+      "reason_en": "While grammatically understandable, the phrase 「質問を聞く」 (to hear a question) is not naturally used in Japanese to mean 'to ask a question.' The correct verb is 「質問する」 (to ask a question).",
+      "note_en": "This item tests natural verb-noun combinations in Japanese, identifying common literal translations from English that sound unnatural."
+    },
+    {
+      "scene": "workplace_keigo",
+      "learner_sentence": "よろしくお願います。",
+      "intended_label": "needs_correction",
+      "corrected_sentence": "よろしくお願いします。",
+      "reason_en": "「よろしくお願いします」 is a fixed expression commonly used for greetings and requests for favor, and it should be used as a whole phrase. Changing 「お願いします」 to 「お願います」 is incorrect.",
+      "note_en": "This item focuses on the correct usage of a common fixed expression, which learners often alter slightly."
+    },
+    {
+      "scene": "workplace_keigo",
+      "learner_sentence": "明日の会議、参加します。",
+      "intended_label": "needs_correction",
+      "corrected_sentence": "明日の会議に参加します。",
+      "reason_en": "The verb 「参加します」 (to participate) requires the particle 「に」 to indicate the event or place of participation (e.g., 「会議に参加します」).",
+      "note_en": "This item tests the correct use of particles required by specific verbs, a common challenge for beginners."
+    }
+  ],
+  "verified_on": "2026-08-09",
+  "verified_by": "native speaker (project author)",
+  "verification_note": "Generated to replace one item after the native verdict on eval-052 moved it to `false` and the 90:30 split needed a `true` back. ONE candidate was adopted — 「よろしくお願います。」→「よろしくお願いします。」, now eval-118 — and native-verified on 2026-08-09. The other five were rejected during that check: 「会議室に待ちます。」and 「明日の会議、参加します。」 are particle items in a set already heavy with them, 「資料は後で送る。」 repeats eval-053's politeness mistake in the same scene, 「この報告書を読みましたください。」 repairs to a request that the 2026-08-08 native verdict says is too flat for a manager, and 「質問を聞きたいです。」 is correct Japanese under a different reading, which docs/ja/glossary.md §2 labels `false`."
+}

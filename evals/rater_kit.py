@@ -24,6 +24,8 @@ Three decisions are fixed here, because each one can void the number quietly:
     what the dataset expects would measure how well they can read the dataset.
 
 Build the kit:  .venv/bin/python -m evals.rater_kit --run evals/runs/<run>-baseline-dev.json
+Send it:        .venv/bin/python -m evals.rater_kit --whatsapp evals/rater/<kit>.json \
+                                                    --reply-by 2026-08-16
 Score it:       .venv/bin/python -m evals.rater_kit --score evals/rater/<kit>-jun.json \
                                                             evals/rater/<kit>-second.json
 """
@@ -70,6 +72,45 @@ SCALE: Final[dict[str, tuple[str, str]]] = {
         "states something that is factually untrue.",
     ),
 }
+
+# The scale was written assuming something needed correcting, and the first twenty
+# items found two ways for that assumption to fail. Undefined, each splits raters in
+# the same shape — the corrected sentence is natural, which reads as Valid; the
+# correction went further than it had to, which reads as Wrong — so the disagreement
+# would be a fault in the scale rather than a difference of judgement. Settled by
+# convention instead of two more boxes, because the form is already printed
+# (docs/ja/glossary.md §6).
+#
+#   - Nothing needed correcting at all: two of the twenty.
+#   - Something did, and the AI supplied it and then also swapped a verb: one more.
+#
+# Which items, and how they were graded, is deliberately not written down here or in
+# §6. This file is in a public repository and the second rater has its address; the
+# kit numbers plus the author's own grades are exactly the agreement being measured.
+#
+# Rendered rather than stored, because the two forms name the grades differently: the
+# paper form capitalises to match its tick boxes, and the message keeps the lower case
+# it asks to be sent back. §6 requires both to say the same thing, so only the grade
+# names may vary.
+_SCALE_NOTE_TEMPLATE: Final = (
+    "{open}If the learner's sentence was already correct and needed no change at "
+    "all{close}, answer {insufficient} — unless the AI's version is unnatural or means "
+    "something different, which is {wrong}.\n"
+    "{open}If it did need correcting but the AI changed more than that{close}, the "
+    "necessary part being right is enough for {insufficient}; answer {wrong} only if "
+    "what it added makes the sentence unnatural or no longer a version of what the "
+    "learner said."
+)
+
+
+def scale_note(insufficient: str, wrong: str, open: str = "**", close: str = "**") -> str:
+    """§6's convention for the cases the three grades do not cover, in one wording."""
+    return _SCALE_NOTE_TEMPLATE.format(
+        open=open, close=close, insufficient=insufficient, wrong=wrong
+    )
+
+
+SCALE_NOTE: Final = scale_note("*Insufficient*", "*Wrong*")
 
 # Fixed at 20 by the definition of `rater_agreement` in docs/ja/glossary.md §5, and
 # separately by the day: this is 30 minutes of a stranger's time at a meeting that
@@ -302,6 +343,8 @@ def kit_markdown(kit: dict[str, Any]) -> str:
         lines.append(f"| **{label}** | {meaning} |")
     lines += [
         "",
+        SCALE_NOTE,
+        "",
         "There is a space for a comment on each item. It is optional, but if you tick "
         "*Wrong*, one line about what is wrong is worth more than the tick.",
         "",
@@ -349,10 +392,138 @@ def kit_markdown(kit: dict[str, Any]) -> str:
     return "\n".join(lines) + "\n"
 
 
+def whatsapp_message(kit: dict[str, Any], reply_by: str) -> str:
+    """The same kit as one plain-text message, to be pasted into WhatsApp.
+
+    The distribution route changed on 8/9. The plan was to hand over paper at the
+    meeting and collect it there; a venue of rolling standing conversations had no
+    half-hour in it, so the kit is sent to a phone instead and comes back whenever
+    the rater gets to it. `kit_markdown` cannot do that job — WhatsApp renders no
+    tables and no headings, so the printed form arrives as a wall of pipes.
+
+    Two things this must get right, because both would show up as a number rather
+    than as an error:
+
+      - **The reply comes back as twenty numbered words, never as prose.** Free text
+        has to be assigned to `valid`/`insufficient`/`wrong` by the person
+        transcribing it, and `rater_agreement` would then partly measure how the
+        author read the second rater — the one thing the metric is there to rule out.
+        So the message ends with the twenty lines to copy, already numbered.
+      - **The three words are printed in lower case**, matching
+        `20260808-2041-rater-kit-second.json` exactly. The paper form prints them
+        capitalised for the tick boxes, which made transcription a conversion step
+        that `_graded` rejects (`"Valid"` is not a grade). Over chat there is no
+        reason to keep that step: what comes back can be pasted straight in.
+
+    The item text is reproduced verbatim, emphasis characters included. A reason is
+    the object being graded, so rewriting one to render more tidily would change what
+    the second rater is answering about.
+    """
+    missing = {"kit_id", "split", "level", "n", "items"} - set(kit)
+    if missing:
+        # Reached by passing a run record to --whatsapp, which is an easy slip: both
+        # live under evals/ and both are JSON with the same ids in them. Worth a
+        # sentence rather than a KeyError, like every other refusal in this module.
+        raise ValueError(f"this is not a rater kit; it has no {', '.join(sorted(missing))}")
+    if kit["split"] != "dev":
+        raise ValueError(
+            f"this kit is built from {kit['split']!r}; only a dev kit may leave the project "
+            "(docs/ja/glossary.md §7: sending test items out would contaminate the "
+            "published figures)"
+        )
+
+    grades = " / ".join(SCALE)
+    rule = "─" * 24
+    lines = [
+        f"*Japanese correction check — {kit['n']} items*",
+        "",
+        "Thank you again for offering to look at these at Minna Shuugou. It takes about "
+        f"30 minutes and there is no need to do it in one sitting. If you can send it "
+        f"back by *{reply_by}* that would help me a lot.",
+        "",
+        f"An AI was asked to correct sentences written by {LEVEL_WORDING[kit['level']]} "
+        "learners of Japanese and to explain the mistake in English. Below is what it "
+        "produced. It was told the learner's level and the situation, and the situation "
+        "is written above each item.",
+        "",
+        f"*For each item, answer with one of these words: {grades}.* Judge the correction "
+        "and the reason — not the learner. If the correction is fine but the explanation "
+        "is weak, that is _insufficient_, not _valid_.",
+        "",
+    ]
+    for key, (_, meaning) in SCALE.items():
+        lines += [f"*{key}* — {meaning}", ""]
+
+    lines += [
+        # The same convention as the printed form and docs/ja/glossary.md §6, differing
+        # only in which case of the grade names it prints.
+        scale_note("*insufficient*", "*wrong*", open="*", close="*"),
+        "",
+        "*How to reply:* copy the numbered list at the end of this message and write one "
+        "of those words after each number. That is all I need. If you answer *wrong*, "
+        "one line saying what is wrong is worth more to me than the word itself.",
+        "",
+        rule,
+        "",
+    ]
+
+    for item in kit["items"]:
+        situation, _ = scene_brief(item["scene"])
+        _, requirement = politeness_floor(item["scene"])
+        lines += [
+            f"*{item['kit_no']}. {SCENES[item['scene']]}*",
+            f"_Situation the AI was given: {situation}_",
+            f"_How polite the learner has to be: {requirement}_",
+            "",
+            f"Learner wrote: {item['learner_sentence']}",
+            f"AI corrected it to: {item['corrected_sentence']}",
+            f"AI's reason: {item['reason_en']}",
+            "",
+            rule,
+            "",
+        ]
+
+    lines += [
+        f"*Copy from here and fill in the blanks — {grades}*",
+        f"_({kit['kit_id']})_",
+        "",
+    ]
+    lines += [f"{item['kit_no']}:" for item in kit["items"]]
+    return "\n".join(lines) + "\n"
+
+
 def _write(path: Path, text: str) -> Path:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(text, encoding="utf-8")
     return path
+
+
+def refuse_if_graded(path: Path) -> None:
+    """Stop before a rebuild erases a form somebody has already filled in.
+
+    `--run` regenerates five files, and two of them are the blank forms. That is
+    right the first time and destructive every time after: on 2026-08-09 it was run
+    again to reprint the kit after a wording fix, and it overwrote the author's
+    twenty grades with nulls. They existed nowhere else — a form is filled in by
+    hand, over an hour, and the file had not been committed yet — and the recovery
+    was luck.
+
+    Refused rather than merged or backed up. The two forms are the whole of
+    `rater_agreement`, and a command that reprints a form has no business touching
+    the answers on it.
+
+    Checked for every form before any file is written, so a refusal leaves the kit
+    as it was rather than half rebuilt around the one file it would not touch.
+    """
+    if not path.exists():
+        return
+    existing = json.loads(path.read_text(encoding="utf-8"))
+    graded = [row for row in existing.get("ratings", []) if row.get("rating")]
+    if graded:
+        raise SystemExit(
+            f"{path} already has {len(graded)} grade(s) on it and would be erased. "
+            "Move it aside if you really mean to start that form again."
+        )
 
 
 def _dump(payload: dict[str, Any]) -> str:
@@ -362,6 +533,19 @@ def _dump(payload: dict[str, Any]) -> str:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--run", type=Path, help="a baseline run record on dev; builds the kit")
+    parser.add_argument(
+        "--whatsapp",
+        type=Path,
+        metavar="KIT",
+        help="a built kit; writes the same 20 items as a message to paste into WhatsApp",
+    )
+    # No default. The date belongs to a particular send, and a default here would go
+    # stale silently — a message asking for a reply by a date already past reads as
+    # boilerplate and gets treated as one.
+    parser.add_argument(
+        "--reply-by",
+        help="the date to ask for the reply by, as it should be printed (with --whatsapp)",
+    )
     parser.add_argument(
         "--score",
         type=Path,
@@ -383,29 +567,84 @@ def main() -> None:
     )
     args = parser.parse_args()
 
+    if args.reply_by and not args.whatsapp:
+        # Otherwise it falls through to --run and is silently dropped, which looks
+        # like a message was written with that date on it.
+        raise SystemExit("--reply-by only applies to --whatsapp")
     if args.score:
         _score(*args.score)
         return
+    if args.whatsapp:
+        _whatsapp(args.whatsapp, args.reply_by, args.out)
+        return
     if not args.run:
-        raise SystemExit("give --run to build a kit, or --score to compute rater_agreement")
+        raise SystemExit(
+            "give --run to build a kit, --whatsapp to write the message that sends it, "
+            "or --score to compute rater_agreement"
+        )
 
     record = json.loads(args.run.read_text(encoding="utf-8"))
-    selections = select(record, KIT_SIZE, args.items)
-    kit = kit_record(record, selections)
+    written, selections = build_kit(record, args.items, args.out, args.raters)
 
-    written = [
-        _write(args.out / f"{kit['kit_id']}.json", _dump(kit)),
-        _write(args.out / f"{kit['kit_id']}.md", kit_markdown(kit)),
-    ]
-    written += [
-        _write(args.out / f"{kit['kit_id']}-{rater}.json", _dump(scoring_template(kit, rater)))
-        for rater in args.raters
-    ]
-
+    # The scene list is the one thing worth reading in this output: `select` spreads
+    # the 20 across the scenes so that tiers B and C are in the kit at all, and a kit
+    # that quietly stopped before them would still print a plausible count.
     scenes = sorted({selection.scene for selection in selections})
-    print(f"{len(selections)} items from {kit['split']}, {len(scenes)} scenes: {', '.join(scenes)}")
+    print(
+        f"{len(selections)} items from {record['split']}, {len(scenes)} scenes: {', '.join(scenes)}"
+    )
     for path in written:
         print(f"  -> {path}")
+
+
+def build_kit(
+    record: dict[str, Any], items_path: Path, out: Path, raters: list[str]
+) -> tuple[list[Path], list[Selection]]:
+    """Write the kit, the printed form and a blank form for each rater.
+
+    Separated from `main` so the order of the two steps below can be tested. It is
+    the whole of the command, and the part that matters is not what it writes but
+    what it checks before writing anything.
+
+    Returns what it wrote and what went into it, because the caller reports on both.
+    """
+    selections = select(record, KIT_SIZE, items_path)
+    kit = kit_record(record, selections)
+
+    # Every form first, before a single file is written. Rebuilding is a routine
+    # thing to do — a wording fix, a reprint — and on 2026-08-09 doing it erased
+    # twenty hand-written grades. A refusal has to leave the kit as it was rather
+    # than half rebuilt around the one file it would not overwrite.
+    forms = {out / f"{kit['kit_id']}-{rater}.json": rater for rater in raters}
+    for path in forms:
+        refuse_if_graded(path)
+
+    written = [
+        _write(out / f"{kit['kit_id']}.json", _dump(kit)),
+        _write(out / f"{kit['kit_id']}.md", kit_markdown(kit)),
+        *(_write(path, _dump(scoring_template(kit, rater))) for path, rater in forms.items()),
+    ]
+    return written, selections
+
+
+def _whatsapp(kit_path: Path, reply_by: str | None, out: Path) -> None:
+    """Write the sendable message for an already-built kit.
+
+    Rendered from the kit JSON rather than rewritten by hand, for the same reason the
+    two blank forms are generated together: the message, the printed form and the
+    scoring templates all have to name the same twenty items, and the copy that gets
+    sent is the one nobody can check afterwards.
+
+    `.txt` rather than `.md`: it is meant to be pasted into a chat, and the extension
+    is the only thing stopping it from being mistaken for the printable form.
+    """
+    if not reply_by:
+        raise SystemExit("--whatsapp needs --reply-by (the date printed in the message)")
+
+    kit = json.loads(kit_path.read_text(encoding="utf-8"))
+    path = _write(out / f"{kit['kit_id']}-whatsapp.txt", whatsapp_message(kit, reply_by))
+    print(f"{kit['n']} items from {kit['split']}, reply requested by {reply_by}")
+    print(f"  -> {path}")
 
 
 def _score(first: Path, second: Path) -> None:
