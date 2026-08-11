@@ -1,0 +1,384 @@
+{
+  "run_id": "20260811-1852",
+  "measurement": "level_compliance",
+  "model": "gemini/gemini-2.5-flash",
+  "prompt_version": "dialogue-v1",
+  "temperature": 0.7,
+  "tier_version": "bccwj-suw+luw-cuts70-80-90-95",
+  "regenerated": false,
+  "trials": 1,
+  "n": 30,
+  "date": "20260811",
+  "first_shot_rate": 0.9,
+  "first_shot_rate_by_level": {
+    "beginner": 0.9,
+    "upper_beginner": null,
+    "intermediate": null
+  },
+  "content_words_judged": 70,
+  "unknown_words": 4,
+  "most_common_over_level": [
+    [
+      "エンジニア",
+      1
+    ],
+    [
+      "かしこまり",
+      1
+    ],
+    [
+      "何時ごろ",
+      1
+    ]
+  ],
+  "results": [
+    {
+      "scene": "greeting",
+      "level": "beginner",
+      "turn": 1,
+      "reply": "いい天気ですね。どちらへ？",
+      "judged": 2,
+      "over_level": [],
+      "far_over_level": [],
+      "unknown": [],
+      "passes": true
+    },
+    {
+      "scene": "greeting",
+      "level": "beginner",
+      "turn": 2,
+      "reply": "元気でよかった！お散歩ですか？",
+      "judged": 3,
+      "over_level": [],
+      "far_over_level": [],
+      "unknown": [],
+      "passes": true
+    },
+    {
+      "scene": "greeting",
+      "level": "beginner",
+      "turn": 3,
+      "reply": "ええ、本当に。どこかへお出かけですか？",
+      "judged": 2,
+      "over_level": [],
+      "far_over_level": [],
+      "unknown": [
+        "お出かけ"
+      ],
+      "passes": true
+    },
+    {
+      "scene": "greeting",
+      "level": "beginner",
+      "turn": 4,
+      "reply": "駅ですか。お仕事ですか？",
+      "judged": 2,
+      "over_level": [],
+      "far_over_level": [],
+      "unknown": [],
+      "passes": true
+    },
+    {
+      "scene": "greeting",
+      "level": "beginner",
+      "turn": 5,
+      "reply": "はい、また明日！いってらっしゃい。",
+      "judged": 3,
+      "over_level": [],
+      "far_over_level": [],
+      "unknown": [],
+      "passes": true
+    },
+    {
+      "scene": "self_introduction",
+      "level": "beginner",
+      "turn": 1,
+      "reply": "ラフルさんですね。私はアキラです。",
+      "judged": 1,
+      "over_level": [],
+      "far_over_level": [],
+      "unknown": [
+        "ラフル"
+      ],
+      "passes": true
+    },
+    {
+      "scene": "self_introduction",
+      "level": "beginner",
+      "turn": 2,
+      "reply": "インドからですか！そうなんですね。",
+      "judged": 1,
+      "over_level": [],
+      "far_over_level": [],
+      "unknown": [],
+      "passes": true
+    },
+    {
+      "scene": "self_introduction",
+      "level": "beginner",
+      "turn": 3,
+      "reply": "エンジニアさんですか。すごいですね。",
+      "judged": 2,
+      "over_level": [
+        "エンジニア"
+      ],
+      "far_over_level": [
+        "エンジニア"
+      ],
+      "unknown": [],
+      "passes": false
+    },
+    {
+      "scene": "self_introduction",
+      "level": "beginner",
+      "turn": 4,
+      "reply": "どこで日本語を勉強していますか。",
+      "judged": 4,
+      "over_level": [],
+      "far_over_level": [],
+      "unknown": [],
+      "passes": true
+    },
+    {
+      "scene": "self_introduction",
+      "level": "beginner",
+      "turn": 5,
+      "reply": "こちらこそ、よろしくお願いします。日本の食べ物は何が好きですか。",
+      "judged": 4,
+      "over_level": [],
+      "far_over_level": [],
+      "unknown": [],
+      "passes": true
+    },
+    {
+      "scene": "thanks",
+      "level": "beginner",
+      "turn": 1,
+      "reply": "重かったですね。どこか痛いですか。",
+      "judged": 2,
+      "over_level": [],
+      "far_over_level": [],
+      "unknown": [],
+      "passes": true
+    },
+    {
+      "scene": "thanks",
+      "level": "beginner",
+      "turn": 2,
+      "reply": "そうですか。ちょっと休みますか。",
+      "judged": 3,
+      "over_level": [],
+      "far_over_level": [],
+      "unknown": [],
+      "passes": true
+    },
+    {
+      "scene": "thanks",
+      "level": "beginner",
+      "turn": 3,
+      "reply": "いいえ。少し休みましょうか。",
+      "judged": 2,
+      "over_level": [],
+      "far_over_level": [],
+      "unknown": [],
+      "passes": true
+    },
+    {
+      "scene": "thanks",
+      "level": "beginner",
+      "turn": 4,
+      "reply": "そうですか。よかった。",
+      "judged": 2,
+      "over_level": [],
+      "far_over_level": [],
+      "unknown": [],
+      "passes": true
+    },
+    {
+      "scene": "thanks",
+      "level": "beginner",
+      "turn": 5,
+      "reply": "どういたしまして。これで終わりですか。",
+      "judged": 3,
+      "over_level": [],
+      "far_over_level": [],
+      "unknown": [],
+      "passes": true
+    },
+    {
+      "scene": "simple_request",
+      "level": "beginner",
+      "turn": 1,
+      "reply": "はい、何でしょうか。",
+      "judged": 0,
+      "over_level": [],
+      "far_over_level": [],
+      "unknown": [],
+      "passes": true
+    },
+    {
+      "scene": "simple_request",
+      "level": "beginner",
+      "turn": 2,
+      "reply": "お水ですね。ペットボトルのお水でよろしいですか。",
+      "judged": 4,
+      "over_level": [],
+      "far_over_level": [],
+      "unknown": [],
+      "passes": true
+    },
+    {
+      "scene": "simple_request",
+      "level": "beginner",
+      "turn": 3,
+      "reply": "100円です。",
+      "judged": 1,
+      "over_level": [],
+      "far_over_level": [],
+      "unknown": [],
+      "passes": true
+    },
+    {
+      "scene": "simple_request",
+      "level": "beginner",
+      "turn": 4,
+      "reply": "かしこまりました。お水一つですね。",
+      "judged": 2,
+      "over_level": [
+        "かしこまり"
+      ],
+      "far_over_level": [
+        "かしこまり"
+      ],
+      "unknown": [],
+      "passes": false
+    },
+    {
+      "scene": "simple_request",
+      "level": "beginner",
+      "turn": 5,
+      "reply": "100円、お願いします。",
+      "judged": 3,
+      "over_level": [],
+      "far_over_level": [],
+      "unknown": [],
+      "passes": true
+    },
+    {
+      "scene": "delay_notice",
+      "level": "beginner",
+      "turn": 1,
+      "reply": "大丈夫ですよ。あとどれくらいかかりますか。",
+      "judged": 2,
+      "over_level": [],
+      "far_over_level": [],
+      "unknown": [],
+      "passes": true
+    },
+    {
+      "scene": "delay_notice",
+      "level": "beginner",
+      "turn": 2,
+      "reply": "電車が止まっていますか。大変ですね。",
+      "judged": 3,
+      "over_level": [],
+      "far_over_level": [],
+      "unknown": [],
+      "passes": true
+    },
+    {
+      "scene": "delay_notice",
+      "level": "beginner",
+      "turn": 3,
+      "reply": "十分ですね。分かりました。",
+      "judged": 1,
+      "over_level": [],
+      "far_over_level": [],
+      "unknown": [],
+      "passes": true
+    },
+    {
+      "scene": "delay_notice",
+      "level": "beginner",
+      "turn": 4,
+      "reply": "分かりました。気をつけて来てくださいね。",
+      "judged": 5,
+      "over_level": [],
+      "far_over_level": [],
+      "unknown": [
+        "つけ"
+      ],
+      "passes": true
+    },
+    {
+      "scene": "delay_notice",
+      "level": "beginner",
+      "turn": 5,
+      "reply": "いえいえ、大丈夫ですよ。",
+      "judged": 0,
+      "over_level": [],
+      "far_over_level": [],
+      "unknown": [],
+      "passes": true
+    },
+    {
+      "scene": "workplace_keigo",
+      "level": "beginner",
+      "turn": 1,
+      "reply": "おはようございます。今日は何か予定がありますか。",
+      "judged": 3,
+      "over_level": [],
+      "far_over_level": [],
+      "unknown": [],
+      "passes": true
+    },
+    {
+      "scene": "workplace_keigo",
+      "level": "beginner",
+      "turn": 2,
+      "reply": "ありがとうございます。資料、楽しみにしていますね。",
+      "judged": 5,
+      "over_level": [],
+      "far_over_level": [],
+      "unknown": [],
+      "passes": true
+    },
+    {
+      "scene": "workplace_keigo",
+      "level": "beginner",
+      "turn": 3,
+      "reply": "はい、大丈夫ですよ。急がなくていいです。",
+      "judged": 2,
+      "over_level": [],
+      "far_over_level": [],
+      "unknown": [],
+      "passes": true
+    },
+    {
+      "scene": "workplace_keigo",
+      "level": "beginner",
+      "turn": 4,
+      "reply": "何時ごろ送りますか。",
+      "judged": 2,
+      "over_level": [
+        "何時ごろ"
+      ],
+      "far_over_level": [],
+      "unknown": [],
+      "passes": false
+    },
+    {
+      "scene": "workplace_keigo",
+      "level": "beginner",
+      "turn": 5,
+      "reply": "お疲れ様でした。",
+      "judged": 1,
+      "over_level": [],
+      "far_over_level": [],
+      "unknown": [
+        "お疲れ様"
+      ],
+      "passes": true
+    }
+  ]
+}

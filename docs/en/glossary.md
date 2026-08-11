@@ -185,7 +185,7 @@ correction engine**, bypassing the app, the microphone, and transcription.
 | Correction validity | `correction_validity` | 40 items rated by hand on the three-point scale in §6 | ≥ 85% valid |
 | Rater agreement | `rater_agreement` | Of 20 items rated by both the author and a second native speaker, the share receiving the same rating | ≥ 80% |
 | Retrieval hit rate | `retrieval_hit_rate` | Share of learner sentences for which a genuinely relevant grammar article appeared in the top 3 | ≥ 80% |
-| Level compliance | `level_compliance_rate` | Share of AI replies containing no more over-level words than the threshold | ≥ 90% |
+| Level compliance | `level_compliance_rate` | Share of AI replies containing no more over-level words than the threshold. **Reported as two figures, first-shot and post-regeneration** (below) | ≥ 90% **on the post-regeneration figure** |
 | Format compliance | `format_compliance_rate` | Share of outputs that were valid JSON **and** whose reason was in English. **Reported separately from accuracy** so a language slip is never mistaken for a reasoning error | — |
 | Latency | `latency_ms` | Median and 95th percentile, **reported separately with and without the speech stages** | Before/after comparison |
 | Adoption | — | Number of testers holding at least one session, and turns per tester | ≥ 5 testers |
@@ -193,6 +193,24 @@ correction engine**, bypassing the app, the microphone, and transcription.
 **The corrected sentence is never scored by exact match.** Natural phrasing is not unique, so
 exact matching would report far below true performance. Only the binary label is machine-scored;
 the quality of the phrasing and reason is judged by eye (§6).
+
+**`level_compliance_rate` is reported as two figures (decided 2026-08-11).** The validation node
+regenerates a reply that fails **this same check, through this same function**, so the
+post-regeneration figure converges on "the share that fails twice in a row" and climbs past 90%
+regardless of whether the replies are actually within reach of a beginner. A metric satisfied by
+the machinery built to satisfy it is a metric **reported without being measured** — the same trap
+week 1 avoided by not using constrained decoding.
+
+| Figure | What it is | Target |
+|---|---|---|
+| **First-shot rate** | **Reply quality before any gate.** The headline figure in the README | None — reported for information |
+| Post-regeneration rate | The operational figure | **≥ 90% attaches here** |
+
+**The README states alongside it that the post-regeneration figure is the result of gating with
+the same function, and so is not independent evidence.** It is measured on a fixed script (6 scenes
+× 5 turns × 3 levels = 90 replies) which **contains no line from the evaluation set**, so that no
+`test` sentence is ever pushed through the conversation prompt. Where the vocabulary tiers come
+from is documented in [`nlp/frequency.py`](../../nlp/frequency.py).
 
 **The 20 items for `rater_agreement` are taken from `dev` (decided 2026-08-08).** The
 definition above does not say which split. Taking them from `test` would mean the author reading

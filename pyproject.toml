@@ -4,20 +4,28 @@ version = "0.1.0"
 description = "Speaking practice for beginner learners of Japanese, with corrections after the conversation"
 requires-python = ">=3.11"
 
-# Week 1 needs a text-only conversation loop and a correction call. Retrieval,
-# tokenization, the API layer and the graph arrive in weeks 2-3 and their
+# Retrieval, the API layer and the graph arrive in weeks 2-3 and their
 # dependencies are added then, not now.
 #
 # The model provider goes through LangChain so that swapping it is a one-line
 # change. Gemini is used because a key is already available; Anthropic is the
 # preferred provider and is swapped back in once billing is sorted. Both
 # integration packages are installed so the swap needs no dependency change.
+#
+# SudachiPy arrives in week 2 for the vocabulary-level check. Japanese writes no
+# spaces between words, so deciding whether the AI's reply sits above a learner's
+# level needs the reply split into words first — string matching cannot find a
+# boundary that is not written down. The dictionary is a separate package of
+# roughly 70MB; it is installed at build time, which matters for the week-3
+# Docker image. Both are Apache-2.0 with no share-alike condition.
 dependencies = [
     "langchain",
     "langchain-google-genai",
     "langchain-anthropic",
     "streamlit",
     "python-dotenv",
+    "sudachipy",
+    "sudachidict-core",
 ]
 
 [dependency-groups]
@@ -38,6 +46,13 @@ select = ["E", "F", "I", "UP", "B", "SIM"]
 python_version = "3.12"
 strict = true
 warn_unreachable = true
+
+# SudachiPy ships no type information. Narrowed to that one package rather than
+# relaxed globally, so an untyped import anywhere else still fails: the point of
+# strict mode is that a new dependency has to be argued for, not waved through.
+[[tool.mypy.overrides]]
+module = ["sudachipy.*"]
+ignore_missing_imports = true
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

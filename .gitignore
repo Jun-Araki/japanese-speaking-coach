@@ -42,3 +42,10 @@ data/sessions/
 .DS_Store
 .idea/
 *.swp
+
+# The BCCWJ word frequency list (NINJAL) and everything derived from it. It is
+# free to use for research and education, but the terms say nothing about
+# redistribution — and a public repository is not a place to guess. Same handling
+# PLAN.md already fixed for JMdict: fetch it, do not ship it.
+# Rebuild with: .venv/bin/python -m nlp.frequency --build
+data/frequency/
