@@ -7,9 +7,11 @@ and carries no frequency either, and the shipped dictionary is compiled — the 
 that holds the cost column is not in the package. The tokenizer was never the
 problem; the tier source was missing, and week 2 found that out by looking.
 
-SOURCE. The short-unit word list of the Balanced Corpus of Contemporary Written
-Japanese (BCCWJ), National Institute for Japanese Language and Linguistics.
-  https://clrd.ninjal.ac.jp/bccwj/freq-list.html   DOI 10.15084/00003218
+SOURCE. The word frequency lists of the Balanced Corpus of Contemporary Written
+Japanese (BCCWJ), National Institute for Japanese Language and Linguistics. Both
+the short-unit and the long-unit list, retrieved 2026-08-11, ver1_0.
+  https://clrd.ninjal.ac.jp/bccwj/freq-list.html
+  short unit  DOI 10.15084/00003218    long unit  DOI 10.15084/00003212
 NINJAL states it is free to use for research and educational purposes. It says
 nothing about redistribution, so the list is fetched and never committed —
 the handling PLAN.md §2-3 already fixed for JMdict. `wordfreq` was considered and
@@ -18,9 +20,12 @@ out) and it wants MeCab, which would mean carrying a second tokenizer beside the
 one this project claims to use.
 
 TIERS. Boundaries are not chosen, they are read off the corpus: content lemmas
-sorted by frequency, cut where the running coverage of all content tokens reaches
-70%, 80%, 90% and 95%. That lands on cumulative vocabularies of roughly 1.7k,
-3.4k, 8.4k and 15.9k words — near the sizes usually quoted for the JLPT levels,
+sorted by frequency, cut where the running share of the total reaches
+70%, 80%, 90% and 95%. The total is the sum of one frequency per lemma — the
+highest, where a lemma appears under several parts of speech — not the raw token
+count, which the list does not give per lemma. That lands on cumulative
+vocabularies of roughly 1.7k,
+3.4k, 8.3k and 15.8k words — near the sizes usually quoted for the JLPT levels,
 which is why the README may say the tiers *approximately correspond* to them and
 must not say more. Nothing from a textbook or a past paper is ingested (PLAN.md
 §2-3).
@@ -93,7 +98,9 @@ BEYOND: Final = len(COVERAGE_CUTS) + 1
 # the tiers have five bands, so the top band is above every learner by design.
 # Calibrated on 2026-08-11 against this project's own evaluation set, which is 120
 # sentences written to be what a beginner would say. Of their 426 content words,
-# 74.4% are tier 1 and 89.0% are tier 1 or 2. Mapping beginner to tier 1 would
+# 74.4% were tier 1 and 89.0% tier 1 or 2 when this was decided, against the
+# short-unit table alone; with the long-unit table since added it reads 76.5% and
+# 91.1%. The decision does not turn on which. Mapping beginner to tier 1 would
 # therefore call a quarter of the words in a beginner corpus "above the learner's
 # level" — the check would fire on almost every reply, and the threshold would get
 # blamed for a mapping that was wrong. Beginner is tier 2.

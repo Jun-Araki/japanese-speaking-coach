@@ -70,5 +70,17 @@ so the substance is settled. Only then move to voice, then extract FastAPI and L
 
 SudachiPy and SudachiDict are Apache-2.0 with no share-alike condition, so bundling is fine;
 the README states source and licence. JMdict and KANJIDIC2 are CC BY-SA and are not bundled.
-Commercial textbooks and JLPT past papers are never ingested — difficulty tiers are derived
+Commercial textbooks and JLPT past papers are never ingested — difficulty tiers are built here
 from word frequency and described as "approximately corresponding to JLPT levels".
+
+**The frequency comes from the BCCWJ word lists** (Balanced Corpus of Contemporary Written
+Japanese, NINJAL): short-unit ([DOI 10.15084/00003218](https://doi.org/10.15084/00003218)) and
+long-unit ([DOI 10.15084/00003212](https://doi.org/10.15084/00003212)), ver1_0, retrieved
+2026-08-11 (added 2026-08-11). **SudachiDict does not carry frequency** — it exposes surface,
+lemma, reading and part of speech and nothing else — so tokenization and frequency come from
+different sources.
+
+**BCCWJ is not bundled.** NINJAL states it is free for research and educational use and says
+nothing about redistribution, so it gets the same handling as JMdict: gitignored, with a fetch
+script. `wordfreq` was rejected on two counts — its data is CC BY-SA, and it requires MeCab,
+which would put a second tokenizer beside SudachiPy.

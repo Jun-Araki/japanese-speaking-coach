@@ -224,10 +224,23 @@ instructions land here once that exists.
 
 - **Evaluation set** — written for this project, published in this repository
 - **Grammar reference** — written for this project
-- **SudachiPy / SudachiDict** — Apache-2.0, no share-alike condition
+- **SudachiPy / SudachiDict** — Apache-2.0, no share-alike condition. Used for tokenization.
+  **Not** the source of the difficulty tiers: it carries no word-frequency information
+- **BCCWJ word frequency lists** — Balanced Corpus of Contemporary Written Japanese, National
+  Institute for Japanese Language and Linguistics. Short-unit list
+  ([DOI 10.15084/00003218](https://doi.org/10.15084/00003218)) and long-unit list
+  ([DOI 10.15084/00003212](https://doi.org/10.15084/00003212)), both ver1_0, retrieved
+  2026-08-11. NINJAL states they are free to use for research and educational purposes and says
+  nothing about redistribution, so **they are fetched and never committed here** — the same
+  handling as JMdict below. Rebuild the tier tables with
+  `python -m nlp.frequency --build`; the source and the tier boundaries are documented in
+  [`nlp/frequency.py`](nlp/frequency.py)
+- `wordfreq` was considered and **not** used: its data is CC BY-SA, and it requires MeCab, which
+  would mean a second tokenizer alongside SudachiPy
 - JMdict and KANJIDIC2 are **not** used (CC BY-SA)
-- Commercial textbooks and JLPT past papers are **not** ingested. Difficulty tiers are derived
-  from word frequency, so levels are described as *approximately* corresponding to JLPT levels
+- Commercial textbooks and JLPT past papers are **not** ingested. Difficulty tiers are cut from
+  the frequency list above at fixed points of cumulative corpus coverage, so levels are described
+  as *approximately* corresponding to JLPT levels and no more than that
 
 ## Privacy
 

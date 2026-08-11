@@ -215,6 +215,11 @@ def run_record(
         "over_correction_rate": report.over_correction_rate,
         "format_compliance_rate": report.format_compliance_rate,
         "unusable_verdicts": report.unusable_verdicts,
+        # An aggregate, so it survives redaction: it says how often a reason named
+        # Japanese without quoting it, not whether any particular item was right.
+        # It was printed to the console and nowhere else, which left a figure in
+        # the steering notes that no record could reproduce.
+        "japanese_left_unquoted": sum(1 for o in report.outcomes if o.japanese_left_unquoted),
         "manual_check_ids": sample_ids,
         "scorer_checked_on": scorer_checked_on,
         "results_redacted": redacted,

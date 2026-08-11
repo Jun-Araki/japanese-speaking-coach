@@ -163,8 +163,15 @@ leave nothing to correct and would destroy the evaluation, which is the point of
 | `intermediate` | Intermediate | JLPT N3 |
 
 **"Roughly corresponds to" is deliberate wording.** JLPT past papers and commercial textbooks
-are never ingested. Difficulty tiers are derived from word frequency in SudachiDict, so the
-mapping is an approximation and the README says so.
+are never ingested. Difficulty tiers are built here, by cutting the **BCCWJ word frequency list
+(Balanced Corpus of Contemporary Written Japanese, NINJAL)** at fixed points of cumulative
+content-word coverage — see [`nlp/frequency.py`](../../nlp/frequency.py). The mapping is an
+approximation and the README says so.
+
+**This previously read "derived from word frequency in SudachiDict", which was wrong (corrected
+2026-08-11).** SudachiPy exposes surface, lemma, reading and part of speech and **nothing about how
+common a word is**; the dictionary ships compiled, and the CSV holding the cost column is not in the
+package. **Tokenization comes from SudachiPy and frequency from BCCWJ** — two sources, not one.
 
 **Over-level word** (`over_level_word`): a token in the **AI's reply** whose frequency tier
 is above the learner's declared level. Detected by tokenizing with SudachiPy — string
@@ -355,10 +362,10 @@ each. **Never inline them in code.** Current state:
 
 | Threshold | Provisional value | Status |
 |---|---|---|
-| Rewrite-too-far, normalised edit distance | `0.65` | Provisional — confirm against the dev split in Week 2 |
+| Rewrite-too-far, normalised edit distance | **`0.85`** | **Fixed 2026-08-11.** Measured over the 73 corrections the baseline produced on `dev`: the **largest distance, 0.82, belonged to a correction identical to this project's own reference answer**, and the one correction that changed the meaning scored 0.77, below it. **No threshold separates them**, so it sits above the observed range and **a firing count of zero is reported** |
 | Rewrite-too-far, short-sentence absolute distance | `6` chars, applied below 8 chars | Provisional |
 | **Reason language: share of Japanese left outside quotes** | `0.25` | **Fixed — reconfirmed against the 80 dev items on 2026-08-11 and left where it was.** Across the 73 items that came back with a reason the share peaked at `0.164` and sat at `0.009` in the middle; **nothing crossed the threshold**. English explanations approach it from below (0.164 at most) and a reason actually written in Japanese sits far above (0.67–1.00 measured), so the threshold occupies the gap between them |
-| Over-level content-word ratio | `0.2` | Provisional |
+| Over-level content-word ratio | `0.2` | **Left as it was, 2026-08-11.** Across 90 replies regeneration would fire on 5.6% overall and 13.3% at beginner, under the 30% at which the prompt rather than the threshold is the thing to fix. **0.2 was never swept** — the measurement says this value does not break the conversation, not that it is the best one |
 | Absolute tier gap rejected outright | `2` tiers | Provisional |
 | Maximum regenerations per reply | `1` | Fixed — an unbounded loop would stall the conversation |
 
