@@ -12,7 +12,13 @@ from __future__ import annotations
 
 from config import threshold
 from correction.engine import Correction
-from correction.validation import edit_distance, rewritten_too_far, validate
+from correction.validation import (
+    ADMISSION_PHRASES,
+    admits_the_sentence_was_fine,
+    edit_distance,
+    rewritten_too_far,
+    validate,
+)
 
 # An answer that kept nothing of the sentence and is far longer. After the 8/11
 # measurement the threshold sits above every distance the baseline actually
@@ -59,6 +65,33 @@ class TestRewrittenTooFar:
     def test_the_thresholds_are_not_inlined(self) -> None:
         assert threshold("rewrite_too_far", "normalised_distance_max") == 0.85
         assert threshold("rewrite_too_far", "short_sentence_chars") == 8
+
+
+class TestAdmissionPhrases:
+    """The phrase list is the pre-registration, so it is pinned, not described.
+
+    Its size decides whether the day-2 signal clears the 20-point bar: three of the
+    four phrases give +23.5pt and all four give +35.2pt. Anything that can be
+    widened after the measurement is not a criterion fixed in advance.
+    """
+
+    def test_the_list_is_exactly_what_was_registered(self) -> None:
+        assert ADMISSION_PHRASES == (
+            "grammatically correct",
+            "grammatically understandable",
+            "perfectly natural",
+            "is correct",
+        )
+
+    def test_matches_the_admission_and_not_an_ordinary_correction(self) -> None:
+        conceded = "Your sentence is grammatically correct, but a more natural way is..."
+        ordinary = "The particle should be で, because it marks where an action happens."
+
+        assert admits_the_sentence_was_fine(conceded)
+        assert not admits_the_sentence_was_fine(ordinary)
+
+    def test_is_not_thrown_by_capitals(self) -> None:
+        assert admits_the_sentence_was_fine("Grammatically correct, but unusual here.")
 
 
 class TestValidate:

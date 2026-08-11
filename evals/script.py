@@ -5,12 +5,21 @@ the learner's side has to be held still. Generating a fresh learner turn each ti
 would make a before-and-after comparison a comparison of two different
 conversations.
 
-WRITTEN FRESH, ON PURPOSE. Not one line here comes from data/evaluation. Feeding
-those sentences to the dialogue model would push `test` items through the
-conversation prompt, and the held-out split is touched once this month and not by
-this. It also would not be a conversation: the evaluation items are isolated
-sentences, and what is needed here is five turns that follow on from each other
-and from the partner's opening line in dialogue/scenes.py.
+WRITTEN FRESH, AND CHECKED. No line here matches an item in the held-out split —
+`tests/test_script.py` fails if one ever does. Feeding a `test` sentence to the
+dialogue model would push it through the conversation prompt, and that split is
+touched once this month and not by this.
+
+The first draft said "not one line comes from data/evaluation" and was wrong: two
+lines matched `test` items verbatim and six matched `dev` ones. Set phrases are a
+small, closed set, so 「おはようございます。」 and 「よろしくお願いします。」 coincide
+with the reference answers whatever anyone intends. The `test` collisions were
+replaced; the `dev` ones are left, because the script never reaches the correction
+engine and `dev` is the side that may be tuned against anyway.
+
+It also would not be a conversation if lifted from there: the evaluation items are
+isolated sentences, and what is needed here is five turns that follow on from each
+other and from the partner's opening line in dialogue/scenes.py.
 
 DELIBERATELY CORRECT-ISH JAPANESE. These are not learner mistakes to be corrected;
 they are prompts to make the partner talk. A script full of errors would measure
@@ -56,7 +65,7 @@ SCRIPT: Final[dict[str, tuple[str, ...]]] = {
     ),
     "delay_notice": (
         "すみません、少し遅れます。",
-        "電車が止まっています。",
+        "電車がまだ動きません。",
         "たぶん十分ぐらいです。",
         "はい、着いたら連絡します。",
         "ご迷惑をおかけします。",
@@ -66,7 +75,7 @@ SCRIPT: Final[dict[str, tuple[str, ...]]] = {
         "はい、資料は今日できます。",
         "少し時間がかかります。",
         "はい、確認してから送ります。",
-        "お先に失礼します。",
+        "では、また明日。",
     ),
 }
 

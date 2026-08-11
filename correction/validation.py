@@ -21,6 +21,25 @@ from typing import Final
 from config import threshold
 from correction.engine import Correction
 
+# Frozen before the measurement it will be judged by, which is the whole of what
+# "pre-registered" means here. The day-2 error analysis found that the baseline
+# often admits the sentence was fine and rewrites it anyway, and that admission
+# separates the two labels better than anything else tried: on dev, 54.5% of the
+# over-corrections say one of these against 19.4% of the genuine corrections.
+#
+# The set is written out because the separation moves with it. Three of these four
+# give +23.5pt, all four give +35.2pt, and a looser match on "understandable" alone
+# gives +47.5pt — against an acceptance bar of 20pt and a denominator of eleven,
+# where one item is 9.1pt. A criterion fixed in advance against a predicate chosen
+# afterwards is not a criterion. Change this list and the run that used it is no
+# longer the run the bar was set for.
+ADMISSION_PHRASES: Final[tuple[str, ...]] = (
+    "grammatically correct",
+    "grammatically understandable",
+    "perfectly natural",
+    "is correct",
+)
+
 _DISTANCE_MAX: Final[float] = threshold("rewrite_too_far", "normalised_distance_max")
 _SHORT_CHARS: Final[int] = threshold("rewrite_too_far", "short_sentence_chars")
 _SHORT_DISTANCE_MAX: Final[int] = threshold("rewrite_too_far", "short_sentence_distance_max")
@@ -44,6 +63,18 @@ class Validation:
     @property
     def fired(self) -> bool:
         return self.discarded is not None
+
+
+def admits_the_sentence_was_fine(reason: str) -> bool:
+    """Whether the model's own explanation concedes the original needed nothing.
+
+    Deterministic, and about the model's output rather than the learner's sentence:
+    this reads what was already written, it does not ask anything further. Whether
+    it earns a place in the validation node is decided on 8/15 against the bar in
+    design.md, on the real implementation's reasons rather than the baseline's.
+    """
+    lowered = reason.lower()
+    return any(phrase in lowered for phrase in ADMISSION_PHRASES)
 
 
 def edit_distance(left: str, right: str) -> int:

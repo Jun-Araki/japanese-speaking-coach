@@ -96,14 +96,20 @@ BEYOND: Final = len(COVERAGE_CUTS) + 1
 
 # Which tier each learner level is allowed to reach. The app has three levels and
 # the tiers have five bands, so the top band is above every learner by design.
-# Calibrated on 2026-08-11 against this project's own evaluation set, which is 120
-# sentences written to be what a beginner would say. Of their 426 content words,
-# 74.4% were tier 1 and 89.0% tier 1 or 2 when this was decided, against the
-# short-unit table alone; with the long-unit table since added it reads 76.5% and
-# 91.1%. The decision does not turn on which. Mapping beginner to tier 1 would
-# therefore call a quarter of the words in a beginner corpus "above the learner's
-# level" — the check would fire on almost every reply, and the threshold would get
-# blamed for a mapping that was wrong. Beginner is tier 2.
+# Calibrated on 2026-08-11 against the DEV half of this project's evaluation set —
+# 80 sentences written to be what a beginner would say, 293 content words. 73.7%
+# are tier 1 and 91.1% are tier 1 or 2. Mapping beginner to tier 1 would therefore
+# call a quarter of the words in a beginner corpus "above the learner's level":
+# the check would fire on almost every reply, and the threshold would be blamed
+# for a mapping that was wrong. Beginner is tier 2.
+#
+# Dev only, and this was corrected after the fact. The first calibration used all
+# 120 items including the held-out learner sentences AND their reference answers,
+# which is a third, unrecorded touch of `test` (docs/ja/glossary.md §7 allows it at
+# the start and the end of August, nowhere between). Recomputing on `dev` alone
+# gives 73.7% / 91.1% against 76.5% / 91.1%, and the same tier — the decision never
+# depended on the held-out half. Which is the point: it cost nothing to take it
+# out, so there was no reason to leave it in.
 LEVEL_TIER: Final[dict[str, int]] = {
     "beginner": 2,
     "upper_beginner": 3,
