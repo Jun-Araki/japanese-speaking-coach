@@ -1,0 +1,67 @@
+{
+  "cases": [
+    {
+      "id": "fix-001",
+      "scene": "greeting",
+      "learner_sentence": "おはようです",
+      "needs_correction": true,
+      "corrected_sentence": "おはようございます",
+      "predicted": true,
+      "reason": "The polite morning greeting is a fixed phrase."
+    },
+    {
+      "id": "fix-002",
+      "scene": "thanks",
+      "learner_sentence": "ありがとう",
+      "needs_correction": true,
+      "corrected_sentence": "ありがとうございます",
+      "predicted": true,
+      "reason": "Add ございます to make it polite in this situation."
+    },
+    {
+      "id": "fix-003",
+      "scene": "delay_notice",
+      "learner_sentence": "遅れるです",
+      "needs_correction": true,
+      "corrected_sentence": "遅れます",
+      "predicted": false,
+      "reason": null
+    },
+    {
+      "id": "fix-004",
+      "scene": "workplace_keigo",
+      "learner_sentence": "確認しますか",
+      "needs_correction": true,
+      "corrected_sentence": "ご確認いただけますか",
+      "predicted": null,
+      "reason": null
+    },
+    {
+      "id": "fix-005",
+      "scene": "greeting",
+      "learner_sentence": "今日は暑いね。",
+      "needs_correction": false,
+      "corrected_sentence": null,
+      "predicted": false,
+      "reason": null
+    },
+    {
+      "id": "fix-006",
+      "scene": "greeting",
+      "learner_sentence": "良い朝ですね。",
+      "needs_correction": false,
+      "corrected_sentence": null,
+      "predicted": true,
+      "reason": "A more natural greeting is 「いい天気ですね」."
+    },
+    {
+      "id": "fix-007",
+      "scene": "thanks",
+      "learner_sentence": "助かりました。",
+      "needs_correction": false,
+      "corrected_sentence": null,
+      "predicted": true,
+      "reason": "これは丁寧な言い方ではありません。もっと自然な形にしました。"
+    }
+  ]
+}

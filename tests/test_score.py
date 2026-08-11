@@ -14,14 +14,17 @@ that never calls a provider:
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 from typing import Any
 
 import pytest
 
 from correction.engine import Correction, CorrectionResult
+from correction.engine import format_problems as engine_format_problems
 from evals.dataset import Item
 from evals.score import (
+    MEASUREMENT_LEVEL,
     SCORER_VERSION,
     ScoreReport,
     _print_manual_check,
@@ -93,6 +96,45 @@ class FakeJudge:
             reason_en=reason if verdict else None,
         )
         return CorrectionResult(sentence, correction, 1, problems)
+
+
+FIXTURE_PATH = Path(__file__).parent / "fixtures" / "scorer_regression.json"
+FIXTURE_CASES: list[dict[str, Any]] = json.loads(FIXTURE_PATH.read_text(encoding="utf-8"))["cases"]
+FIXTURE_ITEMS = [
+    Item(
+        id=case["id"],
+        scene=case["scene"],
+        learner_sentence=case["learner_sentence"],
+        needs_correction=case["needs_correction"],
+        corrected_sentence=case["corrected_sentence"],
+        reason_en="Reference reason." if case["needs_correction"] else None,
+        split="dev",
+    )
+    for case in FIXTURE_CASES
+]
+
+
+class FixtureJudge:
+    """Replays the frozen answers, through the engine's own format check.
+
+    Unlike `FakeJudge` this does not hand `format_problems` over ready-made: it
+    builds the `Correction` and asks `correction.engine.format_problems` about it,
+    which is where the language rule actually lives.
+    """
+
+    def __init__(self) -> None:
+        self.remaining = list(FIXTURE_CASES)
+
+    def __call__(self, sentence: str, scene: str, level: str) -> CorrectionResult:
+        case = self.remaining.pop(0)
+        if case["predicted"] is None:
+            return CorrectionResult(sentence, None, 2, ("invalid_json",))
+        correction = Correction(
+            needs_correction=case["predicted"],
+            corrected_sentence=case["corrected_sentence"] if case["predicted"] else None,
+            reason_en=case["reason"],
+        )
+        return CorrectionResult(sentence, correction, 1, engine_format_problems(correction))
 
 
 class TestDetectionAccuracy:
@@ -395,47 +437,70 @@ class TestTestSplitGuard:
 
 
 class TestExistingMetricsDoNotMove:
-    """A frozen expectation for the three week-1 numbers.
+    """A frozen expectation for the three week-1 numbers, through the real path.
 
     Week 2 adds metrics and record fields under a rule: the existing three keep the
     same definition, so `scorer_version` stays put and the 8/11 baseline stays
     comparable with everything measured after it. The rule is written in four
-    places and enforced in none — and "we did not change it" is not something a
-    reader of the README can check.
+    places, and "we did not change it" is not something a README reader can check.
 
-    So: one fixed set of outcomes, one set of numbers. Any edit that moves them is
-    a scorer change, and a scorer change means a new `scorer_version` and a
-    re-measured baseline — which costs a second touch of `test`.
+    Three things this deliberately does, after an audit found the first version
+    short of all of them:
+
+    - The cases live in `tests/fixtures/scorer_regression.json`, not in this file.
+      A number that moves has to show up as a diff against data, and a fixture that
+      can be edited in the same breath as the code it pins is not a fixture.
+    - The values are read off `run_record()`, not off `ScoreReport`. Week 2 adds
+      six fields to that record; the point is that adding them moves nothing.
+    - The reasons go through `correction.engine.format_problems`, so the language
+      rule is exercised. `SCORER_VERSION` says it covers "the language rule", but
+      that rule lives in the engine, and it was edited on 8/11 AFTER the official
+      test measurement without the version moving. The earlier fake returned
+      `format_problems` ready-made and never touched it — the one path that most
+      needed pinning was the one path the test could not see.
     """
 
-    def _frozen(self) -> ScoreReport:
-        items = [
-            make_item("t1", True),
-            make_item("t2", True),
-            make_item("t3", True),
-            make_item("t4", True),
-            make_item("f1", False),
-            make_item("f2", False),
-            make_item("f3", False),
-        ]
-        # detected, missed, unusable, detected | over-corrected, clean, clean
-        return score(items, FakeJudge(True, False, None, True, True, False, False))
+    def _report(self) -> ScoreReport:
+        return score(FIXTURE_ITEMS, FixtureJudge(), MEASUREMENT_LEVEL)
 
     def test_the_three_numbers_are_unchanged(self) -> None:
-        report = self._frozen()
+        record = run_record(
+            self._report(), "baseline", "baseline-v1", "dev", MEASUREMENT_LEVEL, "20260811-0000"
+        )
 
-        assert report.detection_accuracy == 0.5  # 2 of 4 labelled true
-        assert report.over_correction_rate == pytest.approx(1 / 3)  # 1 of 3 labelled false
-        # 6 of 7: the answer that never parsed is a format failure as well as a
-        # missed detection. The two are counted in different places on purpose, and
-        # this line is what stops a later edit from quietly merging them.
-        assert report.format_compliance_rate == pytest.approx(6 / 7)
-        assert report.unusable_verdicts == 1
+        assert record["detection_accuracy"] == 0.5  # 2 of 4 labelled true
+        assert record["over_correction_rate"] == pytest.approx(2 / 3)  # 2 of 3 labelled false
+        # 5 of 7, and the two failures are different failures. fix-007 came back
+        # in Japanese; fix-004 never parsed, and unparseable output is a format
+        # failure as well as a missed detection — the same item is counted in both
+        # places on purpose, because they are answers to different questions.
+        #
+        # This expectation was written as 6/7 twice, by hand, on the reasoning that
+        # an unusable verdict "has no reason to judge". Both times the fixture said
+        # otherwise. That is the argument for having one.
+        #
+        # fix-002 names ございます without quotes and still passes: an English
+        # sentence mentioning a Japanese word is English (docs/ja/glossary.md §5).
+        assert record["format_compliance_rate"] == pytest.approx(5 / 7)
+        assert record["unusable_verdicts"] == 1
+
+    def test_the_language_rule_still_splits_the_same_reasons(self) -> None:
+        # fix-002 names ございます without quotes and is English; fix-007 is written
+        # in Japanese. Both are recorded as unquoted Japanese; only one is a
+        # failure. Reversing that was the day-4 bug, and this is what would catch
+        # it returning.
+        report = self._report()
+        by_id = {outcome.item.id: outcome for outcome in report.outcomes}
+
+        assert by_id["fix-002"].format_compliant is True
+        assert by_id["fix-007"].format_compliant is False
+        assert by_id["fix-002"].japanese_left_unquoted is True
+        assert by_id["fix-007"].japanese_left_unquoted is True
 
     def test_the_denominators_are_unchanged(self) -> None:
         # The two accuracy numbers do not share a denominator, and week 1 corrected
         # the error margin twice for getting that wrong.
-        report = self._frozen()
+        report = self._report()
 
         assert len(report.labelled(True)) == 4
         assert len(report.labelled(False)) == 3
