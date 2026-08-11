@@ -31,7 +31,7 @@ from typing import Any, Final
 from correction import PROMPT_VERSION as ENGINE_PROMPT_VERSION
 from correction import baseline_check, check
 from correction.baseline import PROMPT_VERSION as BASELINE_PROMPT_VERSION
-from correction.engine import CorrectionResult, japanese_left_unquoted
+from correction.engine import CorrectionResult, japanese_left_unquoted, japanese_ratio
 from dialogue.scenes import LEVELS
 from evals.dataset import ITEMS_PATH, Item, Split, load_items
 from llm import active_model_name
@@ -82,6 +82,10 @@ class Outcome:
     # Recorded, not counted: the correction prompt asks for 「」 and the baseline
     # prompt does not, so this shows where that difference actually lands.
     japanese_left_unquoted: bool
+    # How far the reason sat from the language threshold, not just which side of it.
+    # glossary §7 asks for that threshold to be reconfirmed against dev this week,
+    # and a boolean cannot answer "by how much". None when there was no reason.
+    japanese_ratio: float | None
     attempts: int
     corrected_sentence: str | None
     reason_en: str | None
@@ -245,6 +249,7 @@ def _result_row(outcome: Outcome) -> dict[str, Any]:
         "format_compliant": outcome.format_compliant,
         "format_problems": list(outcome.format_problems),
         "japanese_left_unquoted": outcome.japanese_left_unquoted,
+        "japanese_ratio": outcome.japanese_ratio,
         "attempts": outcome.attempts,
         "corrected_sentence": outcome.corrected_sentence,
         "reason_en": outcome.reason_en,
@@ -261,6 +266,7 @@ def _judge_item(item: Item, judge: Judge, level: str) -> Outcome:
         format_compliant=result.format_compliant,
         format_problems=tuple(result.format_problems),
         japanese_left_unquoted=reason is not None and japanese_left_unquoted(reason),
+        japanese_ratio=None if reason is None else japanese_ratio(reason),
         attempts=result.attempts,
         corrected_sentence=None if correction is None else correction.corrected_sentence,
         reason_en=None if correction is None else correction.reason_en,

@@ -339,7 +339,7 @@ each. **Never inline them in code.** Current state:
 |---|---|---|
 | Rewrite-too-far, normalised edit distance | `0.65` | Provisional — confirm against the dev split in Week 2 |
 | Rewrite-too-far, short-sentence absolute distance | `6` chars, applied below 8 chars | Provisional |
-| **Reason language: share of Japanese left outside quotes** | `0.25` | **Set from day 4 observations** (decided against nine real cases out of 20). Reconfirm against the dev split in Week 2 |
+| **Reason language: share of Japanese left outside quotes** | `0.25` | **Fixed — reconfirmed against the 80 dev items on 2026-08-11 and left where it was.** Across the 73 items that came back with a reason the share peaked at `0.164` and sat at `0.009` in the middle; **nothing crossed the threshold**. English explanations approach it from below (0.164 at most) and a reason actually written in Japanese sits far above (0.67–1.00 measured), so the threshold occupies the gap between them |
 | Over-level content-word ratio | `0.2` | Provisional |
 | Absolute tier gap rejected outright | `2` tiers | Provisional |
 | Maximum regenerations per reply | `1` | Fixed — an unbounded loop would stall the conversation |

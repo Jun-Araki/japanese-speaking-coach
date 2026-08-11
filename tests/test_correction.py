@@ -163,6 +163,40 @@ class TestReasonIsEnglish:
         # nobody can reproduce (docs/ja/glossary.md §7).
         assert threshold("reason_language", "japanese_ratio_max") == engine._JAPANESE_RATIO_MAX
 
+    def test_a_reason_with_neither_language_is_not_english(self) -> None:
+        # The ratio alone would call this English: no Japanese over no Japanese plus
+        # no Latin is zero, which sits comfortably under the threshold. That is why
+        # the no-Latin case is answered before the ratio and not by it. Written down
+        # because the guard looks redundant next to `japanese_ratio` and is not.
+        assert engine.japanese_ratio("123 456 ...") == 0.0
+        assert not reason_is_english("123 456 ...")
+
+
+class TestJapaneseRatio:
+    """The number behind the boolean, recorded per item on dev runs.
+
+    glossary §7 asks for 0.25 to be reconfirmed against the dev split this week.
+    A boolean says which side of the line an item fell; it cannot say whether the
+    line sits anywhere sensible. Week 1 replaced the day-4 rule for exactly that
+    reason — nine "failures" turned out to be English sentences naming a Japanese
+    word, and nobody could see it from the flag alone.
+    """
+
+    def test_an_english_reason_naming_a_japanese_word_scores_far_below_the_threshold(
+        self,
+    ) -> None:
+        ratio = engine.japanese_ratio("the masu-stem of the verb (遅れ) cannot end a sentence.")
+
+        assert ratio < engine._JAPANESE_RATIO_MAX / 2
+
+    def test_a_reason_written_in_japanese_scores_far_above_it(self) -> None:
+        assert engine.japanese_ratio("これは丁寧な言い方ではありません。") > 0.5
+
+    def test_quoted_japanese_does_not_count(self) -> None:
+        # Same removal as reason_is_english: pointing at 「は」 is how a particle is
+        # explained, and a ratio that punished it would make good reasons look worst.
+        assert engine.japanese_ratio("「は」 marks the topic.") == 0.0
+
 
 class TestJapaneseLeftUnquoted:
     def test_quoted_japanese_is_not_flagged(self) -> None:

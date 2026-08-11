@@ -238,12 +238,30 @@ def reason_is_english(reason: str) -> bool:
 
     The threshold and the measurements behind it are in config/thresholds.toml.
     """
+    # The no-Latin case is answered before the ratio, not by it. A reason with no
+    # Latin letters and no Japanese either — digits, punctuation, an empty gesture —
+    # scores a ratio of zero and would pass as English on a technicality.
+    outside_quotes = _QUOTED.sub(" ", reason)
+    if len(re.findall(r"[A-Za-z]", outside_quotes)) == 0:
+        return False
+    return japanese_ratio(reason) <= _JAPANESE_RATIO_MAX
+
+
+def japanese_ratio(reason: str) -> float:
+    """The proportion `reason_is_english` compares against the threshold.
+
+    Recorded per item on `dev` runs so the threshold can be re-examined without
+    re-measuring. glossary §7 asks for 0.25 to be reconfirmed against dev in week 2,
+    and a boolean cannot answer that question: it says an item passed, not by how
+    much. The day-4 rule was replaced precisely because nobody could see that the
+    nine "failures" sat nowhere near a reason actually written in Japanese.
+    """
     outside_quotes = _QUOTED.sub(" ", reason)
     japanese = len(_JAPANESE.findall(outside_quotes))
     latin = len(re.findall(r"[A-Za-z]", outside_quotes))
-    if latin == 0:
-        return False
-    return japanese / (japanese + latin) <= _JAPANESE_RATIO_MAX
+    if japanese + latin == 0:
+        return 0.0
+    return japanese / (japanese + latin)
 
 
 def japanese_left_unquoted(reason: str) -> bool:
