@@ -124,6 +124,33 @@ class TestPolitenessFloor:
     def test_every_scene_has_a_floor(self) -> None:
         assert set(POLITENESS_FLOORS) == set(SCENES)
 
+    def test_the_tier_of_each_scene_is_the_one_the_dataset_was_labelled_under(self) -> None:
+        """Tiers reach the generator as `tier {tier}` and decided 120 labels.
+
+        Fixed here rather than left to the table: moving a scene between tiers makes
+        every item already labelled under it wrong, and nothing else would notice —
+        the same reason the scene identifiers themselves are pinned (§2, §3).
+        """
+        assert {scene: tier for scene, (tier, _) in POLITENESS_FLOORS.items()} == {
+            "greeting": "A",
+            "thanks": "A",
+            "self_introduction": "B",
+            "simple_request": "B",
+            "delay_notice": "C",
+            "workplace_keigo": "C",
+        }
+
+    def test_the_scenes_that_needed_adjudicating_are_the_ones_that_split(self) -> None:
+        """Tier B is where the candidates split; A and C never did (§2).
+
+        Without this the other tests here pass over an empty dict: they all iterate
+        `POLITENESS_ADJUDICATIONS`, so deleting its contents — which takes the worked
+        criteria out of the generator's prompt — is invisible.
+        """
+        assert set(POLITENESS_ADJUDICATIONS) == {"self_introduction", "simple_request"}
+        for adjudication in POLITENESS_ADJUDICATIONS.values():
+            assert adjudication.strip()
+
     def test_unknown_scene_is_rejected_by_both(self) -> None:
         with pytest.raises(ValueError, match="Unknown scene"):
             politeness_floor("restaurant")

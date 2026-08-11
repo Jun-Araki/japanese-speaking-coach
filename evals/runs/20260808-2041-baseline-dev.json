@@ -19,6 +19,7 @@
     "eval-036",
     "eval-048"
   ],
+  "dataset_note": "Written 2026-08-08. The dataset moved underneath it on 2026-08-09: eight of these 40 rows no longer describe the item that now carries their id. Seven had their learner_sentence replaced when duplicates and self-contradictions were resolved (eval-005, 012, 013, 029, 044, 048, 059), and eval-052 was relabelled true -> false. The figures above are correct for the dataset as it stood on 2026-08-08 and are left as they were; recomputed against the current items.json, over_correction_rate is 6/9 = 0.667 rather than 5/8 = 0.625 (detection_accuracy is unchanged at 1.0). Week 2's error analysis reads this record: check any row against items.json before drawing a conclusion from it, or rerun the dev split.",
   "results": [
     {
       "id": "eval-001",

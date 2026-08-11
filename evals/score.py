@@ -20,6 +20,7 @@ Run:  .venv/bin/python -m evals.score --implementation baseline --split test
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 from collections.abc import Callable
 from dataclasses import dataclass
@@ -157,6 +158,21 @@ def manual_check_sample(outcomes: list[Outcome], size: int = MANUAL_CHECK_SAMPLE
     return [outcomes[int(index * step)] for index in range(size)]
 
 
+def items_digest(path: Path) -> str:
+    """Fingerprint of the dataset a run was measured against.
+
+    Without it a run record names the model, the prompt and the scorer but not the
+    data, so two runs can carry the same versions and still be measured on
+    different item sets. That is not hypothetical here: the day-4 and day-6 runs
+    were taken against a 60-item file, and the file now holds 120 — the `test`
+    split itself grew from 20 items to 40 between them.
+
+    Twelve hex digits, because this is for telling two datasets apart by eye in a
+    README, not for defending against a forged one.
+    """
+    return hashlib.sha256(path.read_bytes()).hexdigest()[:12]
+
+
 def run_record(
     report: ScoreReport,
     implementation: str,
@@ -164,6 +180,8 @@ def run_record(
     split: Split,
     level: str,
     run_id: str,
+    digest: str | None = None,
+    scorer_checked_on: str | None = None,
 ) -> dict[str, Any]:
     """The JSON written for every measurement.
 
@@ -171,6 +189,10 @@ def run_record(
     a number in the README cannot be traced back to the measurement it came from —
     and week 1 deliberately measures twice, on 20 items and then on 40, so "which
     run is this?" is a question that will actually be asked (design.md).
+
+    `scorer_checked_on` names the `dev` run whose five items were read by hand
+    before this one. On a `test` run that is the whole of the hand check: see
+    `_print_manual_check`.
     """
     sample_ids = [outcome.item.id for outcome in manual_check_sample(report.outcomes)]
     redacted = split == "test"
@@ -180,6 +202,7 @@ def run_record(
         "model": active_model_name(),
         "prompt_version": prompt_version,
         "scorer_version": SCORER_VERSION,
+        "items_digest": digest,
         "n": len(report.outcomes),
         "split": split,
         "level": level,
@@ -189,6 +212,7 @@ def run_record(
         "format_compliance_rate": report.format_compliance_rate,
         "unusable_verdicts": report.unusable_verdicts,
         "manual_check_ids": sample_ids,
+        "scorer_checked_on": scorer_checked_on,
         "results_redacted": redacted,
         "results": [] if redacted else [_result_row(outcome) for outcome in report.outcomes],
     }
@@ -267,14 +291,36 @@ def _print_summary(report: ScoreReport, implementation: str, split: str) -> None
     print(f"  japanese left unquoted  {unquoted}  (recorded, not counted)")
 
 
-def _print_manual_check(report: ScoreReport) -> None:
-    """Print the five hand-checked items in full, `test` included.
+def _print_manual_check(report: ScoreReport, split: Split) -> None:
+    """Print the five hand-checked items in full — on `dev` only.
 
-    This is the one deliberate exception to the redaction above, and it is bounded:
-    five items, at the console, listed by id in `manual_check_ids` so the exception
-    is on the record. A scoring bug and a bad model produce the same disappointing
-    number, and nothing else tells them apart (design.md, day 4).
+    The point of the hand check is to tell a scoring bug apart from a weak model,
+    and the only thing that separates them is `expected` against `predicted`. So
+    this cannot be softened for `test` by hiding a column or two: printing the
+    learner sentence and the system's correction without the verdicts leaves a
+    check on the MODEL, which is not what this step is for.
+
+    The redaction in `_result_row` closed the run record and left this open. Five
+    of forty is 12.5% of the split, and `over_correction_rate` rests on thirteen
+    items — so reading five verdicts means reading the outcome of up to 15% of that
+    denominator, days before a week of tuning against `dev`. "Bounded" was the wrong
+    defence: week 1's lesson is that a rule kept by discipline is a rule that gets
+    broken, and every other leak here was closed by machinery instead.
+
+    Both cannot be had at once. `items.json` publishes `needs_correction` for every
+    item, so any per-item line that varies with the answer is `predicted` under
+    another name (evals/score.py `_result_row`). The hand check therefore MOVES: a
+    handful of `dev` items are scored first, through the same code at the same
+    `scorer_version`, and that run's id goes into `scorer_checked_on`. Nothing is
+    lost — a scoring bug does not know which split it is on.
     """
+    if split == "test":
+        ids = ", ".join(outcome.item.id for outcome in manual_check_sample(report.outcomes))
+        print("\nNo per-item output on test: a verdict read here is a verdict tuned against.")
+        print("  the hand check ran on dev instead, recorded as scorer_checked_on")
+        print(f"  ids sampled (labels are public, verdicts are not): {ids}")
+        return
+
     print(f"\nCheck these {MANUAL_CHECK_SAMPLE} by hand before believing the numbers above:")
     for outcome in manual_check_sample(report.outcomes):
         item = outcome.item
@@ -299,24 +345,67 @@ def main() -> None:
     )
     parser.add_argument("--level", choices=sorted(LEVELS), default=MEASUREMENT_LEVEL)
     parser.add_argument("--items", type=Path, default=ITEMS_PATH)
+    parser.add_argument(
+        "--limit",
+        type=int,
+        help=(
+            "score only the first N items. dev only — it exists so the hand check "
+            "before a test run costs a handful of calls instead of the whole split"
+        ),
+    )
+    parser.add_argument(
+        "--scorer-checked-on",
+        help=(
+            "run_id of the dev run whose five items were read by hand first. "
+            "Required for --split test, where no per-item output is printed"
+        ),
+    )
     args = parser.parse_args()
+
+    # A `test` run prints no verdicts, so the hand check has to have happened
+    # somewhere else. Asking for the id here is what makes that a step rather than
+    # an intention: without it, the cheapest path is to skip the check entirely and
+    # publish a number nobody looked behind.
+    if args.split == "test" and not args.scorer_checked_on:
+        raise SystemExit(
+            "test runs need --scorer-checked-on: score a few dev items first, at this "
+            "same scorer_version, and pass that run_id. The hand check does not "
+            "happen on test (see _print_manual_check)."
+        )
+
+    # A partial `test` run would be written to `evals/runs/` looking like every other
+    # test record, carrying an `n` that nobody reads as "and the rest was skipped".
+    # The one test measurement of the month is not the place to allow a subset.
+    if args.limit is not None and args.split == "test":
+        raise SystemExit("--limit is for dev. A test run is measured over the whole split.")
 
     judge, prompt_version = IMPLEMENTATIONS[args.implementation]
     items = [item for item in load_items(args.items) if item.split == args.split]
     if not items:
         raise SystemExit(f"no {args.split} items in {args.items}")
+    if args.limit is not None:
+        items = items[: args.limit]
 
     print(f"{args.implementation} over {len(items)} {args.split} items...")
     report = score(items, judge, args.level)
 
     run_id = datetime.now().strftime("%Y%m%d-%H%M")
-    record = run_record(report, args.implementation, prompt_version, args.split, args.level, run_id)
+    record = run_record(
+        report,
+        args.implementation,
+        prompt_version,
+        args.split,
+        args.level,
+        run_id,
+        digest=items_digest(args.items),
+        scorer_checked_on=args.scorer_checked_on,
+    )
     RUNS_DIR.mkdir(parents=True, exist_ok=True)
     path = RUNS_DIR / f"{run_id}-{args.implementation}-{args.split}.json"
     path.write_text(json.dumps(record, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
     _print_summary(report, args.implementation, args.split)
-    _print_manual_check(report)
+    _print_manual_check(report, args.split)
     print(f"\nrun record -> {path}")
 
 

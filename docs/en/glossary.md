@@ -275,14 +275,18 @@ each one splits raters between `Insufficient` and `Wrong`** — the corrected se
 natural, which reads as Valid, while the AI touched something that did not need touching, which
 reads as Wrong.
 
-> **Which items these were is deliberately not recorded here — and that is not a safeguard**
-> (established 2026-08-09). The kit itself (`evals/rater/*.json`) **is already committed and
-> public**, and against `items.json` it gives up **exactly two** items labelled
-> `needs_correction: false` and exactly one matching case 2. **Keeping only the counts still
-> leaves the grades recoverable by anyone who follows the trail.** What is actually protecting
-> the number is that the second rater is unlikely to go looking, which is not a mechanism.
-> This could not be redacted after the fact, so it is written down as it is. **Next time, the
-> item text stays uncommitted until `rater_agreement` has been computed.**
+> **The first rater's answers are published.** Not "not hidden here" — **not hidden at all**
+> (established 2026-08-09, amended 8/10). `evals/rater/20260808-2041-rater-kit-jun.json` is
+> committed with all twenty grades in it, because the evidence that it was sealed before the
+> second rater replied *is* its commit timestamp. Recording only the counts in this section is
+> therefore worth very little; `.steering/` names the three items outright.
+>
+> **So what protects `rater_agreement` is that the second rater is unlikely to go looking**,
+> which is not a mechanism. **Read the number with that caveat attached.**
+>
+> **Procedure for the next kit:** commit a hash of the answers to timestamp the seal, and commit
+> the answers themselves only after `rater_agreement` has been computed. This time that was not
+> possible because "seal it" had already been defined as "commit the file".
 
 **Case 1: nothing needed correcting at all** (**2** of the 20 rated on 8/9).
 
