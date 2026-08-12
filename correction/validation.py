@@ -20,6 +20,7 @@ from typing import Final
 
 from config import threshold
 from correction.engine import Correction
+from dialogue.scenes import politeness_floor
 
 # Frozen before the measurement it will be judged by, which is the whole of what
 # "pre-registered" means here. The day-2 error analysis found that the baseline
@@ -75,6 +76,52 @@ def admits_the_sentence_was_fine(reason: str) -> bool:
     """
     lowered = reason.lower()
     return any(phrase in lowered for phrase in ADMISSION_PHRASES)
+
+
+# The other candidate for check 3, and the one tried first. A sentence that ends
+# in a polite form was probably fine as it stood — except at tier A, where politeness
+# is not required at all and the plain form IS the right answer (docs/ja/glossary.md
+# §2). Measured on the 120 items: without the tier the predicate separates the labels
+# by MINUS 7.8 points, firing more often on the sentences that genuinely needed
+# correcting than on the ones that did not. Reading the tier first takes it to
+# +12.2, which is real and is still not much.
+#
+# Only the tier is read, never `politeness_rule` or POLITENESS_ADJUDICATIONS: those
+# settle borderline cases by quoting evaluation items, one of them from the held-out
+# split, and a rule built from an item is a rule that answers that item.
+POLITE_ENDINGS: Final[tuple[str, ...]] = (
+    "です",
+    "ます",
+    "ください",
+    "でしょうか",
+    "ました",
+    "ません",
+    "でした",
+    "ですか",
+    "ますか",
+    "ですね",
+    "ませんか",
+    "でしょう",
+    "ましょう",
+)
+
+_CLOSING = "。、？！「」 \t\n"
+
+
+def politeness_looks_sufficient(sentence: str, scene: str) -> bool:
+    """Whether the sentence already meets what the scene asks for, structurally.
+
+    Tier A asks for nothing, so everything passes; tiers B and C are judged on the
+    ending alone. No exceptions for 「はじめまして」 or a trailing 「お名前は」 — both
+    are correct and both fail this test. They are left failing on purpose: an
+    exception list here would be copied out of the evaluation set, and a predicate
+    that knows the answers is not measuring anything. The error it causes is a
+    measurable error; the one an exception list causes is not.
+    """
+    tier, _ = politeness_floor(scene)
+    if tier == "A":
+        return True
+    return sentence.rstrip(_CLOSING).endswith(POLITE_ENDINGS)
 
 
 def edit_distance(left: str, right: str) -> int:

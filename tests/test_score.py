@@ -81,6 +81,9 @@ class FakeJudge:
         # the same way. A fake that reports Japanese as format-compliant is a state
         # the engine cannot produce, and it leaves that column untested.
         self.japanese_reason = japanese_reason
+        # When set, the correction returned instead of the usual one. Used to hand
+        # the validation checks something to reject.
+        self.replacement: str | None = None
         self.calls: list[tuple[str, str, str]] = []
 
     def __call__(self, sentence: str, scene: str, level: str) -> CorrectionResult:
@@ -92,9 +95,10 @@ class FakeJudge:
         reason = "これは丁寧ではありません。" if self.japanese_reason else "A fixed phrase."
         if verdict and self.japanese_reason:
             problems = (*problems, "reason_not_english")
+        corrected = self.replacement or "おはようございます"
         correction = Correction(
             needs_correction=verdict,
-            corrected_sentence="おはようございます" if verdict else None,
+            corrected_sentence=corrected if verdict else None,
             reason_en=reason if verdict else None,
         )
         return CorrectionResult(sentence, correction, 1, problems)
@@ -572,6 +576,70 @@ class TestProvenanceFields:
         assert record["results"] == []
         assert set(record["latency_ms"]) == {"median", "p95"}
         assert record["latency_ms"]["median"] is not None
+
+
+class TestStages:
+    """The same answers, scored with the checks on and off.
+
+    This is what makes the comparison table readable: the difference between two
+    stages is the check, with no second set of calls and no sampling noise between
+    the columns. It also means a run has to say which stage it was, or two records
+    of the same split and the same prompt mean different things.
+    """
+
+    def _replaced(self) -> tuple[list[Item], FakeJudge]:
+        # A correction that keeps nothing of the sentence — above the 0.85 the
+        # threshold was measured up to on 8/11.
+        item = Item(
+            id="over",
+            scene="greeting",
+            learner_sentence="はい。",
+            needs_correction=True,
+            corrected_sentence="はい、そうです。",
+            reason_en="Reference reason.",
+            split="dev",
+        )
+        judge = FakeJudge(True)
+        judge.replacement = "本日は大変よいお天気でございますね。まったくその通りです。"
+        return [item], judge
+
+    def test_raw_keeps_what_the_model_said(self) -> None:
+        items, judge = self._replaced()
+        record = run_record(
+            score(items, judge, MEASUREMENT_LEVEL, "raw"),
+            "engine", "correction-v1", "dev", MEASUREMENT_LEVEL, "20260812-0000", stage="raw",
+        )
+
+        assert record["stage"] == "raw"
+        assert record["detection_accuracy"] == 1.0
+        assert record["validation_fired"] == {"on_needs_correction": 0, "on_already_natural": 0}
+
+    def test_validated_discards_it_and_says_so(self) -> None:
+        items, judge = self._replaced()
+        record = run_record(
+            score(items, judge, MEASUREMENT_LEVEL, "validated"),
+            "engine", "correction-v1", "dev", MEASUREMENT_LEVEL, "20260812-0000",
+            stage="validated",
+        )
+
+        # Detection falls, because the learner is no longer told anything. That is
+        # the cost of the check and it has to be visible next to the benefit.
+        assert record["detection_accuracy"] == 0.0
+        assert record["validation_fired"]["on_needs_correction"] == 1
+        assert record["results"][0]["validation_reason"] == "rewrite_too_far"
+        assert record["results"][0]["discarded_correction"] is not None
+
+    def test_firing_is_split_by_label(self) -> None:
+        # A check that fires on `false` items is doing its job; one that fires on
+        # `true` items is destroying corrections the learner needed. One total
+        # hides the only distinction that matters here.
+        record = run_record(
+            score(*self._replaced()[:2], MEASUREMENT_LEVEL, "validated"),
+            "engine", "correction-v1", "dev", MEASUREMENT_LEVEL, "20260812-0000",
+            stage="validated",
+        )
+
+        assert set(record["validation_fired"]) == {"on_needs_correction", "on_already_natural"}
 
 
 class TestItemsDigest:

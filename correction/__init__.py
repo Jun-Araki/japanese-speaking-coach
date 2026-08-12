@@ -15,14 +15,17 @@ from correction.engine import (
     format_problems,
     parse_correction,
 )
+from correction.validation import Validation, validate
 
 __all__ = [
     "PROMPT_VERSION",
     "Correction",
     "CorrectionFormatError",
     "CorrectionResult",
+    "Validation",
     "baseline_check",
     "check",
     "format_problems",
     "parse_correction",
+    "validate",
 ]

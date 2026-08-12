@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import os
 import sys
+from dataclasses import replace
 from pathlib import Path
 
 import streamlit as st
@@ -20,7 +21,7 @@ from dotenv import load_dotenv
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from correction import CorrectionResult, check  # noqa: E402
+from correction import CorrectionResult, check, validate  # noqa: E402
 from dialogue import LEVELS, SCENES, Utterance, opening_line, reply  # noqa: E402
 
 load_dotenv()
@@ -69,6 +70,12 @@ def record_correction(sentence: str, scene: str, level: str) -> None:
     """
     try:
         result = check(sentence, scene, level)
+        # The deterministic checks run here rather than inside `check`, so that the
+        # measurement can score the same answers with them on and off. The learner
+        # sees the validated version; the scorer decides per run (evals/score.py).
+        if result.correction is not None:
+            checked = validate(sentence, result.correction)
+            result = replace(result, correction=checked.correction)
     except Exception:
         result = CorrectionResult(sentence, correction=None, attempts=0, format_problems=())
     corrections().append(result)

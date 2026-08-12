@@ -35,6 +35,7 @@ from correction import PROMPT_VERSION as ENGINE_PROMPT_VERSION
 from correction import baseline_check, check
 from correction.baseline import PROMPT_VERSION as BASELINE_PROMPT_VERSION
 from correction.engine import CorrectionResult, japanese_left_unquoted, japanese_ratio
+from correction.validation import validate
 from dialogue.scenes import LEVELS
 from evals.dataset import ITEMS_PATH, Item, Split, load_items
 from llm import active_model_name
@@ -62,6 +63,12 @@ MANUAL_CHECK_SAMPLE: Final = 5
 # One learner sentence, one scene, one level, in and a judgement out. Both
 # implementations have this shape so that the scoring path is the same for both.
 Judge = Callable[[str, str, str], CorrectionResult]
+
+# Stages, not implementations. The validation checks are post-processing over an
+# answer that already exists, so the SAME set of answers can be scored with them on
+# and off — the difference between two stages is the check and nothing else, with
+# no second set of calls and no sampling noise in between (design.md, "段は4つに割る").
+STAGES: Final[tuple[str, ...]] = ("raw", "validated")
 
 IMPLEMENTATIONS: Final[dict[str, tuple[Judge, str]]] = {
     "baseline": (baseline_check, BASELINE_PROMPT_VERSION),
@@ -94,6 +101,12 @@ class Outcome:
     # glossary §7 asks for that threshold to be reconfirmed against dev this week,
     # and a boolean cannot answer "by how much". None when there was no reason.
     japanese_ratio: float | None
+    # Which check discarded this correction, if any, and what it discarded. Named
+    # rather than counted: when the implementation scores below the baseline the
+    # first suspect is the validation throwing away corrections that were fine, and
+    # a tally cannot answer that (correction/validation.py).
+    validation_reason: str | None
+    discarded_correction: str | None
     attempts: int
     corrected_sentence: str | None
     reason_en: str | None
@@ -153,9 +166,14 @@ class ScoreReport:
         return [o for o in self.outcomes if o.item.needs_correction is needs_correction]
 
 
-def score(items: list[Item], judge: Judge, level: str = MEASUREMENT_LEVEL) -> ScoreReport:
+def score(
+    items: list[Item],
+    judge: Judge,
+    level: str = MEASUREMENT_LEVEL,
+    stage: str = "raw",
+) -> ScoreReport:
     """Run one implementation over the items, in the order they were given."""
-    return ScoreReport([_judge_item(item, judge, level) for item in items])
+    return ScoreReport([_judge_item(item, judge, level, stage) for item in items])
 
 
 def manual_check_sample(outcomes: list[Outcome], size: int = MANUAL_CHECK_SAMPLE) -> list[Outcome]:
@@ -206,6 +224,7 @@ def run_record(
     run_id: str,
     digest: str | None = None,
     scorer_checked_on: str | None = None,
+    stage: str = "raw",
 ) -> dict[str, Any]:
     """The JSON written for every measurement.
 
@@ -236,6 +255,19 @@ def run_record(
         "over_correction_rate": report.over_correction_rate,
         "format_compliance_rate": report.format_compliance_rate,
         "unusable_verdicts": report.unusable_verdicts,
+        "stage": stage,
+        # Split by label, because the two directions mean opposite things: a check
+        # that fires on `false` items is doing its job and one that fires on `true`
+        # items is destroying corrections the learner needed. A single total hides
+        # exactly the distinction the check is judged on.
+        "validation_fired": {
+            "on_needs_correction": sum(
+                1 for o in report.labelled(True) if o.validation_reason is not None
+            ),
+            "on_already_natural": sum(
+                1 for o in report.labelled(False) if o.validation_reason is not None
+            ),
+        },
         # An aggregate, so it survives redaction: it says how often a reason named
         # Japanese without quoting it, not whether any particular item was right.
         # It was printed to the console and nowhere else, which left a figure in
@@ -277,6 +309,8 @@ def _result_row(outcome: Outcome) -> dict[str, Any]:
         "format_problems": list(outcome.format_problems),
         "japanese_left_unquoted": outcome.japanese_left_unquoted,
         "japanese_ratio": outcome.japanese_ratio,
+        "validation_reason": outcome.validation_reason,
+        "discarded_correction": outcome.discarded_correction,
         "elapsed_ms": outcome.elapsed_ms,
         "attempts": outcome.attempts,
         "corrected_sentence": outcome.corrected_sentence,
@@ -284,11 +318,19 @@ def _result_row(outcome: Outcome) -> dict[str, Any]:
     }
 
 
-def _judge_item(item: Item, judge: Judge, level: str) -> Outcome:
+def _judge_item(item: Item, judge: Judge, level: str, stage: str = "raw") -> Outcome:
     started = time.perf_counter()
     result = judge(item.learner_sentence, item.scene, level)
     elapsed_ms = round((time.perf_counter() - started) * 1000)
+
     correction = result.correction
+    validation_reason: str | None = None
+    discarded: str | None = None
+    if stage == "validated" and correction is not None:
+        checked = validate(item.learner_sentence, correction)
+        correction = checked.correction
+        validation_reason = checked.reason
+        discarded = None if checked.discarded is None else checked.discarded.corrected_sentence
     reason = None if correction is None else correction.reason_en
     return Outcome(
         item=item,
@@ -297,6 +339,8 @@ def _judge_item(item: Item, judge: Judge, level: str) -> Outcome:
         format_problems=tuple(result.format_problems),
         japanese_left_unquoted=reason is not None and japanese_left_unquoted(reason),
         japanese_ratio=None if reason is None else japanese_ratio(reason),
+        validation_reason=validation_reason,
+        discarded_correction=discarded,
         elapsed_ms=elapsed_ms,
         attempts=result.attempts,
         corrected_sentence=None if correction is None else correction.corrected_sentence,
@@ -397,6 +441,12 @@ def main() -> None:
         required=True,
         help="test is touched at the start and at the end of August, and nowhere between",
     )
+    parser.add_argument(
+        "--stage",
+        choices=sorted(STAGES),
+        default="raw",
+        help="raw is the model's answer; validated applies the deterministic checks over it",
+    )
     parser.add_argument("--level", choices=sorted(LEVELS), default=MEASUREMENT_LEVEL)
     parser.add_argument("--items", type=Path, default=ITEMS_PATH)
     parser.add_argument(
@@ -441,7 +491,7 @@ def main() -> None:
         items = items[: args.limit]
 
     print(f"{args.implementation} over {len(items)} {args.split} items...")
-    report = score(items, judge, args.level)
+    report = score(items, judge, args.level, args.stage)
 
     run_id = datetime.now().strftime("%Y%m%d-%H%M")
     record = run_record(
@@ -453,9 +503,10 @@ def main() -> None:
         run_id,
         digest=items_digest(args.items),
         scorer_checked_on=args.scorer_checked_on,
+        stage=args.stage,
     )
     RUNS_DIR.mkdir(parents=True, exist_ok=True)
-    path = RUNS_DIR / f"{run_id}-{args.implementation}-{args.split}.json"
+    path = RUNS_DIR / f"{run_id}-{args.implementation}-{args.stage}-{args.split}.json"
     path.write_text(json.dumps(record, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
     _print_summary(report, args.implementation, args.split)
