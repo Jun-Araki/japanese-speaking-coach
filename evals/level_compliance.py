@@ -79,6 +79,7 @@ class ReplyOutcome:
     text: str
     first_shot: str
     attempts: int
+    language_retried: bool
     judged: int
     over_level: tuple[str, ...]
     first_shot_over_level: tuple[str, ...]
@@ -114,6 +115,7 @@ def measure(levels: tuple[str, ...] = tuple(LEVELS)) -> list[ReplyOutcome]:
                         text=answer.text,
                         first_shot=answer.first_shot,
                         attempts=answer.attempts,
+                        language_retried=answer.language_retried,
                         judged=check.judged,
                         over_level=tuple(word.surface for word in check.over_level),
                         first_shot_over_level=tuple(
@@ -171,6 +173,12 @@ def run_record(outcomes: list[ReplyOutcome], run_id: str) -> dict[str, Any]:
             level: _rate([outcome.passes for outcome in group]) for level, group in by_level.items()
         },
         "regenerations": sum(1 for outcome in outcomes if outcome.attempts > 1),
+        # Counted apart from the level gate. A reply sent back for not being in
+        # Japanese is the conversation prompt's failure; one sent back for hard
+        # vocabulary is the learner's level. Folding them together would let the
+        # first hide inside the second, which is how two English paragraphs spent
+        # a measurement sitting at the top of a vocabulary list.
+        "language_retries": sum(1 for outcome in outcomes if outcome.language_retried),
         "content_words_judged": words,
         "unknown_words": sum(len(outcome.unknown) for outcome in outcomes),
         # Counted on the FIRST attempt: this column answers "what did the gate fire
@@ -189,6 +197,7 @@ def run_record(outcomes: list[ReplyOutcome], run_id: str) -> dict[str, Any]:
                 "reply": outcome.text,
                 "first_shot": outcome.first_shot,
                 "attempts": outcome.attempts,
+                "language_retried": outcome.language_retried,
                 "judged": outcome.judged,
                 "over_level": list(outcome.over_level),
                 "first_shot_over_level": list(outcome.first_shot_over_level),
@@ -229,6 +238,7 @@ def main() -> None:
     print(f"  first shot          {_percent(record['first_shot_rate'])}")
     print(f"  after regeneration  {_percent(record['after_regeneration_rate'])}")
     print(f"  regenerated         {record['regenerations']}")
+    print(f"  sent back (not ja)  {record['language_retries']}")
     for level in record["first_shot_rate_by_level"]:
         first = _percent(record["first_shot_rate_by_level"][level])
         after = _percent(record["after_regeneration_rate_by_level"][level])

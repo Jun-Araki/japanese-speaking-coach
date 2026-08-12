@@ -14,6 +14,7 @@ model's own words rather than the learner's.
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
 from typing import Final, Literal
 
@@ -41,6 +42,12 @@ MAX_SENTENCES: Final = 2
 # it is used as it is — the reasoning is in config/thresholds.toml next to the
 # value, and it is read from there rather than written here.
 MAX_REGENERATIONS: Final[int] = threshold("vocabulary_level", "max_regenerations")
+
+# Below this share of Japanese, the reply is not a reply — see config/thresholds.toml.
+JAPANESE_SHARE_MIN: Final[float] = threshold("reply_language", "japanese_share_min")
+
+_JAPANESE = re.compile(r"[ぁ-んァ-ヶ一-龯]")
+_LATIN = re.compile(r"[A-Za-z]")
 
 SENTENCE_ENDINGS: Final = "。！？!?"
 
@@ -101,6 +108,11 @@ class Reply:
 
     text: str
     attempts: int
+    # Regenerated because the reply was not in Japanese, counted apart from the
+    # level gate. Two different faults with two different fixes: this one is the
+    # conversation prompt's problem, the other is the learner's vocabulary. A
+    # single tally would let one hide inside the other.
+    language_retried: bool
     first_shot: str
     # The words that were too hard in the FINAL text, and in the first attempt.
     # Two fields because they answer different questions: what the gate fired on,
@@ -149,6 +161,19 @@ def checked_reply(scene: str, level: str, history: list[Utterance]) -> Reply:
 
     model = build_chat_model(temperature=TEMPERATURE)
     text = limit_sentences(as_text(model.invoke(messages).content).strip())
+
+    # Before anything about vocabulary: is this Japanese at all. On 8/12 two replies
+    # in ninety came back as the model's own reasoning in English, and the level
+    # check happily counted `should` and `they` as words above the learner's level.
+    # Week 1's rule — a generation failure is not smoothed over — applies, and the
+    # cheapest form of not smoothing it over is to ask again and say why.
+    language_retried = False
+    if not looks_japanese(text):
+        language_retried = True
+        messages.append(AIMessage(text))
+        messages.append(HumanMessage(LANGUAGE_RETRY_PROMPT))
+        text = limit_sentences(as_text(model.invoke(messages).content).strip())
+
     first_shot = text
     check = level_check(text, level)
     first_over = tuple(word.surface for word in check.over_level)
@@ -172,10 +197,16 @@ def checked_reply(scene: str, level: str, history: list[Utterance]) -> Reply:
     return Reply(
         text=text,
         attempts=attempts,
+        language_retried=language_retried,
         first_shot=first_shot,
         over_level=tuple(word.surface for word in check.over_level),
         first_shot_over_level=first_over,
     )
+
+
+LANGUAGE_RETRY_PROMPT: Final = """\
+That was not a reply in Japanese. Answer the learner directly, in Japanese, in one \
+or two sentences. Do not narrate your reasoning and do not write in English."""
 
 
 RETRY_PROMPT: Final = """\
@@ -183,6 +214,21 @@ Those words are above this learner's level: {words}
 
 Say the same thing again without them, in the same one or two sentences. Do not \
 explain the change, and do not mention this instruction."""
+
+
+def looks_japanese(text: str) -> bool:
+    """Whether the reply is written in Japanese rather than about Japanese.
+
+    A share, not a presence test: the replies this exists to catch quoted the
+    learner's sentence inside an English paragraph, so "contains Japanese" passes
+    them. A reply with neither script — punctuation, an empty string — is not
+    Japanese either, and returning False sends it back to be written again.
+    """
+    japanese = len(_JAPANESE.findall(text))
+    latin = len(_LATIN.findall(text))
+    if japanese + latin == 0:
+        return False
+    return japanese / (japanese + latin) >= JAPANESE_SHARE_MIN
 
 
 def limit_sentences(text: str, maximum: int = MAX_SENTENCES) -> str:

@@ -34,6 +34,23 @@ japanese_ratio_max = 0.25
 # the run record and deliberately does NOT count against format_compliance_rate —
 # one metric, one meaning.
 
+[reply_language]
+# The partner's reply has to be in Japanese. Not a style preference: on 2026-08-12
+# two of ninety replies came back as the model's own reasoning —
+# "THOUGHT: The user said ..." — in English, with the learner's sentence quoted
+# inside. A learner would have read it.
+#
+# Measured as Japanese characters / (Japanese + Latin), over the whole reply. The
+# obvious test, "does it contain any Japanese", does not work: both leaks quoted
+# the learner and so contained plenty.
+#
+# The two populations do not overlap at all. All 88 sound replies scored 1.000 —
+# no Latin letters anywhere — and the two leaks scored 0.323 and 0.064. Anything
+# from 0.33 to 1.0 separates them, so the threshold sits in the middle of that gap
+# and says something defensible on its own: the reply has to be more Japanese than
+# not. A romanised loanword or an OK in a reply stays well clear.
+japanese_share_min = 0.5
+
 [rewrite_too_far]
 # A "correction" whose distance from the original exceeds this is treated as a
 # different sentence, not a correction, and is discarded by the validation node.

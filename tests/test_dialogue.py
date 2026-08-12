@@ -171,6 +171,28 @@ class TestPolitenessFloor:
             politeness_rule("restaurant")
 
 
+class TestLooksJapanese:
+    """The reply has to be in Japanese, and quoting the learner does not count.
+
+    Both replies this was written for began "THOUGHT: The user said ..." and quoted
+    the learner's sentence, so a presence test passes them. The two populations do
+    not overlap: 88 sound replies scored 1.000 and the two leaks scored 0.323 and
+    0.064 (config/thresholds.toml).
+    """
+
+    def test_a_japanese_reply_passes(self) -> None:
+        assert reply_module.looks_japanese("はい、元気です。")
+
+    def test_reasoning_that_quotes_the_learner_does_not(self) -> None:
+        leaked = 'THOUGHT: The user said "はい、確認してから送ります。" This does not answer.'
+
+        assert not reply_module.looks_japanese(leaked)
+
+    def test_a_reply_with_neither_script_does_not(self) -> None:
+        # Punctuation, an empty string. Not Japanese, and worth another attempt.
+        assert not reply_module.looks_japanese("……")
+
+
 class TestCheckedReply:
     """Validation node 2: regenerate once when the reply is above the learner.
 
@@ -263,6 +285,33 @@ class TestCheckedReply:
         # Still over level, and said so. The retry was spent and did not work,
         # which is a different outcome from the retry not being needed.
         assert "弊社" in result.over_level
+
+    def test_english_reasoning_is_sent_back_before_vocabulary_is_judged(
+        self, monkeypatch: Any
+    ) -> None:
+        # The level check happily read `should` and `they` as words above the
+        # learner's level. Asking whether the reply is Japanese has to come first,
+        # or the vocabulary metric ends up counting English.
+        leaked = 'THOUGHT: The user seems to be ending the conversation. I need to acknowledge.'
+        self._model(monkeypatch, leaked, "はい、また明日。")
+
+        result = reply_module.checked_reply(
+            "greeting", "beginner", [Utterance("learner", "また明日")]
+        )
+
+        assert result.text == "はい、また明日。"
+        assert result.language_retried is True
+        # Counted apart from the level gate: different fault, different fix.
+        assert result.attempts == 1
+
+    def test_a_japanese_reply_is_not_sent_back(self, monkeypatch: Any) -> None:
+        self._model(monkeypatch, "はい、元気です。")
+
+        result = reply_module.checked_reply(
+            "greeting", "beginner", [Utterance("learner", "やあ")]
+        )
+
+        assert result.language_retried is False
 
     def test_attempts_is_counted_rather_than_assumed(self, monkeypatch: Any) -> None:
         # It used to return `1 + MAX_REGENERATIONS` on every failure path — a
