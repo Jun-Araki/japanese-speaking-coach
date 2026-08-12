@@ -51,7 +51,7 @@ Greetings and set expressions are single units. They are not assembled from part
 so 「です」 cannot be added to make them polite:
 
 - ✗ おはよう**です** → ✓ おはようございます
-- ✗ お会計、お願い**です** → ✓ お会計、お願いします
+- ✗ ご案内、お願い**です** → ✓ ご案内、お願いします
 
 「お願いです」 does exist in other shapes — 「一生のお願いです」 — but it is not the polite
 form of 「お願い」, and it cannot stand where 「お願いします」 belongs. The set phrases are

@@ -32,7 +32,7 @@ The prefix is 「お」 with native verbs (お待ちください、お読みく�
 Chinese-derived nouns (ご確認ください). 「ご見せください」 does not exist.
 
 This applies only to *their* action. Talking about your own, です・ます is enough —
-「少し考えます」 needs nothing added. See grammar-008.
+「あとで送ります」 needs nothing added. See grammar-008.
 
 ## 〜てくれてありがとう — thank you for doing that
 

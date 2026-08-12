@@ -23,7 +23,7 @@ order produces sentences that are understandable but not Japanese:
 
 - ✗ どこがあなたの会社ですか。 → ✓ お勤め先**は**どちらですか。
 
-「あなた」 is not what is wrong there. 「あなたはこの本を持っていますか。」 is a perfectly good
+「あなた」 is not what is wrong there. 「あなたは何時に来ますか。」 is a perfectly good
 sentence. The defect is the word order, which starts from 「どこが」 instead of from
 the thing being asked about.
 

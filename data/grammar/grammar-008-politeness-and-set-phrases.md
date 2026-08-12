@@ -11,7 +11,7 @@ also_see: [grammar-002, grammar-003, grammar-004, grammar-006, grammar-007]
 「トイレはどこ？」 is fine said to a colleague and wrong said to a shop assistant. Same
 sentence, same subject, different listener.
 
-**A neighbour or a colleague.** No polite form is required. 「毎日、走るんだ。」「早いですね。」
+**A neighbour or a colleague.** No polite form is required. 「今日は寒いね。」「もう帰るの。」
 are both fine, and a plain-form sentence here is not a mistake.
 
 **Someone met for the first time, or a shop assistant.** The **ending** has to be
@@ -19,7 +19,7 @@ polite — です、ます or ください. 「お」 makes a *word* polite; it 
 sentence polite, so it cannot carry the floor on its own.
 
 - ✗ 名前は？ → ✓ お名前は何ですか。
-- ✗ お仕事、何？ → ✓ お仕事は何でしょうか？
+- ✗ ご趣味、何？ → ✓ ご趣味は何でしょうか？
 
 The one exception is a sentence deliberately left unfinished. 「お名前は。」 trails off
 instead of closing, and that form is polite in itself. Stopping on 「何？」 is not
@@ -30,11 +30,11 @@ that — it closes, bluntly.
 - ✗ ここで待つ。 → ✓ ここで待ちます。
 - ✗ まだ書いていない。 → ✓ まだ書いていません。
 
-For your **own** actions です・ます is the whole requirement — 「少し考えます」 needs
+For your **own** actions です・ます is the whole requirement — 「あとで送ります」 needs
 nothing more, and full honorific and humble keigo are not expected. Asking for the
 **manager's** action is different: です・ます alone is not enough.
 
-- ✗ この資料、確認しますか。 → ✓ この資料を**ご確認ください**。／**ご確認いただけますか**。
+- ✗ この件、返事しますか。 → ✓ この件に**ご返事ください**。／**ご返事いただけますか**。
 
 The prefix follows the word: **ご** for Chinese-derived nouns (ご確認、ご連絡、ご報告),
 **お** for native ones (お読みください、お待ちください). 「見せる」 is native, so it is
@@ -50,12 +50,12 @@ polite (grammar-004).
 | おはようございます | おはようです |
 | はじめまして | はじめました |
 | お願いします | お願いです |
-| お先に失礼します | お先に失礼です |
+| いってらっしゃい | いってらっしゃいです |
 | ありがとうございました | ありがとうでした |
 
 This is about *altering* a fixed phrase, not about using an unusual one. Greetings
-have real variety — 「良い朝ですね」「もう出かけるんですか」「ごきげんよう」 are all things people say,
-and none of them needs correcting just for being less common than 「おはようございます」.
+have real variety — 「いい天気ですね」「今日も暑くなりそうですね」 are all things people say, and
+none of them needs correcting just for being less common than 「おはようございます」.
 
 ## Two phrases that point the wrong way
 
