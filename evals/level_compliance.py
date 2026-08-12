@@ -11,9 +11,16 @@ So the headline is the FIRST-SHOT rate — the quality of the replies before any
 gate — and the post-regeneration rate is reported beside it as the operational
 figure. docs/ja/glossary.md §5 carries which target attaches to which.
 
-Nothing here is regenerated yet: the validation node arrives on day 4, so today's
-run measures the raw side only, and that is stated in the record rather than left
-to be inferred from the date.
+Both figures come out of one pass. `checked_reply` hands back the discarded first
+attempt along with the final text, so the ungated reply is judged as well as the
+one the learner would see, and neither number depends on running the script twice
+under different conditions.
+
+That is not how this started. The first version called `reply()`, and when the gate
+landed inside `reply()` a commit later, this file went on calling it — the
+"first-shot" figure would have become the post-regeneration figure, silently, and
+the only sign would have been the number improving. The metric designed around
+that exact trap walked into it from the other side.
 
 Run:  .venv/bin/python -m evals.level_compliance
 """
@@ -27,8 +34,8 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Any, Final
 
-from dialogue import Utterance, opening_line, reply
-from dialogue.reply import PROMPT_VERSION, TEMPERATURE
+from dialogue import Utterance, opening_line
+from dialogue.reply import MAX_REGENERATIONS, PROMPT_VERSION, TEMPERATURE, checked_reply
 from dialogue.scenes import LEVELS, SCENES
 from evals.score import RUNS_DIR
 from evals.script import SCRIPT, TURNS
@@ -43,15 +50,26 @@ TIER_VERSION: Final = "bccwj-suw+luw-cuts70-80-90-95"
 
 @dataclass(frozen=True)
 class ReplyOutcome:
+    """One reply, judged before and after the gate.
+
+    `first_shot_passes` is the reply as the model produced it; `passes` is the one
+    the learner would have seen. On a reply that was not regenerated they are the
+    same value about the same text, which is correct and is why they are stored
+    separately rather than derived from `attempts`.
+    """
+
     scene: str
     level: str
     turn: int
     text: str
+    first_shot: str
+    attempts: int
     judged: int
     over_level: tuple[str, ...]
     far_over_level: tuple[str, ...]
     unknown: tuple[str, ...]
     passes: bool
+    first_shot_passes: bool
 
 
 def measure(levels: tuple[str, ...] = tuple(LEVELS)) -> list[ReplyOutcome]:
@@ -67,20 +85,26 @@ def measure(levels: tuple[str, ...] = tuple(LEVELS)) -> list[ReplyOutcome]:
             history = [Utterance("partner", opening_line(scene))]
             for turn, learner in enumerate(SCRIPT[scene][:TURNS], start=1):
                 history.append(Utterance("learner", learner))
-                text = reply(scene, level, history)
-                history.append(Utterance("partner", text))
-                check = level_check(text, level)
+                answer = checked_reply(scene, level, history)
+                history.append(Utterance("partner", answer.text))
+                check = level_check(answer.text, level)
                 outcomes.append(
                     ReplyOutcome(
                         scene=scene,
                         level=level,
                         turn=turn,
-                        text=text,
+                        text=answer.text,
+                        first_shot=answer.first_shot,
+                        attempts=answer.attempts,
                         judged=check.judged,
                         over_level=tuple(word.surface for word in check.over_level),
                         far_over_level=tuple(word.surface for word in check.far_over_level),
                         unknown=tuple(word.surface for word in check.unknown),
                         passes=check.passes,
+                        # The gate fires exactly when the first attempt failed, so
+                        # this is read off the gate rather than judged again — one
+                        # source of truth, and no chance of the two disagreeing.
+                        first_shot_passes=not answer.regenerated,
                     )
                 )
     return outcomes
@@ -104,14 +128,24 @@ def run_record(outcomes: list[ReplyOutcome], run_id: str) -> dict[str, Any]:
         "prompt_version": PROMPT_VERSION,
         "temperature": TEMPERATURE,
         "tier_version": TIER_VERSION,
-        "regenerated": False,
+        "regenerated": True,
+        "max_regenerations": MAX_REGENERATIONS,
         "trials": 1,
         "n": len(outcomes),
         "date": run_id[:8],
-        "first_shot_rate": _rate([outcome.passes for outcome in outcomes]),
+        "first_shot_rate": _rate([outcome.first_shot_passes for outcome in outcomes]),
         "first_shot_rate_by_level": {
+            level: _rate([outcome.first_shot_passes for outcome in group])
+            for level, group in by_level.items()
+        },
+        # The operational figure, and the one the 90% target attaches to. Published
+        # next to the first-shot rate with the note that it is the result of gating
+        # with the same function and so is not independent evidence.
+        "after_regeneration_rate": _rate([outcome.passes for outcome in outcomes]),
+        "after_regeneration_rate_by_level": {
             level: _rate([outcome.passes for outcome in group]) for level, group in by_level.items()
         },
+        "regenerations": sum(1 for outcome in outcomes if outcome.attempts > 1),
         "content_words_judged": words,
         "unknown_words": sum(len(outcome.unknown) for outcome in outcomes),
         "most_common_over_level": Counter(
@@ -123,11 +157,14 @@ def run_record(outcomes: list[ReplyOutcome], run_id: str) -> dict[str, Any]:
                 "level": outcome.level,
                 "turn": outcome.turn,
                 "reply": outcome.text,
+                "first_shot": outcome.first_shot,
+                "attempts": outcome.attempts,
                 "judged": outcome.judged,
                 "over_level": list(outcome.over_level),
                 "far_over_level": list(outcome.far_over_level),
                 "unknown": list(outcome.unknown),
                 "passes": outcome.passes,
+                "first_shot_passes": outcome.first_shot_passes,
             }
             for outcome in outcomes
         ],
@@ -156,10 +193,14 @@ def main() -> None:
     path = RUNS_DIR / f"{run_id}-level-compliance.json"
     path.write_text(json.dumps(record, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
-    overall = _percent(record["first_shot_rate"])
-    print(f"\nfirst-shot level compliance  {overall}  (n={record['n']})")
-    for level, rate in record["first_shot_rate_by_level"].items():
-        print(f"  {level:16s} {_percent(rate)}")
+    print(f"\nlevel compliance, n={record['n']}")
+    print(f"  first shot          {_percent(record['first_shot_rate'])}")
+    print(f"  after regeneration  {_percent(record['after_regeneration_rate'])}")
+    print(f"  regenerated         {record['regenerations']}")
+    for level in record["first_shot_rate_by_level"]:
+        first = _percent(record["first_shot_rate_by_level"][level])
+        after = _percent(record["after_regeneration_rate_by_level"][level])
+        print(f"  {level:16s} first {first}   after {after}")
     print(f"  content words judged  {record['content_words_judged']}")
     print(f"  unknown words         {record['unknown_words']}  (counted as in level)")
     print(f"  most common over level {record['most_common_over_level'][:8]}")
