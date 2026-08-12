@@ -266,6 +266,11 @@ class TestRunRecord:
         # prompt version, and a number that moved for that reason would be read as
         # a change in the model.
         assert record["scorer_version"] == SCORER_VERSION
+        # Pinned to the literal, not to the constant. Comparing the record against
+        # the constant it was written from passes whatever the constant says, and
+        # the version is what keeps the 8/11 baseline comparable with everything
+        # measured after it — bumping it is a decision, and a decision needs a diff.
+        assert SCORER_VERSION == "score-v1"
 
     def test_keeps_every_item_level_result_on_dev(self) -> None:
         # Week 2's error analysis reads these rows; re-running to get them back
@@ -356,6 +361,14 @@ class TestRunRecord:
 
 
 class TestConsoleOutput:
+    """The record was redacted for `test`; the console was not, and then was.
+
+    Everything printed on a `test` run has to be the same whatever the model
+    answered. A count of unquoted Japanese looks like a formatting statistic and is
+    not: it can only be set on an item the model corrected, so it is `predicted is
+    True` totalled up.
+    """
+
     """The run record was redacted for `test`; the console was not.
 
     Same property as the record test, for the same reason: whatever a `test` run

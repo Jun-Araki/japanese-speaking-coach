@@ -29,20 +29,31 @@ japanese-speaking-coach/
 │   ├── scenes.py              Scenes and levels. **glossary.md §3 and §4 are the source**
 │   └── reply.py               `reply()`. Partner prompt and the one-to-two sentence cap
 ├── correction/                Correction node
-│   └── engine.py              `check()`. Parses the structured output **itself** and
-│                              also reports format compliance
+│   ├── engine.py              `check()`. Parses the structured output **itself** and
+│   │                          also reports format compliance
+│   └── validation.py          Validation node. **Python run after generation**, never a
+│                              second call to the model
 ├── tests/                     pytest. **No tests call the model** — generated Japanese
 │                              has no fixed right answer to assert against
 ├── retrieval/                 (planned) Chroma indexing and search
-├── nlp/                       (planned) SudachiPy tokenization, vocabulary level checks
+├── nlp/                       Japanese word processing
+│   ├── tokenize.py            SudachiPy tokenization — Japanese writes no word spaces
+│   ├── frequency.py           Difficulty tiers, cut from the BCCWJ list by coverage
+│   └── level.py               `level_check()`: is this reply above the learner?
 ├── evals/                     Evaluation scripts, baseline, run records
 │   ├── runs/                  One run record JSON per measurement
-│   └── rater/                 The second rater's kit and the returned ratings
+│   ├── rater/                 The second rater's kit and the returned ratings
+│   ├── script.py              Fixed conversation script. **Uses no evaluation item**
+│   └── level_compliance.py    Vocabulary level of replies (first shot and after the gate)
 ├── api/                       (planned) FastAPI application
 └── data/
     ├── evaluation/            120 evaluation items as JSON — a public artefact
     │   └── candidates/        Unverified candidates: raw material for items.json, not the record
-    ├── grammar/               8 self-written grammar reference articles
+    ├── grammar/               8 self-written grammar reference articles. **Quotes no
+    │                          evaluation item** — pinned by pytest
+    ├── frequency/             BCCWJ word lists and the tier tables — **git-ignored**. Not
+    │                          bundled: redistribution terms are not stated. Fetch with
+    │                          `python -m nlp.frequency --build`
     ├── recordings/            Learner audio — git-ignored, personal data
     └── sessions/              Session exports — git-ignored, personal data
 ```

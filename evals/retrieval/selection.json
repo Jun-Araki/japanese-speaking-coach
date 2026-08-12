@@ -1,0 +1,60 @@
+{
+  "excluded_for_verbatim_overlap": [
+    "eval-008",
+    "eval-017",
+    "eval-022",
+    "eval-025",
+    "eval-026",
+    "eval-028",
+    "eval-035",
+    "eval-039",
+    "eval-046",
+    "eval-076",
+    "eval-082",
+    "eval-089"
+  ],
+  "threshold_sample": [
+    "eval-043",
+    "eval-001",
+    "eval-013",
+    "eval-036",
+    "eval-029",
+    "eval-053",
+    "eval-044",
+    "eval-002",
+    "eval-014",
+    "eval-038"
+  ],
+  "measurement_sample": [
+    "eval-031",
+    "eval-055",
+    "eval-048",
+    "eval-004",
+    "eval-016",
+    "eval-042",
+    "eval-085",
+    "eval-056",
+    "eval-103",
+    "eval-005",
+    "eval-047",
+    "eval-009",
+    "eval-023",
+    "eval-034",
+    "eval-032",
+    "eval-052",
+    "eval-050",
+    "eval-010",
+    "eval-083",
+    "eval-101"
+  ],
+  "articles": {
+    "grammar-001": "Places, directions and clock times: に, で, を, へ, から",
+    "grammar-002": "What the verb acts on (を), and what exists or is needed (が)",
+    "grammar-003": "は marks what the sentence is about",
+    "grammar-004": "Adjectives, and what です can and cannot carry",
+    "grammar-005": "Nouns that become verbs with する, and verbs that become nouns with こと",
+    "grammar-006": "ています — a state that holds right now",
+    "grammar-007": "The て-form: asking, thanking, and who is doing what",
+    "grammar-008": "How polite to be, and the phrases that are fixed"
+  }
+}

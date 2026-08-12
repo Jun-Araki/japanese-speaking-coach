@@ -377,7 +377,7 @@ def _percent(value: float | None) -> str:
     return "not measured" if value is None else f"{value:.1%}"
 
 
-def _print_summary(report: ScoreReport, implementation: str, split: str) -> None:
+def _print_summary(report: ScoreReport, implementation: str, split: Split) -> None:
     needs = report.labelled(True)
     natural = report.labelled(False)
     print(f"\n{implementation} on {split}, n={len(report.outcomes)}")
@@ -385,8 +385,14 @@ def _print_summary(report: ScoreReport, implementation: str, split: str) -> None
     print(f"  over_correction_rate    {_percent(report.over_correction_rate)}  (n={len(natural)})")
     print(f"  format_compliance_rate  {_percent(report.format_compliance_rate)}")
     print(f"  unusable verdicts       {report.unusable_verdicts}")
-    unquoted = sum(1 for o in report.outcomes if o.japanese_left_unquoted)
-    print(f"  japanese left unquoted  {unquoted}  (recorded, not counted)")
+    if split != "test":
+        # Only ever set on an item the model corrected, so on the held-out split
+        # this is a count of `predicted is True` under another name — the exact
+        # shape of leak the redaction was written for (see `_result_row`). It stays
+        # in the record as an aggregate, where it says how often a reason named
+        # Japanese without quoting it and nothing about any single item.
+        unquoted = sum(1 for o in report.outcomes if o.japanese_left_unquoted)
+        print(f"  japanese left unquoted  {unquoted}  (recorded, not counted)")
 
 
 def _print_manual_check(report: ScoreReport, split: Split) -> None:

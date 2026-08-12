@@ -21,6 +21,7 @@ name, on a line where a reason can be written.
 
 from __future__ import annotations
 
+import json
 import re
 from pathlib import Path
 
@@ -42,30 +43,19 @@ def normalise(text: str) -> str:
 # there. All of them are set phrases: the article cannot teach 「お願いします」
 # without writing 「お願いします」. Adding to this list is a decision, so it is made
 # here rather than by moving a number.
-KNOWN_DEV_OVERLAP: frozenset[str] = frozenset(
-    {
-        # Set phrases. The article cannot teach 「おはようございます」「はじめまして」
-        # 「お願いします」 without writing them, and their reference answers are the
-        # phrases themselves.
-        "eval-008",
-        "eval-017",
-        "eval-022",
-        "eval-025",
-        "eval-026",
-        "eval-028",
-        "eval-035",
-        "eval-039",
-        "eval-046",
-        "eval-076",
-        "eval-089",
-        # A substring, and one that points the other way. The article's ✓ example is
-        # 「お名前は何ですか。」, which contains this item's sentence 「名前は何ですか？」 —
-        # and the item is labelled as already natural. If retrieval surfaces this,
-        # it argues for ADDING 「お」, which would push toward over-correction rather
-        # than away from it. Left in, and named here so the direction is on record.
-        "eval-082",
-    }
-)
+ACCEPTED_OVERLAP_PATH = GRAMMAR_DIR / "accepted_overlap.json"
+
+
+def accepted_overlap() -> frozenset[str]:
+    """Dev ids whose text is in the reference on purpose, with a reason each.
+
+    Data rather than a literal in this file, because `evals/retrieval_kit.py` needs
+    the same list to keep them out of the sample it draws — and production code
+    reading a constant out of a test file is the wrong direction of dependency.
+    """
+    loaded = json.loads(ACCEPTED_OVERLAP_PATH.read_text(encoding="utf-8"))
+    return frozenset(loaded["items"])
+
 
 # Eleven of the twelve are labelled as needing correction, so what they inflate is
 # `detection_accuracy` rather than `over_correction_rate`. The two items the audit
@@ -98,11 +88,11 @@ class TestGrammarReference:
     def test_the_dev_overlap_is_the_one_that_was_accepted(self) -> None:
         items = [item for item in load_items(ITEMS_PATH) if item.split == "dev"]
 
-        assert quoted_items(items, reference_text()) == KNOWN_DEV_OVERLAP
+        assert quoted_items(items, reference_text()) == accepted_overlap()
 
     def test_the_allow_list_cannot_absorb_a_held_out_item(self) -> None:
         # The list exists to accept collisions that cannot be avoided. It must not
         # become the place a `test` collision goes to be forgotten.
         held_out = {item.id for item in load_items(ITEMS_PATH) if item.split == "test"}
 
-        assert KNOWN_DEV_OVERLAP & held_out == set()
+        assert accepted_overlap() & held_out == set()

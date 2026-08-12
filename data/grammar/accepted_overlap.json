@@ -1,0 +1,17 @@
+{
+  "_note": "Dev items whose text appears verbatim in data/grammar/. Retrieval finds these by string overlap, so they are excluded from the retrieval_hit_rate sample and are listed by id rather than counted: a count lets a new collision through by editing one digit, and an id has to be added on a line where a reason can be written. Held-out items may never appear here — tests/test_grammar_reference.py fails on any overlap with the test split, and on any test id present in this file.",
+  "items": {
+    "eval-008": "Set phrase. おはようございます cannot be taught without writing it.",
+    "eval-017": "Set phrase. はじめまして, and the article explains why it has no polite form.",
+    "eval-022": "Set phrase. お名前は — the trailing form the politeness floor turns on.",
+    "eval-025": "Set phrase. 〜てくれてありがとう, the shape the て-form article is about.",
+    "eval-026": "Set phrase, same shape as eval-025.",
+    "eval-028": "Set phrase. ありがとうございます, quoted as the phrase ご苦労さまです should be.",
+    "eval-035": "Set phrase. ください in a request, which grammar-007 is about.",
+    "eval-039": "Set phrase. 〜てもいいですか, quoted as the request form.",
+    "eval-046": "Set phrase. Clock time with に, which grammar-001 is about.",
+    "eval-076": "Set phrase. お願いします.",
+    "eval-089": "Set phrase. 大変でしたね as a sympathetic reply.",
+    "eval-082": "Substring, pointing the other way. The article's correct example お名前は何ですか。 contains this item's sentence 名前は何ですか？, and this item is labelled already natural — surfacing it argues for ADDING お, which pushes toward over-correction rather than away from it."
+  }
+}

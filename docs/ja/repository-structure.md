@@ -25,18 +25,26 @@ japanese-speaking-coach/
 │   ├── scenes.py              場面・レベルの定義。**glossary.md §3・§4 が正本**
 │   └── reply.py               `reply()`。相手役のプロンプトと1〜2文の制限
 ├── correction/                訂正ノード
-│   └── engine.py              `check()`。構造化出力を**自前で解析**し、書式の適合も返す
+│   ├── engine.py              `check()`。構造化出力を**自前で解析**し、書式の適合も返す
+│   └── validation.py          検証ノード。**生成のあとに走る Python**（2回目の生成ではない）
 ├── tests/                     pytest。**モデルを呼ぶテストは書かない**（生成文には固定の正解がない）
 ├── retrieval/                 (予定) Chroma への登録と検索
-├── nlp/                       (予定) SudachiPy の分かち書き、語彙レベル判定
+├── nlp/                       日本語の語処理
+│   ├── tokenize.py            SudachiPy の分かち書き。**日本語は空白で語を切らない**ので必須
+│   ├── frequency.py           語の難易度の段階。BCCWJ の語彙表から**被覆率で切る**
+│   └── level.py               `level_check()`。返答が学習者のレベルを超えていないか
 ├── evals/                     評価スクリプト、ベースライン、実行記録
 │   ├── runs/                  測定1回ぶんの実行記録 JSON
-│   └── rater/                 第二採点者の採点キットと採点結果
+│   ├── rater/                 第二採点者の採点キットと採点結果
+│   ├── script.py              遵守率を測るための固定台本。**評価データを使わない**
+│   └── level_compliance.py    返答の語彙レベルの測定（1発目と再生成後の2つ）
 ├── api/                       (予定) FastAPI アプリケーション
 └── data/
     ├── evaluation/            評価データ120件の JSON — 公開成果物
     │   └── candidates/        検証前の候補。items.json の材料であって正本ではない
-    ├── grammar/               自作の文法リファレンス8本
+    ├── grammar/               自作の文法リファレンス8本。**評価データを引用しない**（pytest で固定）
+    ├── frequency/             BCCWJ の語彙表と段階の表 — **git 管理外**。再配布の可否が
+    │                          明示されていないため同梱しない（取得は `python -m nlp.frequency --build`）
     ├── recordings/            学習者の音声 — git 管理外、個人情報
     └── sessions/              セッションの書き出し — git 管理外、個人情報
 ```
