@@ -470,12 +470,13 @@ class TestExistingMetricsDoNotMove:
             self._report(), "baseline", "baseline-v1", "dev", MEASUREMENT_LEVEL, "20260811-0000"
         )
 
-        assert record["detection_accuracy"] == 0.5  # 2 of 4 labelled true
+        assert record["detection_accuracy"] == 0.6  # 3 of 5 labelled true
         assert record["over_correction_rate"] == pytest.approx(2 / 3)  # 2 of 3 labelled false
-        # 5 of 7, and the two failures are different failures. fix-007 came back
-        # in Japanese; fix-004 never parsed, and unparseable output is a format
-        # failure as well as a missed detection — the same item is counted in both
-        # places on purpose, because they are answers to different questions.
+        # 5 of 8, and the three failures are three different failures. fix-004
+        # never parsed, and unparseable output is a format failure as well as a
+        # missed detection — the same item counted in both places on purpose,
+        # because they answer different questions. fix-007 came back in Japanese.
+        # fix-008 is the one that matters for the threshold (see below).
         #
         # This expectation was written as 6/7 twice, by hand, on the reasoning that
         # an unusable verdict "has no reason to judge". Both times the fixture said
@@ -483,7 +484,7 @@ class TestExistingMetricsDoNotMove:
         #
         # fix-002 names ございます without quotes and still passes: an English
         # sentence mentioning a Japanese word is English (docs/ja/glossary.md §5).
-        assert record["format_compliance_rate"] == pytest.approx(5 / 7)
+        assert record["format_compliance_rate"] == pytest.approx(5 / 8)
         assert record["unusable_verdicts"] == 1
 
     def test_the_language_rule_still_splits_the_same_reasons(self) -> None:
@@ -499,12 +500,31 @@ class TestExistingMetricsDoNotMove:
         assert by_id["fix-002"].japanese_left_unquoted is True
         assert by_id["fix-007"].japanese_left_unquoted is True
 
+    def test_the_threshold_can_be_moved_in_either_direction_and_be_caught(self) -> None:
+        """fix-008 is the case that makes loosening visible.
+
+        The other reasons sit at 0.000, 0.135 or 1.000, and 1.000 fails on the
+        no-Latin guard before the ratio is consulted — so `japanese_ratio_max` could
+        be raised anywhere from 0.14 to 1.0 without changing a single verdict. The
+        accident this whole file exists to prevent went in that direction: week 1
+        loosened the language rule and format compliance moved 55% to 100%.
+
+        fix-008 is an English sentence that then lapses into Japanese, at 0.79. It
+        fails now, and it passes the moment the threshold goes above it.
+        """
+        report = self._report()
+        by_id = {outcome.item.id: outcome for outcome in report.outcomes}
+
+        assert by_id["fix-008"].japanese_ratio is not None
+        assert 0.25 < by_id["fix-008"].japanese_ratio < 1.0
+        assert by_id["fix-008"].format_compliant is False
+
     def test_the_denominators_are_unchanged(self) -> None:
         # The two accuracy numbers do not share a denominator, and week 1 corrected
         # the error margin twice for getting that wrong.
         report = self._report()
 
-        assert len(report.labelled(True)) == 4
+        assert len(report.labelled(True)) == 5
         assert len(report.labelled(False)) == 3
 
 

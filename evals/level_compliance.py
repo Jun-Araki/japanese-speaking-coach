@@ -28,6 +28,7 @@ Run:  .venv/bin/python -m evals.level_compliance
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 from collections import Counter
 from dataclasses import dataclass
@@ -48,6 +49,20 @@ from nlp import level_check
 TIER_VERSION: Final = "bccwj-suw+luw-cuts70-80-90-95"
 
 
+def script_digest() -> str:
+    """Fingerprint of the fixed script.
+
+    The learner's side is what is being held still, so a run measured against a
+    different script is a different measurement — and neither `prompt_version` nor
+    `tier_version` moves when a line changes. Two lines were replaced on 8/12 when
+    they turned out to collide with the held-out split, and without this the old
+    and new runs are indistinguishable by provenance while carrying the same key
+    names. Same reasoning as `items_digest` on the correction side.
+    """
+    canonical = json.dumps(SCRIPT, ensure_ascii=False, sort_keys=True).encode("utf-8")
+    return hashlib.sha256(canonical).hexdigest()[:12]
+
+
 @dataclass(frozen=True)
 class ReplyOutcome:
     """One reply, judged before and after the gate.
@@ -66,6 +81,8 @@ class ReplyOutcome:
     attempts: int
     judged: int
     over_level: tuple[str, ...]
+    first_shot_over_level: tuple[str, ...]
+    first_shot_unknown: tuple[str, ...]
     far_over_level: tuple[str, ...]
     unknown: tuple[str, ...]
     passes: bool
@@ -88,6 +105,7 @@ def measure(levels: tuple[str, ...] = tuple(LEVELS)) -> list[ReplyOutcome]:
                 answer = checked_reply(scene, level, history)
                 history.append(Utterance("partner", answer.text))
                 check = level_check(answer.text, level)
+                first_check = level_check(answer.first_shot, level)
                 outcomes.append(
                     ReplyOutcome(
                         scene=scene,
@@ -98,13 +116,19 @@ def measure(levels: tuple[str, ...] = tuple(LEVELS)) -> list[ReplyOutcome]:
                         attempts=answer.attempts,
                         judged=check.judged,
                         over_level=tuple(word.surface for word in check.over_level),
+                        first_shot_over_level=tuple(
+                            word.surface for word in first_check.over_level
+                        ),
+                        first_shot_unknown=tuple(word.surface for word in first_check.unknown),
                         far_over_level=tuple(word.surface for word in check.far_over_level),
                         unknown=tuple(word.surface for word in check.unknown),
                         passes=check.passes,
-                        # The gate fires exactly when the first attempt failed, so
-                        # this is read off the gate rather than judged again — one
-                        # source of truth, and no chance of the two disagreeing.
-                        first_shot_passes=not answer.regenerated,
+                        # Judged, not inferred from `attempts`. Deriving it from
+                        # whether the gate fired ties the headline figure to
+                        # `max_regenerations`: set that to zero and every reply
+                        # reports as passing first time, from a value in a config
+                        # file. The check costs nothing — the text is already here.
+                        first_shot_passes=first_check.passes,
                     )
                 )
     return outcomes
@@ -128,6 +152,7 @@ def run_record(outcomes: list[ReplyOutcome], run_id: str) -> dict[str, Any]:
         "prompt_version": PROMPT_VERSION,
         "temperature": TEMPERATURE,
         "tier_version": TIER_VERSION,
+        "script_digest": script_digest(),
         "regenerated": True,
         "max_regenerations": MAX_REGENERATIONS,
         "trials": 1,
@@ -148,9 +173,14 @@ def run_record(outcomes: list[ReplyOutcome], run_id: str) -> dict[str, Any]:
         "regenerations": sum(1 for outcome in outcomes if outcome.attempts > 1),
         "content_words_judged": words,
         "unknown_words": sum(len(outcome.unknown) for outcome in outcomes),
+        # Counted on the FIRST attempt: this column answers "what did the gate fire
+        # on", and a word that triggered a regeneration is by definition absent from
+        # the reply that replaced it. Counting the final text would make the gate
+        # invisible in the one place set aside to look at it.
         "most_common_over_level": Counter(
-            surface for outcome in outcomes for surface in outcome.over_level
+            surface for outcome in outcomes for surface in outcome.first_shot_over_level
         ).most_common(15),
+        "unknown_words_first_shot": sum(len(outcome.first_shot_unknown) for outcome in outcomes),
         "results": [
             {
                 "scene": outcome.scene,
@@ -161,6 +191,8 @@ def run_record(outcomes: list[ReplyOutcome], run_id: str) -> dict[str, Any]:
                 "attempts": outcome.attempts,
                 "judged": outcome.judged,
                 "over_level": list(outcome.over_level),
+                "first_shot_over_level": list(outcome.first_shot_over_level),
+                "first_shot_unknown": list(outcome.first_shot_unknown),
                 "far_over_level": list(outcome.far_over_level),
                 "unknown": list(outcome.unknown),
                 "passes": outcome.passes,

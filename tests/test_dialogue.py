@@ -228,7 +228,10 @@ class TestCheckedReply:
         )
 
         assert result.first_shot == "弊社の懸案事項を鋭意検討します。"
-        assert "弊社" in result.over_level
+        assert "弊社" in result.first_shot_over_level
+        # And the final text is judged on its own, not left carrying the words that
+        # triggered the retry. The learner got a reply with none of them in it.
+        assert result.over_level == ()
 
     def test_the_retry_names_the_words_rather_than_asking_again(self, monkeypatch: Any) -> None:
         # At temperature 0.7 a bare retry sometimes succeeds by luck, which is a
@@ -257,6 +260,25 @@ class TestCheckedReply:
 
         assert result.text == "弊社の懸案事項を鋭意検討します。"
         assert len(sent) == 2
+        # Still over level, and said so. The retry was spent and did not work,
+        # which is a different outcome from the retry not being needed.
+        assert "弊社" in result.over_level
+
+    def test_attempts_is_counted_rather_than_assumed(self, monkeypatch: Any) -> None:
+        # It used to return `1 + MAX_REGENERATIONS` on every failure path — a
+        # constant in the shape of a measurement. With the limit at one the two
+        # agree, which is why nothing caught it; the count is what is meant.
+        self._model(monkeypatch, "弊社の懸案事項を鋭意検討します。", "はい、考えます。")
+        rescued = reply_module.checked_reply(
+            "workplace_keigo", "beginner", [Utterance("learner", "どうですか")]
+        )
+
+        self._model(monkeypatch, "はい、元気です。")
+        clean = reply_module.checked_reply(
+            "greeting", "beginner", [Utterance("learner", "やあ")]
+        )
+
+        assert (clean.attempts, rescued.attempts) == (1, 2)
 
     def test_reply_still_returns_a_string(self, monkeypatch: Any) -> None:
         # app/ and the measurement script both call `reply`; adding the gate must

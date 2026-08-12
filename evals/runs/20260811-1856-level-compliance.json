@@ -1064,5 +1064,7 @@
       ],
       "passes": true
     }
-  ]
+  ],
+  "thresholds_digest": "3197f5bfb9e1",
+  "thresholds_note": "Backfilled 2026-08-12, and RECONSTRUCTED rather than observed. The field was added after these runs, so the value is the digest of config/thresholds.toml at the nearest commit that could have been in the working tree at the time — a27ad4a for the correction runs, e7a0735 for the compliance ones. Both commits landed minutes AFTER the runs they are attributed to (18 and 3-7 minutes), so an edit in between would not show. Recorded this way because today's digest would be plainly wrong, and a blank field would lose the only evidence there is. Runs from 2026-08-12 onward carry the digest observed at run time."
 }

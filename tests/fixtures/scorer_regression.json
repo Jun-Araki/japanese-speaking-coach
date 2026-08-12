@@ -62,6 +62,15 @@
       "corrected_sentence": null,
       "predicted": true,
       "reason": "これは丁寧な言い方ではありません。もっと自然な形にしました。"
+    },
+    {
+      "id": "fix-008",
+      "scene": "simple_request",
+      "learner_sentence": "水ください",
+      "needs_correction": true,
+      "corrected_sentence": "お水をください",
+      "predicted": true,
+      "reason": "Add を here. 助詞の を は 目的語 を 示します から、丁寧な 言い方 に なります。"
     }
   ]
 }

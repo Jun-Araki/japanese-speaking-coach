@@ -1143,5 +1143,7 @@
       "corrected_sentence": "今から、会議室へ向かいます。",
       "reason_en": "Your sentence, 「今から、会議室に行きます」, is grammatically correct and polite. However, in a business context, when you are informing someone that you are going to a specific place, it is often more natural and common to say 「～へ向かいます」 (I am heading to...) instead of 「～に行きます」 (I will go to...). It conveys the action of proceeding towards your destination a bit more smoothly. Also, using the particle 「へ」 (e) for direction can sound slightly more formal and appropriate in this situation."
     }
-  ]
+  ],
+  "thresholds_digest": "97aed0d11ee9",
+  "thresholds_note": "Backfilled 2026-08-12, and RECONSTRUCTED rather than observed. The field was added after these runs, so the value is the digest of config/thresholds.toml at the nearest commit that could have been in the working tree at the time — a27ad4a for the correction runs, e7a0735 for the compliance ones. Both commits landed minutes AFTER the runs they are attributed to (18 and 3-7 minutes), so an edit in between would not show. Recorded this way because today's digest would be plainly wrong, and a blank field would lose the only evidence there is. Runs from 2026-08-12 onward carry the digest observed at run time."
 }

@@ -102,7 +102,12 @@ class Reply:
     text: str
     attempts: int
     first_shot: str
+    # The words that were too hard in the FINAL text, and in the first attempt.
+    # Two fields because they answer different questions: what the gate fired on,
+    # and what the learner was left with. Collapsing them made `over_level` mean
+    # "the first attempt's" while `text` meant "the last one's".
     over_level: tuple[str, ...]
+    first_shot_over_level: tuple[str, ...]
 
     @property
     def regenerated(self) -> bool:
@@ -146,15 +151,31 @@ def checked_reply(scene: str, level: str, history: list[Utterance]) -> Reply:
     text = limit_sentences(as_text(model.invoke(messages).content).strip())
     first_shot = text
     check = level_check(text, level)
-    if check.passes:
-        return Reply(text, 1, first_shot, ())
+    first_over = tuple(word.surface for word in check.over_level)
 
-    over = tuple(word.surface for word in check.over_level)
-    messages.append(AIMessage(text))
-    messages.append(HumanMessage(RETRY_PROMPT.format(words="、".join(over))))
-    for _ in range(MAX_REGENERATIONS):
+    # Counted, not assumed. The first version returned `1 + MAX_REGENERATIONS` on
+    # every failure path — a constant dressed as a measurement, which also meant a
+    # second regeneration would be spent even after the first one succeeded, and
+    # setting the limit to zero would report every reply as passing first time.
+    attempts = 1
+    while not check.passes and attempts <= MAX_REGENERATIONS:
+        over = tuple(word.surface for word in check.over_level)
+        messages.append(AIMessage(text))
+        messages.append(HumanMessage(RETRY_PROMPT.format(words="、".join(over))))
         text = limit_sentences(as_text(model.invoke(messages).content).strip())
-    return Reply(text, 1 + MAX_REGENERATIONS, first_shot, over)
+        attempts += 1
+        # Re-judged, so `over_level` describes what the learner actually gets. The
+        # first version never checked the retry, so a reply that came back just as
+        # hard was reported carrying the previous attempt's words.
+        check = level_check(text, level)
+
+    return Reply(
+        text=text,
+        attempts=attempts,
+        first_shot=first_shot,
+        over_level=tuple(word.surface for word in check.over_level),
+        first_shot_over_level=first_over,
+    )
 
 
 RETRY_PROMPT: Final = """\
