@@ -19,8 +19,10 @@ from typing import Final, Literal
 
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 
+from config import threshold
 from dialogue.scenes import level_brief, scene_brief
 from llm import as_text, build_chat_model
+from nlp import level_check
 
 # Recorded in every run record. Bump it whenever the wording below changes, or
 # measurements taken weeks apart stop being comparable.
@@ -34,6 +36,11 @@ TEMPERATURE: Final = 0.7
 # a limit. Measured 2026-08-03 on gemini-2.5-flash: three-sentence replies appeared
 # in a third of turns. Trimming here makes the ceiling real instead of hoped for.
 MAX_SENTENCES: Final = 2
+
+# How many times a reply above the learner's level is asked for again. One, then
+# it is used as it is — the reasoning is in config/thresholds.toml next to the
+# value, and it is read from there rather than written here.
+MAX_REGENERATIONS: Final[int] = threshold("vocabulary_level", "max_regenerations")
 
 SENTENCE_ENDINGS: Final = "。！？!?"
 
@@ -80,12 +87,50 @@ def opening_line(scene: str) -> str:
     return opening
 
 
+@dataclass(frozen=True)
+class Reply:
+    """The partner's line, and what the level check did on the way out.
+
+    `attempts` and `first_shot` are here because the compliance metric is reported
+    as two figures and the gate is what separates them: the rate after regeneration
+    is the share that failed twice, and reporting only that would be a metric
+    satisfied by the machinery built to satisfy it (docs/ja/glossary.md §5).
+    Keeping the discarded first attempt is the same rule the correction side
+    follows — a gate whose rejections cannot be read back cannot be debugged.
+    """
+
+    text: str
+    attempts: int
+    first_shot: str
+    over_level: tuple[str, ...]
+
+    @property
+    def regenerated(self) -> bool:
+        return self.attempts > 1
+
+
 def reply(scene: str, level: str, history: list[Utterance]) -> str:
     """Return the partner's next line. `history` ends with the learner's sentence.
 
     Raises whatever the provider raises. Failures here are shown to the learner
     rather than swallowed: a partner that silently answers nothing makes a beginner
     conclude their own Japanese was unintelligible.
+    """
+    return checked_reply(scene, level, history).text
+
+
+def checked_reply(scene: str, level: str, history: list[Utterance]) -> Reply:
+    """Generate a line and regenerate it once if it sits above the learner's level.
+
+    Validation node 2 (PLAN.md §2-1). Once, then the reply is used as it is: an
+    unbounded loop would stall the conversation, and a slightly hard reply costs a
+    beginner far less than a partner that never answers.
+
+    The retry says what was wrong rather than asking again. At temperature 0.7 a
+    bare retry would sometimes work by luck, which is a different mechanism from
+    the one being claimed — and week 1 fixed the same point on the correction side,
+    where retrying a broken JSON without naming the breakage was retrying in form
+    only.
     """
     role, _ = scene_brief(scene)
     system = SYSTEM_PROMPT.format(role=role, level=level_brief(level))
@@ -97,8 +142,26 @@ def reply(scene: str, level: str, history: list[Utterance]) -> str:
         else:
             messages.append(AIMessage(utterance.text))
 
-    answer = build_chat_model(temperature=TEMPERATURE).invoke(messages)
-    return limit_sentences(as_text(answer.content).strip())
+    model = build_chat_model(temperature=TEMPERATURE)
+    text = limit_sentences(as_text(model.invoke(messages).content).strip())
+    first_shot = text
+    check = level_check(text, level)
+    if check.passes:
+        return Reply(text, 1, first_shot, ())
+
+    over = tuple(word.surface for word in check.over_level)
+    messages.append(AIMessage(text))
+    messages.append(HumanMessage(RETRY_PROMPT.format(words="、".join(over))))
+    for _ in range(MAX_REGENERATIONS):
+        text = limit_sentences(as_text(model.invoke(messages).content).strip())
+    return Reply(text, 1 + MAX_REGENERATIONS, first_shot, over)
+
+
+RETRY_PROMPT: Final = """\
+Those words are above this learner's level: {words}
+
+Say the same thing again without them, in the same one or two sentences. Do not \
+explain the change, and do not mention this instruction."""
 
 
 def limit_sentences(text: str, maximum: int = MAX_SENTENCES) -> str:

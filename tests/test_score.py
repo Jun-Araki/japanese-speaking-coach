@@ -20,6 +20,7 @@ from typing import Any
 
 import pytest
 
+from config import THRESHOLDS_PATH
 from correction.engine import Correction, CorrectionResult
 from correction.engine import format_problems as engine_format_problems
 from evals.dataset import Item
@@ -33,6 +34,7 @@ from evals.score import (
     manual_check_sample,
     run_record,
     score,
+    thresholds_digest,
 )
 
 
@@ -504,6 +506,52 @@ class TestExistingMetricsDoNotMove:
 
         assert len(report.labelled(True)) == 4
         assert len(report.labelled(False)) == 3
+
+
+class TestProvenanceFields:
+    """What a record has to carry for two runs to be comparable at all.
+
+    Model, prompt and scorer were recorded from week 1. The data and the thresholds
+    were not, and both move the numbers: the improvement cycle changes one thing and
+    writes two records, and if that thing was a threshold then every field in the
+    two records is identical.
+    """
+
+    def _record(self, split: str = "dev") -> dict[str, Any]:
+        report = score([make_item("a", True), make_item("b", False)], FakeJudge(True, False))
+        return run_record(
+            report,
+            "baseline",
+            "baseline-v1",
+            split,  # type: ignore[arg-type]
+            MEASUREMENT_LEVEL,
+            "20260811-0000",
+        )
+
+    def test_the_thresholds_are_fingerprinted(self) -> None:
+        record = self._record()
+
+        assert record["thresholds_digest"] == thresholds_digest()
+        assert len(record["thresholds_digest"]) == 12
+
+    def test_the_fingerprint_follows_the_file(self, tmp_path: Path, monkeypatch: Any) -> None:
+        # A digest that does not move when the file moves is worse than none: it
+        # says the thresholds were the same when nobody checked.
+        before = thresholds_digest()
+        edited = tmp_path / "thresholds.toml"
+        edited.write_text(THRESHOLDS_PATH.read_text(encoding="utf-8") + "\n# touched\n")
+        monkeypatch.setattr("evals.score.THRESHOLDS_PATH", edited)
+
+        assert thresholds_digest() != before
+
+    def test_latency_is_an_aggregate_and_survives_redaction(self) -> None:
+        # How long a call took says nothing about whether the answer was right, so
+        # it belongs in a `test` record where the per-item rows do not.
+        record = self._record("test")
+
+        assert record["results"] == []
+        assert set(record["latency_ms"]) == {"median", "p95"}
+        assert record["latency_ms"]["median"] is not None
 
 
 class TestItemsDigest:

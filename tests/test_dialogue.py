@@ -9,8 +9,13 @@ not drift from docs/ja/glossary.md.
 
 from __future__ import annotations
 
+import importlib
+from types import SimpleNamespace
+from typing import Any
+
 import pytest
 
+from dialogue import Utterance
 from dialogue.reply import MAX_SENTENCES, limit_sentences
 from dialogue.scenes import (
     LEVEL_BRIEFS,
@@ -24,6 +29,14 @@ from dialogue.scenes import (
     politeness_rule,
     scene_brief,
 )
+
+# `dialogue/__init__.py` re-exports the function `reply`, which overwrites the
+# submodule attribute of the same name — so `import dialogue.reply as ...` binds
+# the function, not the module, and monkeypatching it fails with a message that
+# does not say why. Week 1 hit this collision with `correction.check` and renamed
+# the module to `engine`; here the public call is `dialogue.reply()` and stays, so
+# the test asks sys.modules instead.
+reply_module = importlib.import_module("dialogue.reply")
 
 
 class TestLimitSentences:
@@ -156,3 +169,100 @@ class TestPolitenessFloor:
             politeness_floor("restaurant")
         with pytest.raises(ValueError, match="Unknown scene"):
             politeness_rule("restaurant")
+
+
+class TestCheckedReply:
+    """Validation node 2: regenerate once when the reply is above the learner.
+
+    The gate and the metric share `level_check`, so the figure after regeneration
+    is the share that failed twice. That is why the first attempt is kept and
+    reported separately (docs/ja/glossary.md §5), and why these tests care about
+    what is returned alongside the text as much as the text itself.
+    """
+
+    def _model(self, monkeypatch: Any, *answers: str) -> list[list[Any]]:
+        """Replace the provider with a scripted one, recording what it was sent."""
+        sent: list[list[Any]] = []
+        replies = list(answers)
+
+        class ScriptedModel:
+            def invoke(self, messages: list[Any]) -> Any:
+                sent.append(list(messages))
+                return SimpleNamespace(content=replies.pop(0))
+
+        monkeypatch.setattr(reply_module, "build_chat_model", lambda temperature: ScriptedModel())
+        return sent
+
+    def test_an_in_level_reply_is_returned_untouched_and_costs_one_call(
+        self, monkeypatch: Any
+    ) -> None:
+        sent = self._model(monkeypatch, "はい、元気です。")
+
+        result = reply_module.checked_reply("greeting", "beginner", [Utterance("learner", "やあ")])
+
+        assert result.text == "はい、元気です。"
+        assert result.attempts == 1
+        assert result.regenerated is False
+        assert result.over_level == ()
+        assert len(sent) == 1
+
+    def test_an_over_level_reply_is_asked_for_again(self, monkeypatch: Any) -> None:
+        self._model(monkeypatch, "弊社の懸案事項を鋭意検討します。", "はい、考えます。")
+
+        result = reply_module.checked_reply(
+            "workplace_keigo", "beginner", [Utterance("learner", "どうですか")]
+        )
+
+        assert result.text == "はい、考えます。"
+        assert result.attempts == 2
+        assert result.regenerated is True
+
+    def test_the_first_attempt_survives_the_retry(self, monkeypatch: Any) -> None:
+        # The compliance metric needs the ungated reply. If the retry overwrote it,
+        # the only figure left would be the one the gate produced, and glossary §5
+        # asks for both.
+        self._model(monkeypatch, "弊社の懸案事項を鋭意検討します。", "はい、考えます。")
+
+        result = reply_module.checked_reply(
+            "workplace_keigo", "beginner", [Utterance("learner", "どうですか")]
+        )
+
+        assert result.first_shot == "弊社の懸案事項を鋭意検討します。"
+        assert "弊社" in result.over_level
+
+    def test_the_retry_names_the_words_rather_than_asking_again(self, monkeypatch: Any) -> None:
+        # At temperature 0.7 a bare retry sometimes succeeds by luck, which is a
+        # different mechanism from the one being claimed. Week 1 fixed the same
+        # point on the correction side.
+        sent = self._model(monkeypatch, "弊社の懸案事項を鋭意検討します。", "はい、考えます。")
+
+        reply_module.checked_reply(
+            "workplace_keigo", "beginner", [Utterance("learner", "どうですか")]
+        )
+
+        retry_prompt = sent[1][-1].content
+        assert "弊社" in retry_prompt
+        assert "鋭意" in retry_prompt
+
+    def test_it_gives_up_rather_than_looping(self, monkeypatch: Any) -> None:
+        # Both attempts are above level. A partner that never answers costs the
+        # learner more than a slightly hard sentence does.
+        sent = self._model(
+            monkeypatch, "弊社の懸案事項を鋭意検討します。", "弊社の懸案事項を鋭意検討します。"
+        )
+
+        result = reply_module.checked_reply(
+            "workplace_keigo", "beginner", [Utterance("learner", "どうですか")]
+        )
+
+        assert result.text == "弊社の懸案事項を鋭意検討します。"
+        assert len(sent) == 2
+
+    def test_reply_still_returns_a_string(self, monkeypatch: Any) -> None:
+        # app/ and the measurement script both call `reply`; adding the gate must
+        # not change what they get.
+        self._model(monkeypatch, "はい、元気です。")
+
+        assert reply_module.reply("greeting", "beginner", [Utterance("learner", "やあ")]) == (
+            "はい、元気です。"
+        )

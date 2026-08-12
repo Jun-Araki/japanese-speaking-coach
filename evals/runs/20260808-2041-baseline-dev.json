@@ -541,5 +541,7 @@
       "corrected_sentence": "今日、残業しましょうか。",
       "reason_en": "The original sentence \"今日、残業できます。\" (Kyou, zangyou dekimasu.) means \"I can do overtime today.\" While grammatically correct and using a polite ます-form, it sounds like a simple statement of ability rather than a proactive offer to your manager. In a Japanese business context, when offering to stay late or help, it is more polite and natural to use 「〜ましょうか」 (shimashou ka), which means \"Shall I do ~?\" or \"Would you like me to do ~?\". This conveys your willingness to help and asks if your assistance is needed, which is more appropriate when speaking to a superior."
     }
-  ]
+  ],
+  "items_digest": "55581252c8c9",
+  "items_note": "Backfilled 2026-08-12. This run was measured against the 60-item file at commit 7857c94 (dev 40 / test 20); the current items.json holds 120 and its test split is 40, so the two are not the same measurement. The digest is the one that was in force at the time, not today's — writing today's would put a value in the field whose whole job is to say which data a number came from."
 }

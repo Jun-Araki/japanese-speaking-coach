@@ -22,12 +22,15 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import time
 from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import datetime
+from math import ceil
 from pathlib import Path
 from typing import Any, Final
 
+from config import THRESHOLDS_PATH
 from correction import PROMPT_VERSION as ENGINE_PROMPT_VERSION
 from correction import baseline_check, check
 from correction.baseline import PROMPT_VERSION as BASELINE_PROMPT_VERSION
@@ -82,6 +85,11 @@ class Outcome:
     # Recorded, not counted: the correction prompt asks for 「」 and the baseline
     # prompt does not, so this shows where that difference actually lands.
     japanese_left_unquoted: bool
+    # Wall-clock for this item's call. Week 4 optimises latency and compares before
+    # and after, but "before" is the state of the system on the day week 4 starts —
+    # this week's state can only be recorded this week. Kept per item so the
+    # aggregate can be recomputed without re-running.
+    elapsed_ms: int
     # How far the reason sat from the language threshold, not just which side of it.
     # glossary §7 asks for that threshold to be reconfirmed against dev this week,
     # and a boolean cannot answer "by how much". None when there was no reason.
@@ -162,6 +170,18 @@ def manual_check_sample(outcomes: list[Outcome], size: int = MANUAL_CHECK_SAMPLE
     return [outcomes[int(index * step)] for index in range(size)]
 
 
+def thresholds_digest() -> str:
+    """Fingerprint of config/thresholds.toml.
+
+    Changing a threshold moves the numbers and moves neither `prompt_version` nor
+    `scorer_version`, so without this the improvement cycle writes two run records
+    that are identical in every field and different in what they measured. The
+    README is supposed to say what was changed between them; this is what makes
+    that recoverable rather than remembered.
+    """
+    return hashlib.sha256(THRESHOLDS_PATH.read_bytes()).hexdigest()[:12]
+
+
 def items_digest(path: Path) -> str:
     """Fingerprint of the dataset a run was measured against.
 
@@ -206,6 +226,7 @@ def run_record(
         "model": active_model_name(),
         "prompt_version": prompt_version,
         "scorer_version": SCORER_VERSION,
+        "thresholds_digest": thresholds_digest(),
         "items_digest": digest,
         "n": len(report.outcomes),
         "split": split,
@@ -220,6 +241,7 @@ def run_record(
         # It was printed to the console and nowhere else, which left a figure in
         # the steering notes that no record could reproduce.
         "japanese_left_unquoted": sum(1 for o in report.outcomes if o.japanese_left_unquoted),
+        "latency_ms": _latency(report.outcomes),
         "manual_check_ids": sample_ids,
         "scorer_checked_on": scorer_checked_on,
         "results_redacted": redacted,
@@ -255,6 +277,7 @@ def _result_row(outcome: Outcome) -> dict[str, Any]:
         "format_problems": list(outcome.format_problems),
         "japanese_left_unquoted": outcome.japanese_left_unquoted,
         "japanese_ratio": outcome.japanese_ratio,
+        "elapsed_ms": outcome.elapsed_ms,
         "attempts": outcome.attempts,
         "corrected_sentence": outcome.corrected_sentence,
         "reason_en": outcome.reason_en,
@@ -262,7 +285,9 @@ def _result_row(outcome: Outcome) -> dict[str, Any]:
 
 
 def _judge_item(item: Item, judge: Judge, level: str) -> Outcome:
+    started = time.perf_counter()
     result = judge(item.learner_sentence, item.scene, level)
+    elapsed_ms = round((time.perf_counter() - started) * 1000)
     correction = result.correction
     reason = None if correction is None else correction.reason_en
     return Outcome(
@@ -272,10 +297,28 @@ def _judge_item(item: Item, judge: Judge, level: str) -> Outcome:
         format_problems=tuple(result.format_problems),
         japanese_left_unquoted=reason is not None and japanese_left_unquoted(reason),
         japanese_ratio=None if reason is None else japanese_ratio(reason),
+        elapsed_ms=elapsed_ms,
         attempts=result.attempts,
         corrected_sentence=None if correction is None else correction.corrected_sentence,
         reason_en=None if correction is None else correction.reason_en,
     )
+
+
+def _latency(outcomes: list[Outcome]) -> dict[str, int | None]:
+    """Median and 95th percentile of the per-item call time.
+
+    An aggregate, so it survives redaction on `test`: how long a call took says
+    nothing about whether the answer was right. Nearest-rank rather than an
+    interpolated percentile — with forty items the interpolation would invent a
+    value between two measurements and read as more precise than the run is.
+    """
+    if not outcomes:
+        return {"median": None, "p95": None}
+    ordered = sorted(outcome.elapsed_ms for outcome in outcomes)
+    return {
+        "median": ordered[(len(ordered) - 1) // 2],
+        "p95": ordered[min(len(ordered) - 1, ceil(0.95 * len(ordered)) - 1)],
+    }
 
 
 def _ratio(numerator: int, denominator: int) -> float | None:
