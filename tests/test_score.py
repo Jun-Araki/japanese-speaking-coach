@@ -433,9 +433,17 @@ class TestTestSplitGuard:
         monkeypatch.setattr(
             "sys.argv",
             [
-                "score", "--implementation", "baseline", "--split", "test",
-                "--scorer-checked-on", "20260811-0700", "--limit", "5",
-                "--items", "nope.json",
+                "score",
+                "--implementation",
+                "baseline",
+                "--split",
+                "test",
+                "--scorer-checked-on",
+                "20260811-0700",
+                "--limit",
+                "5",
+                "--items",
+                "nope.json",
             ],
         )
         with pytest.raises(SystemExit) as excinfo:
@@ -620,7 +628,12 @@ class TestStages:
         items, judge = self._replaced()
         record = run_record(
             score(items, judge, MEASUREMENT_LEVEL, "raw"),
-            "engine", "correction-v1", "dev", MEASUREMENT_LEVEL, "20260812-0000", stage="raw",
+            "engine",
+            "correction-v1",
+            "dev",
+            MEASUREMENT_LEVEL,
+            "20260812-0000",
+            stage="raw",
         )
 
         assert record["stage"] == "raw"
@@ -631,7 +644,11 @@ class TestStages:
         items, judge = self._replaced()
         record = run_record(
             score(items, judge, MEASUREMENT_LEVEL, "validated"),
-            "engine", "correction-v1", "dev", MEASUREMENT_LEVEL, "20260812-0000",
+            "engine",
+            "correction-v1",
+            "dev",
+            MEASUREMENT_LEVEL,
+            "20260812-0000",
             stage="validated",
         )
 
@@ -648,7 +665,11 @@ class TestStages:
         # hides the only distinction that matters here.
         record = run_record(
             score(*self._replaced()[:2], MEASUREMENT_LEVEL, "validated"),
-            "engine", "correction-v1", "dev", MEASUREMENT_LEVEL, "20260812-0000",
+            "engine",
+            "correction-v1",
+            "dev",
+            MEASUREMENT_LEVEL,
+            "20260812-0000",
             stage="validated",
         )
 

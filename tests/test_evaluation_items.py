@@ -33,9 +33,18 @@ from dialogue.scenes import SCENES
 from evals.dataset import ITEMS_PATH, Item, counts_by_scene, load_items
 
 # What the dataset is finished at, per PLAN.md and docs/ja/glossary.md §5.
+#
+# 91/29, not the 90/30 fixed on day 3. eval-052 「部長、話したいことあります。」 was
+# relabelled `true` on 2026-08-13: preparing the retrieval annotations surfaced that
+# it contradicted data/grammar/grammar-002, which requires 「が」 before 「あります」 in
+# careful speech to a manager, and eval-054 「この件、確認必要です。」 is the same
+# omission labelled `true`. Jun, a native speaker, settled it on the article's side.
+# The item is `dev`, so no test-split denominator moves and the 8/11 held-out
+# measurements are unaffected — but `items_digest` does, and the runs either side of
+# it are told apart by that digest and by this comment.
 TOTAL = 120
-NEEDS_CORRECTION = 90
-NATURAL = 30
+NEEDS_CORRECTION = 91
+NATURAL = 29
 DEV = 80
 TEST = 40
 

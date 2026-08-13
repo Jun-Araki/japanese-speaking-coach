@@ -91,7 +91,7 @@ hand to cover mistake types the generator kept missing, and were verified the sa
 
 | Property | Value |
 |---|---|
-| Items | 120 (90 needing correction, 30 already natural) |
+| Items | 120 (91 needing correction, 29 already natural) |
 | Split | 80 development / 40 held-out test |
 | Held-out discipline | Prompts and thresholds are tuned against the dev split only. The test split is touched at the start and the end, never in between |
 | Scoring | Only the binary "does this need correcting" label is machine-scored. **Corrected sentences are never scored by exact match** — natural phrasing is not unique |

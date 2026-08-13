@@ -436,7 +436,9 @@
     "id": "eval-052",
     "scene": "workplace_keigo",
     "learner_sentence": "部長、話したいことあります。",
-    "needs_correction": false,
+    "needs_correction": true,
+    "corrected_sentence": "部長、話したいことがあります。",
+    "reason_en": "「あります」 takes 「が」 on whatever exists. Speaking to a manager, dropping it reads as a note rather than a remark, the same way 「確認必要です」 does.",
     "split": "dev"
   },
   {

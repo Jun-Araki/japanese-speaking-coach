@@ -292,7 +292,7 @@ class TestCheckedReply:
         # The level check happily read `should` and `they` as words above the
         # learner's level. Asking whether the reply is Japanese has to come first,
         # or the vocabulary metric ends up counting English.
-        leaked = 'THOUGHT: The user seems to be ending the conversation. I need to acknowledge.'
+        leaked = "THOUGHT: The user seems to be ending the conversation. I need to acknowledge."
         self._model(monkeypatch, leaked, "はい、また明日。")
 
         result = reply_module.checked_reply(
@@ -307,9 +307,7 @@ class TestCheckedReply:
     def test_a_japanese_reply_is_not_sent_back(self, monkeypatch: Any) -> None:
         self._model(monkeypatch, "はい、元気です。")
 
-        result = reply_module.checked_reply(
-            "greeting", "beginner", [Utterance("learner", "やあ")]
-        )
+        result = reply_module.checked_reply("greeting", "beginner", [Utterance("learner", "やあ")])
 
         assert result.language_retried is False
 
@@ -323,9 +321,7 @@ class TestCheckedReply:
         )
 
         self._model(monkeypatch, "はい、元気です。")
-        clean = reply_module.checked_reply(
-            "greeting", "beginner", [Utterance("learner", "やあ")]
-        )
+        clean = reply_module.checked_reply("greeting", "beginner", [Utterance("learner", "やあ")])
 
         assert (clean.attempts, rescued.attempts) == (1, 2)
 

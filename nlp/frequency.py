@@ -71,9 +71,7 @@ SOURCES: Final[dict[str, tuple[str, str]]] = {
         "https://repository.ninjal.ac.jp/record/3228/files/BCCWJ_frequencylist_luw_ver1_0.zip",
     ),
 }
-TIER_TABLES: Final[dict[str, Path]] = {
-    unit: DATA_DIR / f"tiers_{unit}.json" for unit in SOURCES
-}
+TIER_TABLES: Final[dict[str, Path]] = {unit: DATA_DIR / f"tiers_{unit}.json" for unit in SOURCES}
 
 # The long-unit list holds 2.1 million content lemmas, nearly all of them one-off
 # compounds seen once or twice. Only the ones inside the last cut are written out;

@@ -45,9 +45,13 @@ Dropping 「を」 stays natural even in polite speech: 「コーヒー、飲み
 
 「が」 is not the same. Before 「あります」「要ります」「必要です」, it is what tells the
 listener which thing you mean, and dropping it in careful speech to a manager reads
-as clipped, memo-like Japanese rather than relaxed speech:
+as clipped, memo-like Japanese rather than relaxed speech. 「あります」 is not the
+lenient one of the three: what exists still has to be named before you say it
+exists.
 
+- ✗ すみません、質問あります。 → ✓ すみません、質問**が**あります。
 - ✗ 明日までに返事必要です。 → ✓ 明日までに返事**が**必要です。
 
-How polite the sentence has to be in the first place is decided by who is listening
-— see grammar-008.
+Said to a friend, both sentences drop the 「が」 and lose nothing at all. That is the
+whole of the rule: it is the listener who decides, here as everywhere else — see
+grammar-008.

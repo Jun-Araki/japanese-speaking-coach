@@ -22,21 +22,19 @@ name, on a line where a reason can be written.
 from __future__ import annotations
 
 import json
-import re
 from pathlib import Path
 
 from evals.dataset import ITEMS_PATH, Item, load_items
 
+# One definition, imported rather than repeated. It dropped punctuation but not
+# markdown emphasis until 8/13, so 「どこ**に**住んでいますか」 did not compare equal to
+# the sentence it quotes — and emphasis is exactly what an article puts on the part
+# that carries the rule, so the quotations most worth catching were the ones that
+# got through. Two copies of a rule like that drift, and the copy that drifts is
+# the one nobody is looking at.
+from evals.retrieval_kit import normalise
+
 GRAMMAR_DIR = Path("data/grammar")
-
-# Punctuation is dropped before comparing. A rule that mentions a phrase writes it
-# without the closing 。, which is how 「はじめまして」 slipped past an equality check
-# in week 1 while sitting in the article as the answer to eval-017.
-_PUNCTUATION = re.compile(r"[。、？！「」\s]")
-
-
-def normalise(text: str) -> str:
-    return _PUNCTUATION.sub("", text)
 
 
 # Every `dev` item whose text appears verbatim in the reference, checked and left

@@ -187,11 +187,12 @@ correction engine**, bypassing the app, the microphone, and transcription.
 
 | Metric | `identifier` | Definition | August target |
 |---|---|---|---|
-| Detection accuracy | `detection_accuracy` | Of the 90 items labelled `true`, the share the system also judged `true` | ≥ 85% |
-| **Over-correction rate** | `over_correction_rate` | Of the 30 items labelled `false`, the share the system wrongly judged `true`. **Lower is better** | ≤ 15% |
+| Detection accuracy | `detection_accuracy` | Of the 91 items labelled `true`, the share the system also judged `true` | ≥ 85% |
+| **Over-correction rate** | `over_correction_rate` | Of the 29 items labelled `false`, the share the system wrongly judged `true`. **Lower is better** | ≤ 15% |
 | Correction validity | `correction_validity` | 40 items rated by hand on the three-point scale in §6 | ≥ 85% valid |
 | Rater agreement | `rater_agreement` | Of 20 items rated by both the author and a second native speaker, the share receiving the same rating | ≥ 80% |
-| Retrieval hit rate | `retrieval_hit_rate` | Share of learner sentences for which a genuinely relevant grammar article appeared in the top 3 | ≥ 80% |
+| Retrieval hit rate | `retrieval_hit_rate` | Of the **16 items that have a grounding article**, the share for which one of the hand-annotated articles appeared in the top 3. **Does not read `score_min`** — rank only | ≥ 80% |
+| Retrieval abstention rate | `retrieval_abstention_rate` | Of the **4 items no article covers**, the share for which nothing came back above `score_min`. **Depends on `score_min`**, so it is never added to the hit rate | Reported, no target |
 | Level compliance | `level_compliance_rate` | Share of AI replies containing no more over-level words than the threshold. **Reported as two figures, first-shot and post-regeneration** (below) | ≥ 90% **on the post-regeneration figure** |
 | Format compliance | `format_compliance_rate` | Share of outputs that were valid JSON **and** whose reason was in English. **Reported separately from accuracy** so a language slip is never mistaken for a reasoning error | — |
 | Latency | `latency_ms` | Median and 95th percentile, **reported separately with and without the speech stages** | Before/after comparison |
@@ -200,6 +201,24 @@ correction engine**, bypassing the app, the microphone, and transcription.
 **The corrected sentence is never scored by exact match.** Natural phrasing is not unique, so
 exact matching would report far below true performance. Only the binary label is machine-scored;
 the quality of the phrasing and reason is judged by eye (§6).
+
+**`retrieval_hit_rate` is reported over 16 items, not 20 (decided 2026-08-13).** Of the twenty
+measurement items annotated by hand, **four turned out to have no article that covers them** —
+nothing in the reference states the polite negative past of a verb, the causative, adverb choice,
+or 〜んです. Running the measurement without first deciding how those four are counted means
+deciding it after seeing the result, because all three candidate rules break something that was
+already pre-registered:
+
+| Candidate | What it breaks |
+|---|---|
+| A `none` item is automatically a miss | The ceiling becomes **16/20 = 80.0%**, so the "≥ 80%" target is reachable only on a flawless run |
+| Drop them from the denominator without saying so | `n = 20` is pre-registered in design.md; going quietly to 16 is a change made afterwards |
+| "Hit if nothing came back above `score_min`", added into one figure | **Invariance to `score_min` is lost.** That invariance is the only thing stopping `score_min` from being tuned to flatter `over_correction_rate`; merged, one threshold moves the published rate by up to 20 points |
+
+**So they are reported as two numbers.** The hit rate is measured over the **16 items that have a
+ground**, reads rank only, and therefore does not move when `score_min` does. The four are
+reported as `retrieval_abstention_rate`, **explicitly marked as depending on `score_min`**. The
+two are never added together, and both `n`s go in the README.
 
 **`level_compliance_rate` is reported as two figures (decided 2026-08-11).** The validation node
 regenerates a reply that fails **this same check, through this same function**, so the
