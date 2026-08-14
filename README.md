@@ -123,7 +123,8 @@ measured **before** the real implementation exists, so the comparison is honest.
 | Over-correction rate | ≤ 15% | — |
 | Correction validity | ≥ 85% | — |
 | Second-rater agreement | ≥ 80% | — |
-| Retrieval hit rate | ≥ 80% | — |
+| Retrieval hit rate (n=16) | ≥ 80% | — |
+| Retrieval abstention rate (n=4) | reported, no target | — |
 | Level compliance | ≥ 90% | — |
 | Testers | ≥ 5 | — |
 
@@ -132,6 +133,17 @@ denominator, not the size of the split. The two accuracy figures do not share on
 40-item test split `detection_accuracy` rests on the 27 items labelled as needing correction
 (±13 points) and `over_correction_rate` on the 13 that do not, where a single item moves the
 figure by 7.7 points. Both will be stated rather than hidden.
+
+Retrieval is reported as two numbers for the same reason. Each of 30 dev items was annotated by
+hand, before any index existed, with the reference article that ought to ground it — and four of
+the twenty published items turned out to have no such article, because nothing in the reference
+covers the polite negative past of a verb, the causative, adverb choice, or 〜んです. Those four
+cannot be scored on whether the right article came back. So the hit rate is measured over the
+**16 items that have a ground** and reads rank alone, which keeps it independent of the retrieval
+score floor; the other **four are reported separately**, on whether anything came back above that
+floor, with their dependence on it stated. They are never added together. Rolling them into one
+figure would let the score floor be tuned until the number improved, and nothing in this
+repository would show that it had been.
 
 ### The correction engine is measured on text, not through the app
 

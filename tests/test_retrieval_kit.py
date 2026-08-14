@@ -18,6 +18,7 @@ from pathlib import Path
 
 import pytest
 
+from config import threshold
 from evals.dataset import ITEMS_PATH, load_items
 from evals.retrieval_kit import (
     KIT_DIR,
@@ -145,6 +146,47 @@ class TestTheFilledWorksheet:
 
         assert len(answered[:THRESHOLD_SAMPLE]) == 10
         assert len(answered[THRESHOLD_SAMPLE:]) == 20
+
+
+class TestTheDenominatorsThatGetPublished:
+    """The `n`s in glossary.md §5, tied to the sheet they are counted from.
+
+    `retrieval_hit_rate` is reported over the items that HAVE a grounding article
+    and `retrieval_abstention_rate` over the ones that do not. Both numbers are
+    written into two documents and a README; nothing connected them to the file
+    they describe, so an annotation changed from `none` to an article would leave
+    the published denominators silently wrong.
+    """
+
+    def _split(self, answered: list[tuple[str, tuple[str, ...]]]) -> tuple[int, int]:
+        grounded = sum(1 for _, ids in answered if ids)
+        return grounded, len(answered) - grounded
+
+    def test_the_published_block_is_sixteen_grounded_and_four_not(self) -> None:
+        answered = list(load_grounds().items())[THRESHOLD_SAMPLE:]
+
+        assert self._split(answered) == (16, 4)
+
+    def test_the_threshold_block_is_eight_grounded_and_two_not(self) -> None:
+        # score_min is chosen on the grounded ones only, so the denominator behind
+        # `recall_floor_items` is 8 — not the 10 items the block appears to hold.
+        answered = list(load_grounds().items())[:THRESHOLD_SAMPLE]
+
+        assert self._split(answered) == (8, 2)
+
+    def test_the_recall_floor_is_reachable_on_that_denominator(self) -> None:
+        grounded, _ = self._split(list(load_grounds().items())[:THRESHOLD_SAMPLE])
+
+        assert 0 < threshold("retrieval", "recall_floor_items") <= grounded
+
+    def test_the_top_k_is_the_three_the_metric_is_defined_over(self) -> None:
+        assert threshold("retrieval", "top_k") == 3
+
+    def test_score_min_is_absent_until_it_has_been_measured(self) -> None:
+        # Deliberate. Anything reaching for it before 8/15 should stop, loudly and
+        # by name, rather than fall back on a default nobody chose.
+        with pytest.raises(KeyError, match="retrieval.score_min"):
+            threshold("retrieval", "score_min")
 
 
 class TestTheSecondAnnotation:

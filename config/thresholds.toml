@@ -162,3 +162,63 @@ max_regenerations = 1
 # threshold does not break the conversation, not that it is the best value. Only
 # three distinct words went over level across all 90 replies, so there is not
 # enough signal here to tune against — revisit in September on real replies.
+
+
+[retrieval]
+# How many articles are handed to the correction model, and the floor a result has
+# to clear to count as grounding at all.
+
+# The top 3, as glossary.md §5 has said since week 1. `retrieval_hit_rate` is
+# measured over this same 3 and reads RANK ONLY — it never compares against
+# score_min. That is deliberate and is the reason the two live in different
+# places: if the published hit rate moved with score_min, score_min could be
+# tuned until the hit rate looked good, and nothing in the repository would show
+# it had been.
+top_k = 3
+
+# HOW score_min IS CHOSEN, written before it is measured (2026-08-13).
+#
+# The obvious rule — "the value that maximises recall of the hand-annotated
+# articles" — cannot choose anything. Recall only rises as the floor falls, so the
+# rule always answers score_min = 0, at which check 3 never fires and the
+# validation node has no third check. A criterion whose answer is fixed before the
+# data arrives is not a criterion.
+#
+# So the rule is inverted, and the recall floor is the part fixed in advance:
+#
+#   score_min = the LARGEST value at which at least `recall_floor_items` of the
+#               grounded items in the THRESHOLD sample still have one of their
+#               annotated articles in the top 3 with a score at or above it.
+#
+# Candidates are the distinct scores actually observed on the threshold sample,
+# plus 0, so the maximum is attained rather than approached. Measured on
+# evals/retrieval/worksheet.md, first block only — the twenty measurement items
+# are not looked at, before or after.
+#
+# The threshold block holds 10 items, of which 8 have a grounding article and 2
+# have none. So the denominator here is 8, not 10.
+recall_floor_items = 7
+
+# WHY 7 OF 8 AND NOT 6. The two errors are not symmetric. A floor set too high
+# discards grounding for a correction that was right, and check 3 then suppresses
+# it — the learner is shown nothing and never learns that anything was wrong. A
+# floor set too low only means check 3 fires less often than it could. That is the
+# same asymmetry already written under [rewrite_too_far]: a discarded valid
+# correction is invisible to the learner and therefore worse than a slightly loose
+# threshold. 7 of 8 allows exactly one grounded item to be lost; 6 of 8 allows two,
+# which on eight items is a quarter of them.
+#
+# IF NO VALUE ABOVE 0 REACHES 7 OF 8, the answer is score_min = 0 and it is
+# reported as "check 3 could not be operated at this reference size", not patched
+# by lowering the floor afterwards. Lowering a floor to make a check fire is how a
+# threshold stops meaning anything.
+#
+# THE TWO `none` ITEMS ARE NOT USED TO CHOOSE. Two items cannot separate anything,
+# and picking score_min to make both of them abstain would be fitting a threshold
+# to two data points. They are reported as a diagnostic at whatever value the rule
+# above returns: how many of the two came back with nothing above it.
+#
+# score_min itself is written here on 8/15, with the measurement beside it. It is
+# deliberately absent until then — config.threshold() raises a KeyError naming
+# this file, which is what should happen if anything tries to run check 3 before
+# the value it depends on exists.
