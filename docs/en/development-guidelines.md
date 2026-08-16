@@ -109,5 +109,7 @@ edits without judging each finding yourself defeats the purpose.
 
 - Secrets from environment variables only
 - Caps on input length, recording length, turns per session, and daily tokens and TTS characters
-- Learner audio and transcripts are personal data: consent before storing, no names, a
-  documented deletion route
+- Learner audio and transcripts are personal data: **they are not stored at all** (decided
+  2026-08-16), and no name is kept. **With nothing stored there is no consent record either** —
+  only the notice (sent to external APIs, do not speak confidential information, the voice is
+  synthetic) and a contact address

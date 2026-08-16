@@ -53,7 +53,7 @@ Label `true` when the sentence is:
 
 Label `false` when a native speaker would accept the sentence as-is in this scene, **even if
 a more elegant phrasing exists.** This is the harder judgement and the one that matters:
-these 30 items exist solely to measure over-correction.
+these **29** items exist solely to measure over-correction (30 originally; eval-052 was relabelled `true` on 2026-08-13, and `tests/test_evaluation_items.py` pins the data).
 
 Explicitly label `false` for:
 
@@ -185,18 +185,18 @@ required rather than decorative.
 All correction metrics are measured by feeding evaluation items **as text directly to the
 correction engine**, bypassing the app, the microphone, and transcription.
 
-| Metric | `identifier` | Definition | August target |
+| Metric | `identifier` | Definition | Target (end of November 2026) |
 |---|---|---|---|
 | Detection accuracy | `detection_accuracy` | Of the 91 items labelled `true`, the share the system also judged `true` | ≥ 85% |
 | **Over-correction rate** | `over_correction_rate` | Of the 29 items labelled `false`, the share the system wrongly judged `true`. **Lower is better** | ≤ 15% |
 | Correction validity | `correction_validity` | 40 items rated by hand on the three-point scale in §6 | ≥ 85% valid |
-| Rater agreement | `rater_agreement` | Of 20 items rated by both the author and a second native speaker, the share receiving the same rating | ≥ 80% |
+| Rater agreement | `rater_agreement` | Of 20 items rated by both the author and a second native speaker, the share receiving the same rating | **Not measured** (below) |
 | Retrieval hit rate | `retrieval_hit_rate` | Of the **16 items that have a grounding article**, the share for which one of the hand-annotated articles appeared in the top 3. **Does not read `score_min`** — rank only | ≥ 80% |
 | Retrieval abstention rate | `retrieval_abstention_rate` | Of the **4 items no article covers**, the share for which nothing came back above `score_min`. **Depends on `score_min`**, so it is never added to the hit rate | Reported, no target |
 | Level compliance | `level_compliance_rate` | Share of AI replies containing no more over-level words than the threshold. **Reported as two figures, first-shot and post-regeneration** (below) | ≥ 90% **on the post-regeneration figure** |
 | Format compliance | `format_compliance_rate` | Share of outputs that were valid JSON **and** whose reason was in English. **Reported separately from accuracy** so a language slip is never mistaken for a reasoning error | — |
-| Latency | `latency_ms` | Median and 95th percentile, **reported separately with and without the speech stages** | Before/after comparison |
-| Adoption | — | Number of testers holding at least one session, and turns per tester | ≥ 5 testers |
+| ~~Latency~~ | ~~`latency_ms`~~ | ~~Median and 95th percentile, split with and without the speech stages~~ | **Not measured (dropped 2026-08-16)** |
+| ~~Adoption~~ | — | ~~Number of testers holding at least one session, and turns per tester~~ | **No figure published. Written feedback from 2–3 testers (2026-08-16)** |
 
 **The corrected sentence is never scored by exact match.** Natural phrasing is not unique, so
 exact matching would report far below true performance. Only the binary label is machine-scored;
@@ -238,9 +238,28 @@ the same function, and so is not independent evidence.** It is measured on a fix
 `test` sentence is ever pushed through the conversation prompt. Where the vocabulary tiers come
 from is documented in [`nlp/frequency.py`](../../nlp/frequency.py).
 
-**The 20 items for `rater_agreement` are taken from `dev` (decided 2026-08-08).** The
+**`rater_agreement` will not be produced (decided 2026-08-16).** No second rater was
+secured. The 20-item kit went out to the first on 8/8, nothing came back by the 8/16 deadline,
+and the decision is not to approach anyone else.
+`evals/rater/20260808-2041-rater-kit-second.json` is left in the repository with all twenty
+ratings still `null` — **it is the evidence the request was made, and deleting it would make
+"asked and got no reply" indistinguishable from "never asked".**
+
+**The metric is not being removed from the table.** Only its target changes, to "not measured".
+A metric that quietly disappears from a document reads, correctly, as one that was dropped
+because it was inconvenient.
+
+**The cost of this is specific and is not being softened.** The private planning document says of
+`correction_validity` that **a system scored only by the person who built it is the weakest
+evidence on offer**, and the second rater was the single mitigation for exactly that. With the
+mitigation gone the weakness stands, so every place `correction_validity` is published must say
+**that it is a single-rater figure with no independent check**. The number is not adjusted; what
+it is a number *of* is stated accurately.
+
+**The 20 items for `rater_agreement` are taken from `dev` (decided 2026-08-08, kept as the
+record of what was asked for).** The
 definition above does not say which split. Taking them from `test` would mean the author reading
-test items in order to rate them, and **every prompt adjustment from week 2 onward would be
+test items in order to rate them, and **every later prompt adjustment would be
 contaminated by that memory** (§7). Agreement asks whether two people read the scale the same
 way, and `dev` carries that just as well.
 
@@ -267,7 +286,7 @@ end a sentence.` is English; `これは丁寧な言い方ではありません` 
   English explanations**; not one answer came back in Japanese. `format_compliance_rate` read
   55%, which a README reader takes to mean "45% answered in Japanese". None did
 - **Quoting style must not be measured under the name of a language metric.** That is the
-  "language mix-up" trap from the llm-jp-eval critique, pointed the other way (PLAN.md §2-4)
+  "language mix-up" trap from the llm-jp-eval critique, pointed the other way
 - Items that left Japanese outside quotes are still recorded per item in the run record
   (`japanese_left_unquoted`) but **never counted** in the metric: the correction prompt asks
   for 「」 and the baseline prompt does not, so the difference stays visible
@@ -286,13 +305,15 @@ This said "on a 40-item test split the margin is roughly ±8 points", and **no m
 
 With 13 items behind it, one item moves `over_correction_rate` 7.7 points and the 15% target is
 really a two-item target. **Do not widen the denominator with `dev`.** Eighty of the 120 items
-are `dev` — the side §7 allows tuning against — so once week 2 tunes the prompt, a
+are `dev` — the side §7 allows tuning against — so once the prompt is tuned, a
 dev-inclusive figure rises by however much it was tuned. **Publish the `test` figure (`n=13`,
 ±19–27pt) and publish the width with it.** A `dev` figure may sit beside it only if it is
 labelled as the tuned-on side, and the two are never added together.
 
-**The answer to a thin denominator is more `false` items, not a mixed one** — which is what
-the 250-item expansion in September is for.
+**The answer to a thin denominator is more `false` items, not a mixed one.**
+**That answer is unavailable for now**: the evaluation set was fixed at 120 items on 2026-08-16
+and the planned expansion to 250 was dropped. **Recording an unavailable remedy is still
+worthwhile** — it is what keeps the thin denominator in mind when the number is read.
 
 ---
 
@@ -368,7 +389,7 @@ case 1 only.
 | Term | Definition |
 |---|---|
 | **Dev split** (`dev`) | 80 items. Prompts and thresholds are tuned against these, freely |
-| **Test split** (`test`) | 40 items. Touched at the start and at the end of August, never in between. Tuning against these would make every number self-graded and worthless |
+| **Test split** (`test`) | 40 items. **Touched at the start and at the end, never in between** (2026-08-16: "of August" removed — a longer deadline does not buy more looks). Tuning against these would make every number self-graded and worthless |
 | **Baseline** (`baseline`) | The naive implementation: one LLM call saying "correct this Japanese and explain why". Measured **before** the real implementation exists, so the comparison table is honest |
 | **Run record** (`run_record`) | The JSON written for every measurement. It carries **enough to reconstruct the conditions a number came from**: model, prompt version, **scorer version** (`scorer_version`), **dataset version** (`items_digest`), **threshold version** (`thresholds_digest`), **stage** (`stage`), date, split and **item count** (`n`). Compliance runs add the **script version** (`script_digest`). Every README figure names the run it came from. **Without `n`, a figure in the README cannot be traced to the size of the measurement behind it** (§5 requires `n` beside every published number). **The scorer version is needed too** — a number that moved because a scoring rule changed reads as a change in the model if only the prompt version is visible (added 2026-08-06). **So are the dataset and threshold versions**: the improvement cycle changes one thing and writes two records, and if that thing was a threshold, **the two records are identical in every other field** (added 2026-08-12) |
 | **Rewrite-too-far** (書き換えすぎ) | A "correction" whose edit distance from the original exceeds the threshold. It is a different sentence, not a correction, and is discarded by the validation node |
@@ -402,4 +423,4 @@ Measured on 2026-08-02:
 A threshold of 0.5 — the value most people would reach for first — would silently discard
 `ありがとう → ありがとうございます`. **A discarded valid correction never reaches the learner
 and never appears in the metrics**, so this failure mode is invisible unless looked for.
-Week 2 must count how many valid dev-split corrections the threshold discards.
+**Before the comparison table is published**, count how many valid dev-split corrections the threshold discards.

@@ -43,11 +43,14 @@ japanese-speaking-coach/
     ├── evaluation/            評価データ120件の JSON — 公開成果物
     │   └── candidates/        検証前の候補。items.json の材料であって正本ではない
     ├── grammar/               自作の文法リファレンス8本。**評価データを引用しない**（pytest で固定）
-    ├── frequency/             BCCWJ の語彙表と段階の表 — **git 管理外**。再配布の可否が
-    │                          明示されていないため同梱しない（取得は `python -m nlp.frequency --build`）
-    ├── recordings/            学習者の音声 — git 管理外、個人情報
-    └── sessions/              セッションの書き出し — git 管理外、個人情報
+    └── frequency/             BCCWJ の語彙表と段階の表 — **git 管理外**。再配布の可否が
+                               明示されていないため同梱しない（取得は `python -m nlp.frequency --build`）
 ```
+
+**`recordings/` と `sessions/` は作らない（2026-08-16 決定）。** 旧版はここに
+「学習者の音声」「セッションの書き出し」を置く予定として書いていたが、
+**何も保存しないことにした**ため、どちらもディスク上に生まれない
+（[architecture.md](architecture.md) の「保存しないという決定」）。
 
 ## 配置のルール
 

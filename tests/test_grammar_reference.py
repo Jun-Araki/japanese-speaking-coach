@@ -8,7 +8,7 @@ is the machinery that keeps it fixed.
 
 Two different rules for the two splits, because the risk is different.
 
-`test` is a hard failure. Those items are measured once more in week 4, against a
+`test` is a hard failure. Those items are measured once more at the end, against a
 corpus that will by then have been retrieved from; an answer sitting in it is the
 kind of contamination that cannot be undone afterwards.
 

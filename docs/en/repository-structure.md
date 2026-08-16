@@ -51,12 +51,15 @@ japanese-speaking-coach/
     │   └── candidates/        Unverified candidates: raw material for items.json, not the record
     ├── grammar/               8 self-written grammar reference articles. **Quotes no
     │                          evaluation item** — pinned by pytest
-    ├── frequency/             BCCWJ word lists and the tier tables — **git-ignored**. Not
-    │                          bundled: redistribution terms are not stated. Fetch with
-    │                          `python -m nlp.frequency --build`
-    ├── recordings/            Learner audio — git-ignored, personal data
-    └── sessions/              Session exports — git-ignored, personal data
+    └── frequency/             BCCWJ word lists and the tier tables — **git-ignored**. Not
+                               bundled: redistribution terms are not stated. Fetch with
+                               `python -m nlp.frequency --build`
 ```
+
+**`recordings/` and `sessions/` are never created (decided 2026-08-16).** They were listed here
+as planned homes for learner audio and session exports; **nothing is stored now**, so neither
+directory ever comes into existence — see "The decision to store nothing" in
+[architecture.md](architecture.md).
 
 ## Placement rules
 

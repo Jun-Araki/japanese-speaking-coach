@@ -1,9 +1,10 @@
 """The conversation screen.
 
 One screen with three states, as fixed in docs/ja/functional-design.md: pick a
-scene and a level, talk, then look back at it. Week 1 is text only -- voice arrives
-in week 3, and putting it in before the corrections are any good would make a bad
-number impossible to attribute to either the transcription or the correction.
+scene and a level, talk, then look back at it. This is text only -- voice arrives
+late in the schedule (late October), and putting it in before the corrections are any
+good would make a bad number impossible to attribute to either the transcription or
+the correction.
 
 Corrections run on every turn but nothing about them reaches the conversation
 state. They are collected out of sight and only the review renders them.

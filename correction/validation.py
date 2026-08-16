@@ -1,6 +1,7 @@
 """Deterministic checks applied to a correction after the model has produced it.
 
-This is the file the "not a thin wrapper" claim rests on (PLAN.md §2-1). Everything
+This is the file the "not a thin wrapper" claim rests on (see
+docs/en/functional-design.md). Everything
 here is ordinary Python run over an answer that already exists — no second call,
 no asking the model whether it went too far. That distinction is not stylistic: a
 second call would draw the same probabilistic judgement again, and the difference
@@ -129,7 +130,7 @@ def edit_distance(left: str, right: str) -> int:
 
     Written out rather than pulled in: it is fifteen lines, it runs over sentences
     of a dozen characters, and a dependency added for it would have to be justified
-    in the Docker image in week 3.
+    in the Docker image when the API is containerised.
     """
     if left == right:
         return 0

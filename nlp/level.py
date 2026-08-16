@@ -30,9 +30,9 @@ class LevelCheck:
     """What the check found, in a form that can be explained to a learner.
 
     `over_level` carries the words themselves rather than only a count: a reply
-    rejected without naming the word that failed cannot be debugged, and week 4's
-    latency work will want to know whether regeneration fires on the same handful
-    of words every time.
+    rejected without naming the word that failed cannot be debugged, and it is
+    worth knowing whether regeneration fires on the same handful of words every
+    time.
     """
 
     words: tuple[Word, ...]

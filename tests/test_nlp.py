@@ -118,7 +118,7 @@ class TestLevelCheck:
         assert not result.passes
         assert "弊社" in [word.surface for word in result.over_level]
         # Naming the words is the point: a reply rejected without them cannot be
-        # debugged, and week 4 will want to know whether the same handful keeps
+        # debugged, and it is worth knowing whether the same handful keeps
         # triggering regeneration.
         assert result.far_over_level != ()
 

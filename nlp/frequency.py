@@ -14,7 +14,8 @@ the short-unit and the long-unit list, retrieved 2026-08-11, ver1_0.
   short unit  DOI 10.15084/00003218    long unit  DOI 10.15084/00003212
 NINJAL states it is free to use for research and educational purposes. It says
 nothing about redistribution, so the list is fetched and never committed —
-the handling PLAN.md §2-3 already fixed for JMdict. `wordfreq` was considered and
+the handling already fixed for JMdict (docs/en/architecture.md,
+"Licensing"). `wordfreq` was considered and
 rejected: its data is CC BY-SA (the same share-alike condition that keeps JMdict
 out) and it wants MeCab, which would mean carrying a second tokenizer beside the
 one this project claims to use.
@@ -27,8 +28,8 @@ count, which the list does not give per lemma. That lands on cumulative
 vocabularies of roughly 1.7k,
 3.4k, 8.3k and 15.8k words — near the sizes usually quoted for the JLPT levels,
 which is why the README may say the tiers *approximately correspond* to them and
-must not say more. Nothing from a textbook or a past paper is ingested (PLAN.md
-§2-3).
+must not say more. Nothing from a textbook or a past paper is ingested
+(docs/en/architecture.md, "Licensing").
 
 WHAT THIS CORPUS IS NOT. BCCWJ is WRITTEN Japanese — books, newspapers, white
 papers, blogs. This app is about speaking, and everyday spoken vocabulary is

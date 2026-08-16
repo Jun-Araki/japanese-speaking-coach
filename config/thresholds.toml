@@ -21,7 +21,7 @@
 # "add です"). A zero-tolerance rule reported the baseline as 55% compliant, which
 # a reader takes to mean it answered in Japanese 45% of the time. It did not
 # once. Measuring quoting style under the name of a language metric is exactly the
-# "language mix-up" trap in the llm-jp-eval critique (PLAN.md §2-4), pointed the
+# "language mix-up" trap in the llm-jp-eval critique (the llm-jp-eval critique), pointed the
 # other way.
 #
 # 0.25 sits far above the observed inline mentions (a few characters in 200-800)
@@ -97,8 +97,11 @@ japanese_share_min = 0.5
 # is reported as a firing count of zero rather than tuned until it fires.
 #
 # What still needs catching is the meaning-changing rewrite, and character
-# distance is the wrong instrument for it. Not solved by a number here; revisit in
-# September, when 250 items give enough of them to see a pattern.
+# distance is the wrong instrument for it. Not solved by a number here.
+# The old note said "revisit in September, when 250 items give enough of them to see
+# a pattern". The set was fixed at 120 items on 2026-08-16 and the 250-item expansion
+# was dropped, so that revisit will not happen on schedule. This stays unsolved, and
+# saying so is better than leaving a plan that no longer exists.
 normalised_distance_max = 0.85
 
 # Below this length the normalised ratio is meaningless (one character changed in
@@ -161,7 +164,8 @@ max_regenerations = 1
 # What that does NOT establish: 0.2 was never swept. The measurement says the
 # threshold does not break the conversation, not that it is the best value. Only
 # three distinct words went over level across all 90 replies, so there is not
-# enough signal here to tune against — revisit in September on real replies.
+# enough signal here to tune against. Revisit when real replies exist; that is now
+# late in the schedule (voice and testers land in November), not September.
 
 
 [retrieval]
@@ -218,7 +222,8 @@ recall_floor_items = 7
 # to two data points. They are reported as a diagnostic at whatever value the rule
 # above returns: how many of the two came back with nothing above it.
 #
-# score_min itself is written here on 8/15, with the measurement beside it. It is
+# score_min itself is written here when retrieval is built (31 Aug - 6 Sep), with the
+# measurement beside it. It is
 # deliberately absent until then — config.threshold() raises a KeyError naming
 # this file, which is what should happen if anything tries to run check 3 before
 # the value it depends on exists.

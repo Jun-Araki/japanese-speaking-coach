@@ -3,7 +3,7 @@
 Japanese writes no spaces between words, so "does this reply use vocabulary above
 the learner's level?" cannot be answered by string matching: the boundary the
 question depends on is not written down. Everything else in `nlp/` stands on this
-file (PLAN.md §2-1).
+file (see docs/en/architecture.md).
 
 Only content words are counted. Particles and auxiliaries are the most frequent
 words in the language and appear in every sentence at every level, so including

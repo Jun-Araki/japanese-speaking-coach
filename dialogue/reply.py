@@ -139,7 +139,7 @@ def reply(scene: str, level: str, history: list[Utterance]) -> str:
 def checked_reply(scene: str, level: str, history: list[Utterance]) -> Reply:
     """Generate a line and regenerate it once if it sits above the learner's level.
 
-    Validation node 2 (PLAN.md §2-1). Once, then the reply is used as it is: an
+    Validation node 2 (see docs/en/functional-design.md). Once, then the reply is used as it is: an
     unbounded loop would stall the conversation, and a slightly hard reply costs a
     beginner far less than a partner that never answers.
 

@@ -46,7 +46,7 @@ RUNS_DIR: Final = Path("evals/runs")
 # rule, the denominators, the treatment of an unusable verdict. The prompt version
 # alone cannot explain a number that moved because the scorer changed, and a
 # scoring bug that nobody can date is the last item in the llm-jp-eval table of
-# traps this project copied its cautions from (PLAN.md §2-4).
+# traps this project copied its cautions from (see docs/en/glossary.md §5).
 SCORER_VERSION: Final = "score-v1"
 
 # The dataset carries a scene per item but no level: the level describes a learner,
@@ -92,10 +92,13 @@ class Outcome:
     # Recorded, not counted: the correction prompt asks for 「」 and the baseline
     # prompt does not, so this shows where that difference actually lands.
     japanese_left_unquoted: bool
-    # Wall-clock for this item's call. Week 4 optimises latency and compares before
-    # and after, but "before" is the state of the system on the day week 4 starts —
-    # this week's state can only be recorded this week. Kept per item so the
-    # aggregate can be recomputed without re-running.
+    # Wall-clock for this item's call. Recorded, but NOT a published metric: latency
+    # was dropped from scope on 2026-08-16, so no README number rests on it and no
+    # optimisation is planned. It stays because a run record is where "what the
+    # system did that day" belongs, and dropping it would discard history that
+    # costs nothing to keep. Kept per item so the aggregate can be recomputed
+    # without re-running. If a figure is ever published from this, the docs that
+    # currently say "not measured" have to change first.
     elapsed_ms: int
     # How far the reason sat from the language threshold, not just which side of it.
     # glossary §7 asks for that threshold to be reconfirmed against dev this week,

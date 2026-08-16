@@ -32,7 +32,7 @@ import pytest
 from dialogue.scenes import SCENES
 from evals.dataset import ITEMS_PATH, Item, counts_by_scene, load_items
 
-# What the dataset is finished at, per PLAN.md and docs/ja/glossary.md §5.
+# What the dataset is finished at, per docs/ja/glossary.md §5.
 #
 # 91/29, not the 90/30 fixed on day 3. eval-052 「部長、話したいことあります。」 was
 # relabelled `true` on 2026-08-13: preparing the retrieval annotations surfaced that
