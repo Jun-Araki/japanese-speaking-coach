@@ -2,10 +2,20 @@
 
 ## Who filled this in, and when — READ THIS BEFORE QUOTING THE HIT RATE
 
-Filled by Claude (Opus) on **2026-08-13**, and **not yet reviewed line by line by
-Jun**. No retrieval existed in this repository at the time — no index, no embedding
-code, no dependency — so the order the metric depends on is intact, and that is
-checkable from the git history rather than on trust: retrieval arrives on 8/15.
+Filled by Claude (Opus) on **2026-08-13** and **reviewed by Jun on 2026-08-16**,
+still before any search. No retrieval existed in this repository at the time — no
+index, no embedding code, no dependency — so the order the metric depends on is
+intact, and that is checkable from the git history rather than on trust.
+
+**The review changed no line, and that is recorded rather than glossed.** Jun, a
+native speaker, was given the five answers this sheet was least sure of and ruled
+on all five: 「もう出かけるんですか」 is everyday speech and stands (28); 「お仕事は
+なにしますか」 is repaired by 「お仕事は何ですか」 (9); 「良い一日を」 is the right form
+(14); 「あなた、どこですか」 would be 「あなたはどこですか」 but stays as it is (21);
+「はい、分かりました」 stands (26). The remaining answers were left to this sheet.
+
+Two of those five confirmed the ITEM without settling which article GROUNDS it,
+and one of them, `eval-014`, is the sheet's closest call — see below.
 
 What this weakens has to be said wherever the number is published: the annotations
 and the retrieval come from the same model family, so `retrieval_hit_rate` measures
@@ -19,6 +29,23 @@ matched exactly.** Four of the five disagreements were resolved in the second
 annotator's favour and are marked in the git history of this file — one of them
 (`eval-014`) because the article this sheet first cited states a rule the sentence
 does not actually break.
+
+**`eval-014`, and the reason for writing this down.** 「お仕事はなにしますか」 is
+answered here with grammar-006, and `none` was genuinely arguable: no article says
+that an occupation is asked about with 「何ですか」. grammar-006 was kept because it
+does state a rule the sentence breaks — plain ます points at the future, so
+「なにしますか」 does not ask what someone does now — and because the blind second
+annotator reached grammar-006 independently.
+
+What has to be said is what was noticed while deciding. This item sits in the
+threshold block, which holds 8 grounded items and 2 without. `recall_floor_items`
+is 7, chosen as "one of the eight may be lost". Answering `none` here would leave
+7 grounded, at which 7 of 7 silently becomes "none may be lost" — a stricter
+criterion than the one that was justified, arrived at by an annotation rather than
+by a decision. **The annotation was settled on its merits first and the interaction
+noted second**, in that order, and it is written here so that a reader can check
+the order was not the other way round. Had `none` won, the floor would have been
+restated to 6 of 7 with the reason recorded, not left to change meaning by itself.
 
 **The order of what happened to `eval-052`, because it matters.** Annotating it
 surfaced that the item contradicted `data/grammar/grammar-002`. Jun, a native

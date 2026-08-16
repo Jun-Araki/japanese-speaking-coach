@@ -127,5 +127,8 @@
       "rating": "valid",
       "note": ""
     }
-  ]
+  ],
+  "caveats": {
+    "eval-052": "This rating predates a label change and is deliberately NOT being revised. Rated 2026-08-08 as `insufficient`, on the stated ground that the learner's sentence 「部長、話したいことあります。」 needed no correction. On 2026-08-13 the item was relabelled needs_correction: true, because it contradicted data/grammar/grammar-002 and because eval-054 「この件、確認必要です。」 is the same omission labelled true; the relabel was confirmed on 2026-08-16. The rating is left exactly as it was recorded: re-rating a hand judgement after changing the label it rests on is the move this project refuses everywhere else, and it would be doing it on the one item where the change improves the system's own numbers. Effect, measured on evals/runs/20260811-0752-baseline-dev.json: over_correction_rate on dev goes from 11/17 = 64.7% to 10/16 = 62.5%, detection_accuracy is unchanged at 98.4%, and the held-out split is untouched. correction_validity must carry this footnote wherever it is published."
+  }
 }
