@@ -11,13 +11,15 @@ already written to a run record are all that is needed. This module reads a `raw
 run record and applies a check over its rows, producing a run record that differs
 from its source in exactly the check and nothing else.
 
-GROUNDING IS EMPTY THIS WEEK, AND THAT IS NOT AN ASSUMPTION MADE HERE. The
-correction prompt states `grounding_ids` is always an empty array, because
-retrieval is not connected yet. Check 3 is a conjunction whose main term is meant
-to be "nothing could be cited"; with that term true for every item, what is being
-measured is the remaining predicate on its own. Requirements §7 of the week-3
-steering directory says this in advance, and the table has to repeat it: a check 3
-column measured this week cannot decide whether check 3 is adopted.
+GROUNDING IS READ FROM THE RECORD, NOT ASSUMED. Stage 0 was measured on a prompt
+that fixes `grounding_ids` to an empty array, so check 3's main term — "nothing
+could be cited" — is true for every one of its items, and what a check 3 column
+restaged from it measures is the remaining predicate on its own. That is stated in
+requirements §7 of the week-3 steering directory and has to be repeated wherever
+the column appears: restaged from an ungrounded run, check 3 cannot decide whether
+check 3 is adopted. Restaged from the grounded run (`correction-rag-v1`, measured
+2026-08-19) the term means what it was meant to mean, and `score_min = 0` makes it
+false for every item that cited anything.
 
 Run:  .venv/bin/python -m evals.restage --run evals/runs/<id>-engine-raw-dev.json \
           --stage validated
@@ -139,11 +141,10 @@ def correction_from_row(row: dict[str, Any]) -> Correction | None:
         needs_correction=row["predicted"],
         corrected_sentence=row["corrected_sentence"],
         reason_en=row["reason_en"],
-        # Not stored per item, and empty for every item this week by construction:
-        # the prompt fixes it (see the module docstring). Once retrieval fills it,
-        # the record has to carry it or this module stops being able to replay
-        # check 3 honestly.
-        grounding_ids=(),
+        # Read from the record where it is present. Runs written before 2026-08-19
+        # did not carry it and were all ungrounded by construction, so an absent
+        # key is an honest empty rather than a missing measurement.
+        grounding_ids=tuple(row.get("grounding_ids", ())),
     )
 
 
@@ -182,6 +183,7 @@ def restage(record: dict[str, Any], stage: str) -> ScoreReport:
                 attempts=row["attempts"],
                 corrected_sentence=None if checked is None else checked.corrected_sentence,
                 reason_en=reason,
+                grounding_ids=() if checked is None else tuple(checked.grounding_ids),
             )
         )
     return ScoreReport(outcomes)

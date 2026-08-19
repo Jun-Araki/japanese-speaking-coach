@@ -17,7 +17,7 @@ from __future__ import annotations
 
 import json
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing import Any, Final, Literal
 
 from langchain_core.messages import AIMessage, BaseMessage, HumanMessage, SystemMessage
@@ -29,6 +29,12 @@ from llm import as_text, build_chat_model
 # Recorded in every run record. Bump it whenever the wording below changes, or
 # measurements taken weeks apart stop being comparable.
 PROMPT_VERSION: Final = "correction-v1"
+
+# The grounded prompt is a SECOND version, not a replacement. Stage 0 of the
+# comparison table is measured on the prompt above and has to stay reproducible
+# after this file learns to retrieve, so the two versions live side by side and a
+# run record says which one produced it.
+GROUNDED_PROMPT_VERSION: Final = "correction-rag-v1"
 
 # The conversation wants variety; the judgement must not have any. The same
 # sentence measured twice has to give the same label, or the evaluation numbers
@@ -128,6 +134,25 @@ not Japanese.
 - `grounding_ids` is always an empty array.
 """
 
+# Appended to the prompt above when retrieval is on, replacing the last bullet. The
+# articles are handed over whole — the sections the search returned, with their ids —
+# because a citation the model never read is not grounding, it is decoration. Asking
+# it to name the ones it USED, rather than recording what was shown, is what makes
+# `grounding_ids` mean something: with score_min at 0 every search returns three
+# sections whether or not any of them applies, so the model's choice is the only
+# signal left about whether anything actually grounded the correction.
+_GROUNDING_BLOCK: Final = """\
+
+REFERENCE ARTICLES. These were retrieved for this sentence. They may or may not be \
+relevant — judge that yourself.
+
+{articles}
+
+- `grounding_ids` lists the ids of the articles above that you ACTUALLY USED to \
+decide. Use an empty array if none of them applies. Do not cite an article you did \
+not use, and do not invent an id that is not listed above.
+"""
+
 _REPAIR_PROMPT: Final = """\
 That answer was not usable: {problem}. Answer again with the JSON object only — no \
 prose, no markdown fence — with exactly the keys needs_correction, \
@@ -156,12 +181,50 @@ def check(sentence: str, scene: str, level: str) -> CorrectionResult:
     Provider errors propagate. A broken answer does not: it is a measurable outcome
     rather than a fault, so it comes back as a result with no correction in it.
     """
+    return _judge(sentence, scene, level, grounding=None)
+
+
+def check_with_retrieval(sentence: str, scene: str, level: str) -> CorrectionResult:
+    """The same judgement, with the retrieved sections in front of the model.
+
+    Retrieval is imported here rather than at module scope on purpose. It pulls in
+    several hundred megabytes of embedding model, and the published build may have
+    to run without it (the free tier may not take torch, in which case the deployed
+    app drops retrieval and the measurements go on running locally). An import at
+    the top would make that fallback impossible: the correction engine would refuse
+    to load at all.
+
+    A retrieval failure is not a correction failure. If the index cannot be built,
+    the sentence is still judged — ungrounded, with `grounding_ids` empty, which is
+    exactly what "nothing could be cited" is supposed to mean.
+    """
+    try:
+        from retrieval.index import search
+
+        results = search(sentence)
+        block = "\n\n".join(
+            f"[{result.article_id}] {result.heading}\n{result.body}" for result in results
+        )
+        allowed = {result.article_id for result in results}
+    except Exception:  # noqa: BLE001 - any retrieval failure degrades to ungrounded
+        block, allowed = "", set()
+
+    return _judge(sentence, scene, level, grounding=(block, allowed))
+
+
+def _judge(
+    sentence: str,
+    scene: str,
+    level: str,
+    grounding: tuple[str, set[str]] | None,
+) -> CorrectionResult:
     role, _ = scene_brief(scene)
+    prompt = SYSTEM_PROMPT.format(situation=role, level=level_brief(level))
+    if grounding is not None and grounding[0]:
+        prompt += _GROUNDING_BLOCK.format(articles=grounding[0])
+
     model = build_chat_model(temperature=TEMPERATURE)
-    messages: list[BaseMessage] = [
-        SystemMessage(SYSTEM_PROMPT.format(situation=role, level=level_brief(level))),
-        HumanMessage(sentence),
-    ]
+    messages: list[BaseMessage] = [SystemMessage(prompt), HumanMessage(sentence)]
 
     # Only the first attempt is described here; see CorrectionResult.
     first_problems: tuple[FormatProblem, ...] = ()
@@ -182,6 +245,16 @@ def check(sentence: str, scene: str, level: str) -> CorrectionResult:
 
         if attempt == 1:
             first_problems = format_problems(correction)
+        # An id the model made up is not grounding. Without this, a hallucinated
+        # `grammar-009` would reach the learner as a citation and reach check 3 as
+        # evidence that something was found.
+        if grounding is not None:
+            correction = replace(
+                correction,
+                grounding_ids=tuple(
+                    one for one in correction.grounding_ids if one in grounding[1]
+                ),
+            )
         return CorrectionResult(sentence, correction, attempt, first_problems)
 
     raise AssertionError("the loop above always returns")

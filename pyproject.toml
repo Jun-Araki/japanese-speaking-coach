@@ -12,6 +12,19 @@ requires-python = ">=3.11"
 # preferred provider and is swapped back in once billing is sorted. Both
 # integration packages are installed so the swap needs no dependency change.
 #
+# Retrieval arrives with chromadb and sentence-transformers. The embedding model is
+# multilingual because the query is a learner's Japanese sentence and the articles
+# are written in English with Japanese examples — an English-only model would score
+# the two sides of every article differently. Chroma is the smallest thing that
+# stores vectors and gives back the top few with their ids and distances; nothing
+# here needs a server, and the index is rebuilt at startup from eight files.
+#
+# THE PUBLISHED BUILD MAY NOT TAKE THESE. sentence-transformers pulls torch, a few
+# hundred megabytes, and Streamlit Community Cloud runs Python 3.14 where the wheel
+# may not exist — while this venv is 3.12. If the deploy fails on it, the published
+# app drops retrieval and the measurements go on running locally, which loses no
+# number (week-3 tasklist, week 5).
+#
 # SudachiPy is installed, for the vocabulary-level check. Japanese writes no
 # spaces between words, so deciding whether the AI's reply sits above a learner's
 # level needs the reply split into words first — string matching cannot find a
@@ -26,6 +39,8 @@ dependencies = [
     "python-dotenv",
     "sudachipy",
     "sudachidict-core",
+    "chromadb",
+    "sentence-transformers",
 ]
 
 [dependency-groups]

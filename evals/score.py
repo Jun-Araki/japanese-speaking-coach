@@ -32,9 +32,14 @@ from typing import Any, Final
 
 from config import THRESHOLDS_PATH
 from correction import PROMPT_VERSION as ENGINE_PROMPT_VERSION
-from correction import baseline_check, check
+from correction import baseline_check, check, check_with_retrieval
 from correction.baseline import PROMPT_VERSION as BASELINE_PROMPT_VERSION
-from correction.engine import CorrectionResult, japanese_left_unquoted, japanese_ratio
+from correction.engine import (
+    GROUNDED_PROMPT_VERSION,
+    CorrectionResult,
+    japanese_left_unquoted,
+    japanese_ratio,
+)
 from correction.validation import validate
 from dialogue.scenes import LEVELS
 from evals.dataset import ITEMS_PATH, Item, Split, load_items
@@ -70,9 +75,13 @@ Judge = Callable[[str, str, str], CorrectionResult]
 # no second set of calls and no sampling noise in between (design.md, "段は4つに割る").
 STAGES: Final[tuple[str, ...]] = ("raw", "validated")
 
+# Adding an implementation is not a change to the scorer: nothing about how a
+# judgement is counted moves, so `SCORER_VERSION` stays where it is and today's runs
+# remain comparable with the ones already recorded.
 IMPLEMENTATIONS: Final[dict[str, tuple[Judge, str]]] = {
     "baseline": (baseline_check, BASELINE_PROMPT_VERSION),
     "engine": (check, ENGINE_PROMPT_VERSION),
+    "engine-rag": (check_with_retrieval, GROUNDED_PROMPT_VERSION),
 }
 
 
@@ -113,6 +122,11 @@ class Outcome:
     attempts: int
     corrected_sentence: str | None
     reason_en: str | None
+    # Which articles the model said it used. Empty for every ungrounded stage, and
+    # the whole of what "nothing could be cited" means for check 3 — which is why
+    # it has to be in the record and not only in the moment: without it, a stage
+    # measured with retrieval cannot be re-scored later against a different floor.
+    grounding_ids: tuple[str, ...] = ()
 
     @property
     def agrees(self) -> bool:
@@ -275,6 +289,9 @@ def run_record(
         # Japanese without quoting it, not whether any particular item was right.
         # It was printed to the console and nowhere else, which left a figure in
         # the steering notes that no record could reproduce.
+        # How often anything was cited at all. Zero for every ungrounded stage, and
+        # the denominator behind any later claim that corrections are grounded.
+        "grounded_items": sum(1 for o in report.outcomes if o.grounding_ids),
         "japanese_left_unquoted": sum(1 for o in report.outcomes if o.japanese_left_unquoted),
         "latency_ms": _latency(report.outcomes),
         "manual_check_ids": sample_ids,
@@ -318,6 +335,7 @@ def _result_row(outcome: Outcome) -> dict[str, Any]:
         "attempts": outcome.attempts,
         "corrected_sentence": outcome.corrected_sentence,
         "reason_en": outcome.reason_en,
+        "grounding_ids": list(outcome.grounding_ids),
     }
 
 
@@ -348,6 +366,7 @@ def _judge_item(item: Item, judge: Judge, level: str, stage: str = "raw") -> Out
         attempts=result.attempts,
         corrected_sentence=None if correction is None else correction.corrected_sentence,
         reason_en=None if correction is None else correction.reason_en,
+        grounding_ids=() if correction is None else tuple(correction.grounding_ids),
     )
 
 

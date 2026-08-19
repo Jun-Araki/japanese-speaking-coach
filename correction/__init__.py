@@ -7,17 +7,20 @@ submodule that happens to share its name.
 
 from correction.baseline import baseline_check
 from correction.engine import (
+    GROUNDED_PROMPT_VERSION,
     PROMPT_VERSION,
     Correction,
     CorrectionFormatError,
     CorrectionResult,
     check,
+    check_with_retrieval,
     format_problems,
     parse_correction,
 )
 from correction.validation import Validation, validate
 
 __all__ = [
+    "GROUNDED_PROMPT_VERSION",
     "PROMPT_VERSION",
     "Correction",
     "CorrectionFormatError",
@@ -25,6 +28,7 @@ __all__ = [
     "Validation",
     "baseline_check",
     "check",
+    "check_with_retrieval",
     "format_problems",
     "parse_correction",
     "validate",

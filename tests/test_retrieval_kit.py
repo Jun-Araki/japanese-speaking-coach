@@ -182,11 +182,20 @@ class TestTheDenominatorsThatGetPublished:
     def test_the_top_k_is_the_three_the_metric_is_defined_over(self) -> None:
         assert threshold("retrieval", "top_k") == 3
 
-    def test_score_min_is_absent_until_it_has_been_measured(self) -> None:
-        # Deliberate. Anything reaching for it before 8/15 should stop, loudly and
-        # by name, rather than fall back on a default nobody chose.
-        with pytest.raises(KeyError, match="retrieval.score_min"):
-            threshold("retrieval", "score_min")
+    def test_score_min_is_the_value_the_rule_returned(self) -> None:
+        # Was "absent until measured", which it was until 2026-08-19. Measuring it
+        # is what changed the test, not a decision to relax it: the value is now
+        # pinned so that editing thresholds.toml without re-running
+        # `evals.retrieval_measure --choose` fails here.
+        #
+        # The rule could not select a floor. Only 5 of the 8 grounded threshold
+        # items had an annotated article in the top 3 at all, against a requirement
+        # of 7, and no floor can rescue an article that never appears. The value
+        # the config names for that outcome is 0.0, and at 0.0 every result counts
+        # as grounding — so CHECK 3 NEVER FIRES. It is not wired into
+        # `correction/validation.py` at all: the composition lives in
+        # `evals/restage.py`, where it is measured but does not ship.
+        assert threshold("retrieval", "score_min") == 0.0
 
 
 class TestTheSecondAnnotation:

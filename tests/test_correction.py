@@ -277,3 +277,82 @@ class TestCheck:
     def test_an_unknown_scene_is_rejected(self) -> None:
         with pytest.raises(ValueError, match="Unknown scene"):
             check("おはようです", "restaurant", "beginner")
+
+
+class TestGroundedPrompt:
+    """Stage 1: the retrieved sections go into the prompt, and only real ids come back.
+
+    No model and no index: what is checked is the wiring around them, which is where
+    a citation can turn into decoration without anybody noticing.
+    """
+
+    def test_the_two_prompt_versions_are_different_strings(self) -> None:
+        # Stage 0 stays reproducible after this file learned to retrieve. If the two
+        # ever collide, two runs measured on different prompts become
+        # indistinguishable in the run records, and the comparison table loses the
+        # one column that says what changed.
+        versions = {engine.PROMPT_VERSION, engine.GROUNDED_PROMPT_VERSION}
+
+        assert len(versions) == 2
+
+    def test_retrieval_is_not_imported_when_the_engine_is(self) -> None:
+        # The published build may have to run without torch. An import at module
+        # scope would make that fallback impossible — the correction engine would
+        # refuse to load at all, rather than judging ungrounded.
+        import ast
+        from pathlib import Path
+
+        tree = ast.parse(Path("correction/engine.py").read_text(encoding="utf-8"))
+        top_level = [node for node in tree.body if isinstance(node, ast.ImportFrom)]
+
+        assert not [node for node in top_level if (node.module or "").startswith("retrieval")]
+
+    def test_an_invented_id_is_dropped(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        # A hallucinated `grammar-009` would reach the learner as a citation and
+        # reach check 3 as evidence that something was found.
+        recorded = Correction(
+            needs_correction=True,
+            corrected_sentence="スーパーで買い物します。",
+            reason_en="Use 「で」 for where an action happens.",
+            grounding_ids=("grammar-001", "grammar-009"),
+        )
+        monkeypatch.setattr(engine, "build_chat_model", lambda temperature: _FakeModel(recorded))
+
+        result = engine._judge(
+            "スーパーに買い物します。", "greeting", "beginner", ("...", {"grammar-001"})
+        )
+
+        assert result.correction is not None
+        assert result.correction.grounding_ids == ("grammar-001",)
+
+    def test_an_ungrounded_run_leaves_the_ids_alone(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        # Stage 0 must be untouched by any of this: no filtering, no retrieval, the
+        # same answer it gave before.
+        recorded = Correction(
+            needs_correction=True,
+            corrected_sentence="スーパーで買い物します。",
+            reason_en="Use 「で」 for where an action happens.",
+            grounding_ids=("grammar-001",),
+        )
+        monkeypatch.setattr(engine, "build_chat_model", lambda temperature: _FakeModel(recorded))
+
+        result = engine.check("スーパーに買い物します。", "greeting", "beginner")
+
+        assert result.correction is not None
+        assert result.correction.grounding_ids == ("grammar-001",)
+
+
+class _FakeModel:
+    """Returns one recorded answer as JSON, so no provider is called."""
+
+    def __init__(self, correction: Correction) -> None:
+        self._correction = correction
+
+    def invoke(self, messages: object) -> object:
+        payload = {
+            "needs_correction": self._correction.needs_correction,
+            "corrected_sentence": self._correction.corrected_sentence,
+            "reason_en": self._correction.reason_en,
+            "grounding_ids": list(self._correction.grounding_ids),
+        }
+        return type("Answer", (), {"content": json.dumps(payload, ensure_ascii=False)})()

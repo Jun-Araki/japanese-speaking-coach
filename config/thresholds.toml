@@ -222,8 +222,29 @@ recall_floor_items = 7
 # to two data points. They are reported as a diagnostic at whatever value the rule
 # above returns: how many of the two came back with nothing above it.
 #
-# score_min itself is written here when retrieval is built (31 Aug - 6 Sep), with the
-# measurement beside it. It is
-# deliberately absent until then — config.threshold() raises a KeyError naming
-# this file, which is what should happen if anything tries to run check 3 before
-# the value it depends on exists.
+# MEASURED 2026-08-19, on the threshold block of evals/retrieval/worksheet.md
+# (the first ten items; the twenty measurement items were not looked at).
+#
+#   score_min = 0.0
+#
+# THE RULE DID NOT SELECT A FLOOR, AND THIS IS THE OUTCOME IT NAMED IN ADVANCE.
+# Of the 8 grounded items in the threshold block, an annotated article reached the
+# top 3 for only 5. The requirement is 7 of 8, so no candidate above 0 can satisfy
+# it — the shortfall is in the RANKING, not in the floor, and no threshold can
+# rescue an article that never appears at all.
+#
+# Per the paragraph above, this is reported as "check 3 could not be operated at
+# this reference size" rather than patched by lowering recall_floor_items. Note
+# what score_min = 0 does downstream: every result counts as grounding, so
+# "nothing could be cited" is false for every item and CHECK 3 NEVER FIRES. The
+# validation node ships with checks 1 and 2 and without check 3.
+#
+# Measured alongside, on the separate twenty-item block: retrieval_hit_rate =
+# 75.0% (12/16, rank only), against a target of 80%. The two numbers agree that
+# the weakness is ranking quality, which is a job for the improvement cycle and
+# not for this file.
+#
+# The diagnostic the rule asks for: of the 2 items annotated `none`, 0 return
+# nothing at or above the floor — which is what score_min = 0 forces and is
+# therefore not evidence about anything.
+score_min = 0.0
