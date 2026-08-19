@@ -48,10 +48,16 @@ def build_chat_model(temperature: float) -> BaseChatModel:
     if provider == "gemini":
         from langchain_google_genai import ChatGoogleGenerativeAI
 
+        # The timeout was missing here until 2026-08-19, when a dev run over eighty
+        # items sat on an open socket for eight hours: this client defaults to no
+        # timeout at all, so a stalled response never comes back and never fails.
+        # A measurement that hangs is worse than one that errors, because nothing
+        # in the output says it stopped.
         return ChatGoogleGenerativeAI(
             model=os.environ.get("GEMINI_MODEL", DEFAULT_GEMINI_MODEL),
             google_api_key=_require_key("GEMINI_API_KEY"),
             temperature=temperature,
+            timeout=REQUEST_TIMEOUT_SECONDS,
         )
 
     if provider == "anthropic":
