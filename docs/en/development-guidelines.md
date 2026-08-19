@@ -34,13 +34,15 @@ disagree, the Japanese version is correct and this file needs updating.
   vocabulary level check, evaluation scoring
 - **The scoring script itself gets tests.** A silent scoring bug is indistinguishable from a
   model improvement
-- Every evaluation run **hand-checks 5 items** from the test split as a sanity gate
+- **Every `dev` run hand-checks 5 items from `dev`** as a sanity gate on the scorer. **Never on `test`** — test runs suppress per-item output (`results_redacted`), and hand-checking would defeat that. A test run records **which dev run the check was done on**, in `scorer_checked_on` (corrected 2026-08-18 from "from the test split", to match the implementation and the README)
 - Model-calling code is tested against recorded responses, not live calls
 
 ## Evaluation discipline
 
 - Prompts and thresholds are tuned **only against the dev split**. The test split is touched
-  at the beginning and at the end, and nowhere else
+  at the beginning and at the end, and nowhere else. **The number of touches does not change with
+  the deadline** — it did not go up when the deadline moved to end of November (2026-08-16), and
+  it does not go up now that it has moved forward to 20 September (2026-08-18)
 - Every run writes a record: model name, prompt version, date, data split
 - Every published number carries `n` and an error margin
 

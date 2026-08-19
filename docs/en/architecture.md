@@ -5,15 +5,15 @@ disagree, the Japanese version is correct and this file needs updating.
 
 
 > **Thin by design.** The table below is the public extract of the stack decisions.
-> **Nothing outside this table is adopted before the end of November.**
+> **Nothing outside this table is adopted before 20 September.**
 
 ## Stack
 
 | Area | Choice | Why |
 |---|---|---|
 | LLM | **LangChain → Gemini** (decided 2026-08-03) | See "Choosing a provider" below |
-| Transcription | **Decided in late October** (Gemini first, OpenAI as fallback) | Same |
-| Text to speech | **Decided in late October** (same) | Both support Japanese. **Disclosing that the voice is AI-generated is done regardless of provider** |
+| Transcription | **Decided in early September** (Gemini first, OpenAI as fallback) | Same |
+| Text to speech | **Decided in early September** (same) | Both support Japanese. **Disclosing that the voice is AI-generated is done regardless of provider** |
 | Tokenization | SudachiPy + SudachiDict (Apache-2.0) | Japanese has no spaces between words, so vocabulary-level checking requires morphological analysis |
 | Embeddings | sentence-transformers, multilingual | Retrieval over Japanese text |
 | Vector store | Chroma | Fastest local option, sufficient for a demo |
@@ -64,7 +64,7 @@ dropped as metrics** — see "What is deliberately not measured" in
 
 ## Choosing a speech provider
 
-**Decided in late October, when voice is built.** Gemini handles both transcription and speech
+**Decided in early September, when voice is built.** Gemini handles both transcription and speech
 generation (WAV accepted, Japanese supported) and would keep everything on one key. But
 **Gemini transcribes via a prompt — a language model writes the text** — so it may **repair the
 learner's mistakes more aggressively than a dedicated speech recogniser would**. That would
@@ -84,33 +84,33 @@ speech model, on the reasoning above, and **the README says the choice was not m
   usage logs into an external database; **with nothing stored at all, the constraint no longer
   applies** (see "The decision to store nothing").
 - **Streamlit cannot hold a persistent connection**, so continuous hands-free speech is not
-  attempted before the end of November. Reconsidered in December or later, and only if testers
-  actually complain about pressing the button.
+  attempted before 20 September. Reconsidered after applications open (28 September), and only
+  if testers actually complain about pressing the button.
 - **The SudachiDict package is ~70MB**, installed at image build time.
-- **No local models before the end of November.** The goal is applying LLMs in a product, not
-  training them; GPU cost and iteration do not fit a budget of six and a half hours a week.
+- **No local models before 20 September.** The goal is applying LLMs in a product, not
+  training them; GPU cost and iteration do not fit a budget of two hours a day (14 a week).
 - **Web only, no mobile app.** App Store review costs time unrelated to the job requirements,
   and an install step would collapse the tester count.
 - **No UI framework or design system.** Appearance is plain CSS, time-boxed to one hour.
 
-## Build order (revised 2026-08-16)
+## Build order (revised 2026-08-18)
 
 Vertical slice first: Streamlit talking directly to a text-only dialogue and correction loop,
 so the substance is settled. **That part is done.**
 
-After that, **one thing at a time, in series** — at six and a half hours a week, two cannot
-move at once.
+After that, **one thing at a time, in series** — even at two hours a day, two cannot move
+at once.
 
-1. **Close the evaluation** (through mid-September) — the baseline comparison table, retrieval,
+1. **Close the evaluation** (through 30 August) — the baseline comparison table, retrieval,
    one improvement cycle
-2. **Make it touchable** (through mid-October) — extract FastAPI, wire LangGraph, Docker,
+2. **Make it touchable** (through 6 September) — extract FastAPI, wire LangGraph,
    **a public URL**
-3. **Move to voice** (through mid-November) — recording, transcription, speech, session flow
-4. **Finish** (through end of November) — act on tester feedback, complete the README
+3. **Move to voice** (through 12 September) — recording, transcription, speech, session flow
+4. **Finish** (through 20 September) — act on tester feedback, Docker, complete the README
 
-**The earlier version put voice and the API extraction in the same week.** That does not survive
-six and a half hours a week, so they were serialised. **Step 2 comes before step 3 because
-nothing that cannot be touched gets evaluated.**
+**The earlier version put voice and the API extraction in the same week.** They were serialised
+because running both at once means **arriving at the hand-off date (13 September) with neither
+finished**. **Step 2 comes before step 3 because nothing that cannot be touched gets evaluated.**
 
 ## Licensing
 

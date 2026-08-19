@@ -87,14 +87,14 @@ but not both at once.
    accuracy figures at all**
 4. Corrections are grounded in a grammar reference via retrieval
 
-## Success criteria (end of November 2026)
+## Success criteria (20 September 2026)
 
 | Metric | Definition in [glossary.md](glossary.md) | Target |
 |---|---|---|
 | Detection accuracy | `detection_accuracy` | ≥ 85% |
 | Over-correction rate | `over_correction_rate` | ≤ 15% |
 | Correction validity | `correction_validity` | ≥ 85%, **rated by one person** (see below) |
-| Rater agreement | `rater_agreement` | **Not measured** — no second rater was obtained (see §5 of [glossary.md](glossary.md)) |
+| Rater agreement | `rater_agreement` | **To be collected on 13 September; not yet obtained** (see §5 of [glossary.md](glossary.md)) |
 | Retrieval hit rate | `retrieval_hit_rate` | ≥ 80% |
 | Level compliance | `level_compliance_rate` | ≥ 90% |
 | Adoption | **No figure is published.** Written feedback from 2–3 testers | 3 comments |
@@ -102,9 +102,11 @@ but not both at once.
 All correction metrics are measured on a **self-built 120-item evaluation set**, split
 80 development / 40 held-out test, and reported **against a naive single-call baseline**.
 
-**The deadline moved from end of August to end of November (2026-08-16)**, because the working
-budget fell from 26 hours a week to **six and a half**. **Not one metric or target value
-changed** — what changed is the date, and what is listed as no longer measured below.
+**The deadline moved from end of November to 20 September (2026-08-18)**, because the working
+budget went back up from six and a half hours a week to **two hours a day, 14 a week**. It had
+previously moved from end of August to end of November (2026-08-16), when that budget fell from
+26 hours a week. **Not one metric or target value changed in either revision** — what changed is
+the date, and what is listed as no longer measured below.
 
 ### What is deliberately not measured (2026-08-16)
 

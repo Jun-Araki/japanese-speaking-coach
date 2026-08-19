@@ -185,12 +185,12 @@ required rather than decorative.
 All correction metrics are measured by feeding evaluation items **as text directly to the
 correction engine**, bypassing the app, the microphone, and transcription.
 
-| Metric | `identifier` | Definition | Target (end of November 2026) |
+| Metric | `identifier` | Definition | Target (20 September 2026) |
 |---|---|---|---|
 | Detection accuracy | `detection_accuracy` | Of the 91 items labelled `true`, the share the system also judged `true` | ≥ 85% |
 | **Over-correction rate** | `over_correction_rate` | Of the 29 items labelled `false`, the share the system wrongly judged `true`. **Lower is better** | ≤ 15% |
 | Correction validity | `correction_validity` | 40 items rated by hand on the three-point scale in §6 | ≥ 85% valid |
-| Rater agreement | `rater_agreement` | Of 20 items rated by both the author and a second native speaker, the share receiving the same rating | **Not measured** (below) |
+| Rater agreement | `rater_agreement` | Of 20 items rated by both the author and a second native speaker, the share receiving the same rating | **To be collected between 24 and 30 August; not yet obtained** (below) |
 | Retrieval hit rate | `retrieval_hit_rate` | Of the **16 items that have a grounding article**, the share for which one of the hand-annotated articles appeared in the top 3. **Does not read `score_min`** — rank only | ≥ 80% |
 | Retrieval abstention rate | `retrieval_abstention_rate` | Of the **4 items no article covers**, the share for which nothing came back above `score_min`. **Depends on `score_min`**, so it is never added to the hit rate | Reported, no target |
 | Level compliance | `level_compliance_rate` | Share of AI replies containing no more over-level words than the threshold. **Reported as two figures, first-shot and post-regeneration** (below) | ≥ 90% **on the post-regeneration figure** |
@@ -238,21 +238,38 @@ the same function, and so is not independent evidence.** It is measured on a fix
 `test` sentence is ever pushed through the conversation prompt. Where the vocabulary tiers come
 from is documented in [`nlp/frequency.py`](../../nlp/frequency.py).
 
-**`rater_agreement` will not be produced (decided 2026-08-16).** No second rater was
-secured. The 20-item kit went out to the first on 8/8, nothing came back by the 8/16 deadline,
-and the decision is not to approach anyone else.
+**`rater_agreement` has not been obtained. The 2026-08-16 decision to abandon it was reversed
+on 2026-08-18.** The 20-item kit went out to the first rater on 8/8 and nothing came back by the
+8/16 deadline. The decision then was not to approach anyone else, on the grounds that waiting for
+the next Minna Shuugou — 8 November, on the schedule as it stood — would stall the whole
+evaluation. That work was moved to the 13 September meetup on 2026-08-18, and then **decoupled
+from the meetup entirely on 2026-08-19.**
+
+**It was decoupled because the premise of waiting was wrong.** The rating is twenty items on
+paper: it needs no public URL, no audio, and no particular venue — only a native speaker of
+Japanese willing to work through them. **Colleagues at INDIGITAL, and Maeda-san at Global Japan,
+can be asked instead**, so the task moved forward to **24–30 August**. What carries over from the
+8/8 failure is that a remote request went unanswered, so the kit is still **handed over in person
+and rated on the spot**; only the person and the date changed.
+
+**The second reason to move it earlier:** `rater_agreement` is the only answer to the sharpest
+criticism of this evaluation — that one person wrote all 120 labels *and* scored validity alone.
+That answer has to be in hand **before the README is written**, not appended afterwards.
+**If it is not obtained by 30 August, the target reverts to "not measured"** — this is not a
+thing to keep waiting on.
 `evals/rater/20260808-2041-rater-kit-second.json` is left in the repository with all twenty
 ratings still `null` — **it is the evidence the request was made, and deleting it would make
 "asked and got no reply" indistinguishable from "never asked".**
 
-**The metric is not being removed from the table.** Only its target changes, to "not measured".
+**The metric is not being removed from the table, whether or not it is obtained.**
 A metric that quietly disappears from a document reads, correctly, as one that was dropped
 because it was inconvenient.
 
-**The cost of this is specific and is not being softened.** The private planning document says of
+**If it is not obtained, the cost is specific and is not being softened.** The private planning document says of
 `correction_validity` that **a system scored only by the person who built it is the weakest
 evidence on offer**, and the second rater was the single mitigation for exactly that. With the
-mitigation gone the weakness stands, so every place `correction_validity` is published must say
+mitigation gone the weakness stands, so **for as long as `rater_agreement` is missing** every
+place `correction_validity` is published must say
 **that it is a single-rater figure with no independent check**. The number is not adjusted; what
 it is a number *of* is stated accurately.
 

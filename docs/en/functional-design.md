@@ -115,7 +115,7 @@ implementation is measured on the same data, and the two are reported side by si
 | `needs_correction` | boolean | Required. Anything other than a boolean counts as a format failure |
 | `corrected_sentence` | string \| null | Required when `needs_correction` is true. **Repairs the sentence they wrote**; it is not a better sentence of the model's own |
 | `reason_en` | string \| null | Same. **One or two sentences of English.** Japanese quoted inside 「」 to point at a word is allowed |
-| `grounding_ids` | array of string | **Always empty until retrieval lands in early September** (changed from "until week 2" on 2026-08-16). **The key is carried from the start** — adding it later would mean rebuilding stored data |
+| `grounding_ids` | array of string | **Always empty until retrieval lands on 30 August** (changed from "until week 2" to "early September" on 2026-08-16, then pulled forward with the schedule on 2026-08-18). **The key is carried from the start** — adding it later would mean rebuilding stored data |
 
 When `needs_correction` is false, `corrected_sentence` and `reason_en` are **normalised to
 null**. A sentence judged not to need changing has nothing to show, whatever the model chose

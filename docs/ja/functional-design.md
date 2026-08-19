@@ -97,7 +97,7 @@ graph TB
 | `needs_correction` | boolean | 必須。真偽値以外が来たら書式の失敗として扱う |
 | `corrected_sentence` | string \| null | `needs_correction: true` のとき必須。**元の文を最小限だけ直す**（別の良い文を書かない） |
 | `reason_en` | string \| null | 同上。**英語1〜2文。** 語を指すための「」内の日本語は許す |
-| `grounding_ids` | string の配列 | **RAG を入れる9月上旬までは必ず空配列**（2026-08-16 に「第2週まで」から改めた）。**キーは最初から置く**（後から増やすと保存済みデータの作り直しが発生する） |
+| `grounding_ids` | string の配列 | **RAG を入れる 8/30 までは必ず空配列**（2026-08-16 に「第2週まで」から「9月上旬」へ、2026-08-18 に日程の前倒しに合わせて改めた）。**キーは最初から置く**（後から増やすと保存済みデータの作り直しが発生する） |
 
 `needs_correction: false` のとき、`corrected_sentence` と `reason_en` は **null に正規化する**。
 モデルが「もっと丁寧な言い方もある」と書いてきても、直す必要がないと判定した文に見せるものはない。

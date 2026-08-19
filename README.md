@@ -97,7 +97,7 @@ hand to cover mistake types the generator kept missing, and were verified the sa
 | Split | 80 development / 40 held-out test |
 | Held-out discipline | Prompts and thresholds are tuned against the dev split only. The test split is touched at the start and the end, never in between |
 | Scoring | Only the binary "does this need correcting" label is machine-scored. **Corrected sentences are never scored by exact match** — natural phrasing is not unique |
-| Second rater | **Planned and not obtained.** One kit of 20 items went out on 8 August and was never answered; see below |
+| Second rater | **Requested, not yet obtained.** One kit of 20 items went out on 8 August and was never answered; it is being collected in person on 13 September. See below |
 
 The 29 already-natural items exist for one reason: to measure **over-correction**. A system
 that corrects everything scores well on detection and is useless to a learner. **There are only
@@ -131,12 +131,12 @@ These targets are for **this implementation**, not for the baseline above. The b
 scores 100% on detection and fails badly on over-correction; beating it means holding detection
 while bringing over-correction down.
 
-| Metric | Target (end of November 2026) | This implementation |
+| Metric | Target (20 September 2026) | This implementation |
 |---|---|---|
 | Detection accuracy | ≥ 85% | — |
 | Over-correction rate | ≤ 15% | — |
 | Correction validity | ≥ 85% | — |
-| Second-rater agreement | **not measured** | see below |
+| Second-rater agreement | **not yet obtained** | see below |
 | Retrieval hit rate (n=16) | ≥ 80% | — |
 | Retrieval abstention rate (n=4) | reported, no target | — |
 | Level compliance (n=90) | ≥ 90% after regeneration | **98.9%** after regeneration, **94.4%** first-shot (±5pt on the first-shot figure) |
@@ -155,11 +155,14 @@ figure by 7.7 points. Both are stated rather than hidden.
 
 **Correction validity is scored by one person, and that person built the system.** That is the
 weakest evidence in this repository and it is stated here rather than left for a reader to work
-out. The plan was for a second native speaker to rate 20 of the same items so that an agreement
-figure could be published beside it; the kit went out on 8 August, nothing came back, and no
-second rater was found. The unanswered kit is still in `evals/rater/` with every rating `null`,
-because "asked and got no reply" and "never asked" should not look the same from outside. The
-metric stays in the table above, marked as not measured, for the same reason.
+out. The mitigation is a second native speaker rating 20 items — **drawn from the dev split, not
+from the 40 test items**, so that reading them cannot contaminate the held-out set — with the
+agreement figure published beside it. The kit went out on 8 August and nothing came back. The
+unanswered kit is still in `evals/rater/` with every rating `null`, because "asked and got no
+reply" and "never asked" should not look the same from outside. **The rating is being collected
+in person on 13 September**; if it is not obtained then, the target reverts to "not measured" and
+that will be stated here. Either way the metric stays in the table above — a metric that quietly
+disappears reads, correctly, as one dropped because it was inconvenient.
 
 Retrieval is reported as two numbers for the same reason. Each of 30 dev items was annotated in
 advance, before any index existed, with the reference article that ought to ground it. **That
@@ -339,7 +342,8 @@ because it exists.
 - [ ] Two or three testers, three written comments
 
 **What is deliberately not on this list:** response time, cost per turn, any measurement of the
-speech stage, tester retention, and a second rater's agreement. Each was dropped from scope, and
-each is named here rather than left off quietly. The working budget is six and a half hours a
-week and the deadline is the end of November; what that budget bought, and what it did not, is
-the honest version of this table.
+speech stage, and tester retention. Each was dropped from scope, and each is named here rather
+than left off quietly. A second rater's agreement is not dropped but is **not yet obtained**: the
+first request went unanswered, and the rating is now being collected in person on 13 September.
+The working budget is two hours a day and the deadline is 20 September; what that budget bought,
+and what it did not, is the honest version of this table.
