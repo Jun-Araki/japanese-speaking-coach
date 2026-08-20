@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import json
 import re
+from collections.abc import Sequence
 from dataclasses import dataclass, replace
 from typing import Any, Final, Literal
 
@@ -213,15 +214,39 @@ def check_with_retrieval(sentence: str, scene: str, level: str) -> CorrectionRes
     try:
         from retrieval.index import search
 
-        results = search(sentence, scene=scene)
-        block = "\n\n".join(
-            f"[{result.article_id}] {result.heading}\n{result.body}" for result in results
-        )
-        allowed = {result.article_id for result in results}
+        grounding = grounding_from(search(sentence, scene=scene))
     except Exception:  # noqa: BLE001 - any retrieval failure degrades to ungrounded
-        block, allowed = "", set()
+        grounding = ("", set())
 
-    return _judge(sentence, scene, level, grounding=(block, allowed))
+    return _judge(sentence, scene, level, grounding=grounding)
+
+
+def grounding_from(results: Sequence[Any]) -> tuple[str, set[str]]:
+    """Turn search results into the block shown to the model, and the ids allowed.
+
+    Typed loosely on purpose: naming `retrieval.Result` here would put the import
+    back at module scope, and a build without retrieval has to be able to load this
+    file (see `check_with_retrieval`).
+    """
+    block = "\n\n".join(f"[{r.article_id}] {r.heading}\n{r.body}" for r in results)
+    return block, {r.article_id for r in results}
+
+
+def judge(
+    sentence: str,
+    scene: str,
+    level: str,
+    grounding: tuple[str, set[str]] | None = None,
+) -> CorrectionResult:
+    """Judge one sentence against articles that have already been retrieved.
+
+    Public because the graph needs it: retrieval and correction are separate nodes
+    there, so the correcting node is handed what the retrieving node found rather
+    than searching again. `check_with_retrieval` is the same two steps in one call,
+    and both must produce the same answer for the same input — the measured numbers
+    describe the engine, and the graph is what ships.
+    """
+    return _judge(sentence, scene, level, grounding)
 
 
 def _judge(

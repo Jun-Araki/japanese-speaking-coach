@@ -41,6 +41,9 @@ dependencies = [
     "sudachidict-core",
     "chromadb",
     "sentence-transformers",
+    "langgraph",
+    "fastapi",
+    "uvicorn",
 ]
 
 [dependency-groups]
@@ -48,6 +51,9 @@ dev = [
     "ruff",
     "mypy",
     "pytest",
+    # FastAPI's TestClient is a thin wrapper over httpx, so the API can be tested
+    # without a server and without a port.
+    "httpx",
 ]
 
 [tool.ruff]

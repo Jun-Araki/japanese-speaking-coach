@@ -1,0 +1,28 @@
+# What Streamlit Community Cloud installs. The full set, retrieval included.
+#
+# CPU TORCH, EXPLICITLY. `pip install torch` on Linux pulls the CUDA runtime with
+# it — nvidia-cudnn, nccl, cusparselt, nvshmem and triton — which is roughly two
+# gigabytes of GPU libraries for a free tier that has no GPU. The CPU index below
+# gives the same torch at about a fifth of the size. Without this line the build
+# does not fail with a helpful message; it fails on disk, minutes in.
+--extra-index-url https://download.pytorch.org/whl/cpu
+
+streamlit==1.60.0
+langchain==1.3.14
+langchain-google-genai==4.3.2
+langchain-anthropic==1.5.3
+python-dotenv==1.2.2
+sudachipy==0.6.11
+sudachidict-core==20260723
+langgraph==1.2.10
+
+# Retrieval. If the build runs out of space or time, swap this file for
+# requirements-no-retrieval.txt: the app degrades to ungrounded corrections on its
+# own and /health says so, and no published number depends on the deployed build.
+torch==2.13.0+cpu
+sentence-transformers==6.0.0
+chromadb==1.5.9
+
+# NOT INSTALLED HERE: fastapi and uvicorn. Community Cloud runs one process from one
+# entry file, so the deployed app calls the graph in-process and the HTTP layer never
+# starts. It is installed in the Docker image instead, where it is the entry point.

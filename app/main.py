@@ -22,12 +22,22 @@ from dotenv import load_dotenv
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from correction import CorrectionResult, check, validate  # noqa: E402
+from app.limits import (  # noqa: E402
+    LimitReached,
+    access_code,
+    code_matches,
+    max_turns,
+    spend_tokens,
+)
+from app.theme import CONTACT, NOTICE, STYLE  # noqa: E402
+from correction import CorrectionResult  # noqa: E402
 from dialogue import LEVELS, SCENES, Utterance, opening_line, reply  # noqa: E402
+from graph.correction_graph import run as run_correction  # noqa: E402
 
 load_dotenv()
 
 st.set_page_config(page_title="Japanese Speaking Coach", page_icon="🗣️")
+st.markdown(STYLE, unsafe_allow_html=True)
 
 SESSION_KEYS = ("scene", "level", "history", "failure", "corrections")
 
@@ -70,13 +80,12 @@ def record_correction(sentence: str, scene: str, level: str) -> None:
     instead of vanishing.
     """
     try:
-        result = check(sentence, scene, level)
-        # The deterministic checks run here rather than inside `check`, so that the
-        # measurement can score the same answers with them on and off. The learner
-        # sees the validated version; the scorer decides per run (evals/score.py).
-        if result.correction is not None:
-            checked = validate(sentence, result.correction)
-            result = replace(result, correction=checked.correction)
+        # Through the graph, which is also what the API calls: retrieve, correct,
+        # validate. Two paths into one graph rather than two copies of the same
+        # three steps — a screen that corrects differently from the endpoint is a
+        # screen the measurements do not describe.
+        state = run_correction(sentence, scene, level)
+        result = replace(state["result"], correction=state.get("correction"))
     except Exception:
         result = CorrectionResult(sentence, correction=None, attempts=0, format_problems=())
     corrections().append(result)
@@ -104,10 +113,9 @@ def render_setup() -> None:
         start_session(scene, level)
         st.rerun()
 
-    st.caption(
-        "Your sentences are sent to an AI model to generate the reply and the "
-        "corrections. Do not type anything you would not want to share."
-    )
+    st.divider()
+    st.markdown(NOTICE)
+    st.caption(f"Questions, or want your session stopped mid-way? {CONTACT}")
 
 
 def render_conversation() -> None:
@@ -129,7 +137,15 @@ def render_conversation() -> None:
         learner_sentence = history()[-1].text
         with st.chat_message("assistant"), st.spinner("…"):
             try:
+                # Counted before the call, not after: a cap that is checked
+                # afterwards is a cap the next request has already crossed. The
+                # whole conversation goes into the estimate because the whole
+                # conversation goes into the prompt.
+                spend_tokens("".join(utterance.text for utterance in history()))
                 answer = reply(scene, level, history())
+            except LimitReached as capped:
+                st.session_state["failure"] = str(capped)
+                st.rerun()
             except Exception as exc:  # shown to the learner, never swallowed
                 st.session_state["failure"] = f"{type(exc).__name__}: {exc}"
                 st.rerun()
@@ -149,7 +165,16 @@ def render_conversation() -> None:
             st.session_state["failure"] = None
             st.rerun()
 
-    if learner_text := st.chat_input("日本語で書いてください"):
+    learner_turns = sum(1 for utterance in history() if utterance.speaker == "learner")
+    if learner_turns >= max_turns():
+        # A cap reached mid-conversation ends it rather than silently ignoring what
+        # is typed next: an input box that accepts a sentence and does nothing with
+        # it is worse than no input box.
+        st.info(
+            f"This demo stops at {max_turns()} sentences per conversation. "
+            "End the conversation to see your corrections."
+        )
+    elif learner_text := st.chat_input("日本語で書いてください"):
         history().append(Utterance("learner", learner_text))
         st.session_state["failure"] = None
         st.rerun()
@@ -208,12 +233,33 @@ def render_review() -> None:
         st.rerun()
 
 
+def render_gate() -> None:
+    """One shared code, asked once per session.
+
+    Not a login: nobody is identified, nothing is remembered beyond this browser
+    session, and everyone types the same string. Its one job is keeping a link that
+    costs money per click from being open to the whole internet.
+    """
+    st.title("Japanese Speaking Coach")
+    st.write("This demo is shared with a code. Please enter it to continue.")
+    given = st.text_input("Access code", type="password")
+    if st.button("Continue", type="primary"):
+        if code_matches(given):
+            st.session_state["unlocked"] = True
+            st.rerun()
+        else:
+            st.error("That code is not right.")
+    st.caption(f"No code? {CONTACT}")
+
+
 if not os.environ.get("GEMINI_API_KEY") and not os.environ.get("ANTHROPIC_API_KEY"):
     st.error(
         "No API key found. GEMINI_API_KEY is read from the environment "
         "(~/.zshenv locally, app secrets once deployed) and is deliberately not "
         "stored in this repository."
     )
+elif access_code() is not None and not st.session_state.get("unlocked"):
+    render_gate()
 elif "scene" in st.session_state:
     render_conversation()
 elif "review" in st.session_state:
