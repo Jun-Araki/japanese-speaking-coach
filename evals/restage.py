@@ -55,12 +55,22 @@ def _check_three(item: Item, correction: Correction, admits: bool) -> Validation
     """The shared body of check 3: a conjunction, with one term swapped in.
 
     The rule is "nothing could be cited, the edit is small, and the sentence was
-    already fine" (PLAN.md §2-1). The first term is true for every item until
-    retrieval lands. The second is the complement of check 1 — a far rewrite is
-    check 1's business, and letting check 3 also fire there would make the two
-    columns overlap on the same items and stop being separable.
+    already fine" (PLAN.md §2-1).
+
+    THE FIRST TERM ONLY STARTED MEANING SOMETHING ON 2026-08-20. Restaged from an
+    ungrounded run it is true for every item, so the check reduces to the remaining
+    predicate and cannot be judged — which is what requirements §7 said in advance
+    and what the first measurement of it showed. Restaged from a grounded run it
+    separates the items the model could cite an article for from the ones it could
+    not, which is the term the whole check was supposed to rest on.
+
+    The second term is the complement of check 1: a far rewrite is check 1's
+    business, and letting check 3 also fire there would make the two columns overlap
+    on the same items and stop being separable.
     """
     if not correction.needs_correction or correction.corrected_sentence is None:
+        return Validation(correction=correction)
+    if correction.grounding_ids:
         return Validation(correction=correction)
     if rewritten_too_far(item.learner_sentence, correction.corrected_sentence):
         return Validation(correction=correction)

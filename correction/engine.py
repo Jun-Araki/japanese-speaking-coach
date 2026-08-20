@@ -28,13 +28,22 @@ from llm import as_text, build_chat_model
 
 # Recorded in every run record. Bump it whenever the wording below changes, or
 # measurements taken weeks apart stop being comparable.
-PROMPT_VERSION: Final = "correction-v1"
+#
+# v2 (2026-08-19, improvement cycle 1): one line added to the "does NOT need
+# correction" list, saying that a politer or more idiomatic alternative is an
+# upgrade rather than a correction. Chosen because over_correction_rate was the
+# only published metric outside its target — 25.0% against a ceiling of 15% — and
+# because three of the four remaining over-corrections were exactly that move: an
+# honorific prefix added, a pronoun the speaker chose removed. Written as a general
+# rule and not as a list of the sentences it was found on: a rule built from an
+# item is a rule that answers that item.
+PROMPT_VERSION: Final = "correction-v2"
 
 # The grounded prompt is a SECOND version, not a replacement. Stage 0 of the
 # comparison table is measured on the prompt above and has to stay reproducible
 # after this file learns to retrieve, so the two versions live side by side and a
 # run record says which one produced it.
-GROUNDED_PROMPT_VERSION: Final = "correction-rag-v1"
+GROUNDED_PROMPT_VERSION: Final = "correction-rag-v2"
 
 # The conversation wants variety; the judgement must not have any. The same
 # sentence measured twice has to give the same label, or the evaluation numbers
@@ -110,6 +119,9 @@ It does NOT need correction when:
 - it is casual or regional but genuinely used
 - a Japanese speaker would not stop at it, even if you would personally choose \
 another wording
+- a more polite or more idiomatic version exists and what they wrote is still \
+acceptable. Adding an honorific prefix, reaching for a set phrase, or removing a \
+word the speaker chose is an UPGRADE, not a correction. Only correct what is wrong
 
 WHEN YOU ARE UNSURE, SAY IT DOES NOT NEED CORRECTION. Changing a sentence that was \
 already fine is the more damaging mistake here: it teaches the learner that correct \
@@ -201,7 +213,7 @@ def check_with_retrieval(sentence: str, scene: str, level: str) -> CorrectionRes
     try:
         from retrieval.index import search
 
-        results = search(sentence)
+        results = search(sentence, scene=scene)
         block = "\n\n".join(
             f"[{result.article_id}] {result.heading}\n{result.body}" for result in results
         )

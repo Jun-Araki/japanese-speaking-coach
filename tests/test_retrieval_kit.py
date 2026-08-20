@@ -188,14 +188,14 @@ class TestTheDenominatorsThatGetPublished:
         # pinned so that editing thresholds.toml without re-running
         # `evals.retrieval_measure --choose` fails here.
         #
-        # The rule could not select a floor. Only 5 of the 8 grounded threshold
-        # items had an annotated article in the top 3 at all, against a requirement
-        # of 7, and no floor can rescue an article that never appears. The value
-        # the config names for that outcome is 0.0, and at 0.0 every result counts
-        # as grounding — so CHECK 3 NEVER FIRES. It is not wired into
-        # `correction/validation.py` at all: the composition lives in
-        # `evals/restage.py`, where it is measured but does not ship.
-        assert threshold("retrieval", "score_min") == 0.0
+        # 2026-08-19: the rule could not select a floor — only 5 of 8 grounded
+        # threshold items reached the top 3, against a requirement of 7 — and the
+        # recorded answer was 0.0 with "check 3 could not be operated".
+        # 2026-08-20: improvement cycle 2 put the scene's politeness tier into the
+        # query, the same eight items reached 7 of 8, and the rule selected. The
+        # floor moved because the ranking improved; recall_floor_items is still 7.
+        assert threshold("retrieval", "recall_floor_items") == 7
+        assert threshold("retrieval", "score_min") == 0.8273
 
 
 class TestTheSecondAnnotation:

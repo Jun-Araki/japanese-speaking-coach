@@ -255,6 +255,9 @@ def run_record(
     `_print_manual_check`.
     """
     sample_ids = [outcome.item.id for outcome in manual_check_sample(report.outcomes)]
+    # Only for the stage that retrieves. Recording it on an ungrounded run would
+    # suggest the search had something to do with that number.
+    retrieval_version = _retrieval_version() if implementation == "engine-rag" else None
     redacted = split == "test"
     return {
         "run_id": run_id,
@@ -273,6 +276,7 @@ def run_record(
         "format_compliance_rate": report.format_compliance_rate,
         "unusable_verdicts": report.unusable_verdicts,
         "stage": stage,
+        "retrieval_version": retrieval_version,
         # Split by label, because the two directions mean opposite things: a check
         # that fires on `false` items is doing its job and one that fires on `true`
         # items is destroying corrections the learner needed. A single total hides
@@ -299,6 +303,19 @@ def run_record(
         "results_redacted": redacted,
         "results": [] if redacted else [_result_row(outcome) for outcome in report.outcomes],
     }
+
+
+def _retrieval_version() -> str | None:
+    """The version of the search, if this build has one at all.
+
+    Imported here rather than at the top: the published build may ship without
+    retrieval, and the scorer has to keep working when it does.
+    """
+    try:
+        from retrieval.index import RETRIEVAL_VERSION
+    except ImportError:  # pragma: no cover - only on a build without retrieval
+        return None
+    return RETRIEVAL_VERSION
 
 
 def _result_row(outcome: Outcome) -> dict[str, Any]:

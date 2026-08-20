@@ -228,3 +228,30 @@ class TestAgainstTheRealRun:
         # restaging path is not quietly changing verdicts.
         assert report.detection_accuracy == source["detection_accuracy"]
         assert report.over_correction_rate == source["over_correction_rate"]
+
+
+class TestCheckThreeReadsGrounding:
+    """The term the check was supposed to rest on, once retrieval can supply it."""
+
+    def test_does_not_fire_when_an_article_was_cited(self) -> None:
+        # "Nothing could be cited" is the main term. A correction the model backed
+        # with an article is exactly the one check 3 must not throw away.
+        cited = Correction(
+            needs_correction=True,
+            corrected_sentence="おはようございます",
+            reason_en="The polite form is expected here.",
+            grounding_ids=("grammar-008",),
+        )
+
+        assert not check_three_politeness(item(), cited).fired
+
+    def test_fires_when_nothing_was_cited(self) -> None:
+        assert check_three_politeness(item(), correction()).fired
+
+    def test_a_row_without_the_key_counts_as_ungrounded(self) -> None:
+        # Runs written before 2026-08-19 carry no grounding_ids and were ungrounded
+        # by construction, so an absent key is an honest empty rather than a
+        # missing measurement.
+        source = record([row()])
+
+        assert restage(source, "check3-politeness").outcomes[0].predicted is False

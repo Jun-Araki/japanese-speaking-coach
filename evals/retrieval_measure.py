@@ -88,7 +88,7 @@ def run_sample(
                 item_id=item_id,
                 learner_sentence=item.learner_sentence,
                 annotated=grounds[item_id],
-                results=tuple(search(item.learner_sentence)),
+                results=tuple(search(item.learner_sentence, scene=item.scene)),
             )
         )
     return outcomes

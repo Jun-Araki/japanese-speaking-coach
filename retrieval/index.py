@@ -30,6 +30,15 @@ from retrieval.chunks import Chunk, load_chunks
 if TYPE_CHECKING:  # pragma: no cover - imported for typing only
     from sentence_transformers import SentenceTransformer
 
+# Bumped whenever anything changes what the search returns for the same sentence —
+# the chunking, the query text, the model. Neither `prompt_version` nor
+# `thresholds_digest` can carry it: improvement cycle 2 changed only the query text,
+# which is code, and without this the two run records either side of it would differ
+# in their numbers and in nothing that explains why.
+#
+# v1: sentence alone. v2 (2026-08-20): the scene's politeness tier prepended.
+RETRIEVAL_VERSION: Final = "retrieval-v2"
+
 DEFAULT_MODEL: Final = "intfloat/multilingual-e5-small"
 COLLECTION: Final = "grammar"
 
@@ -70,9 +79,49 @@ def embed_passages(chunks: list[Chunk]) -> list[list[float]]:
     return [list(map(float, vector)) for vector in _model().encode(texts)]
 
 
-def embed_query(sentence: str) -> list[float]:
+# One short line per politeness tier, prepended to the query. Keyed on the TIER
+# LETTER — the first element of the POLITENESS_FLOORS tuple — so this is three
+# strings for three tiers and quotes no evaluation item.
+#
+# The long requirement text from `politeness_floor` was tried first and was worse
+# than useless: several sentences of English against a ten-character learner
+# sentence swamped the query, and grammar-008 came back first for every item in the
+# sample. Length is the whole difference between the two attempts.
+_TIER_CUE: Final[dict[str, str]] = {
+    "A": "casual speech is acceptable.",
+    "B": "the sentence must end politely.",
+    "C": "です・ます throughout.",
+}
+
+
+def query_text(sentence: str, scene: str | None) -> str:
+    """What is actually embedded on the query side.
+
+    IMPROVEMENT CYCLE 2 (2026-08-20): the scene's politeness tier is prepended.
+    Diagnosed on the threshold block only — the twenty measurement items were not
+    looked at, before or after — where the sentence alone could not reach the right
+    article for a whole class of item. 「タクシーで行く。」 needs the politeness
+    article and every cue in the sentence points at the particle 「で」 instead: the
+    politeness floor is a property of WHO IS BEING SPOKEN TO, so it is not in the
+    sentence at all, and no amount of ranking over the sentence can recover it.
+
+    Three formulations were tried on that block, and the differences between them
+    are recorded rather than only the winner: the sentence alone reached 5 of 8,
+    the full requirement paragraph also 5 of 8 (different items), and this one 7 of
+    8. Trying three and reporting one would make a tuned choice look like a first
+    guess.
+    """
+    if scene is None:
+        return QUERY_PREFIX + sentence
+    from dialogue.scenes import politeness_floor
+
+    tier, _ = politeness_floor(scene)
+    return f"{QUERY_PREFIX}{_TIER_CUE[tier]} {sentence}"
+
+
+def embed_query(sentence: str, scene: str | None = None) -> list[float]:
     """The vector for one learner sentence, with the query prefix applied."""
-    return [float(value) for value in _model().encode(QUERY_PREFIX + sentence)]
+    return [float(value) for value in _model().encode(query_text(sentence, scene))]
 
 
 @lru_cache(maxsize=1)
@@ -94,7 +143,7 @@ def collection() -> Any:
     return store
 
 
-def search(sentence: str, top_k: int | None = None) -> list[Result]:
+def search(sentence: str, top_k: int | None = None, scene: str | None = None) -> list[Result]:
     """The sections closest to one learner sentence, best first.
 
     `top_k` defaults to the configured 3 — the same 3 `retrieval_hit_rate` is
@@ -106,7 +155,7 @@ def search(sentence: str, top_k: int | None = None) -> list[Result]:
     """
     limit = threshold("retrieval", "top_k") if top_k is None else top_k
     found = collection().query(
-        query_embeddings=[embed_query(sentence)],
+        query_embeddings=[embed_query(sentence, scene)],
         n_results=limit,
         include=["documents", "metadatas", "distances"],
     )
