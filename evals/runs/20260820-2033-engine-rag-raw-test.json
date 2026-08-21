@@ -1,0 +1,39 @@
+{
+  "run_id": "20260820-2033",
+  "implementation": "engine-rag",
+  "model": "gemini/gemini-2.5-flash",
+  "prompt_version": "correction-rag-v2",
+  "scorer_version": "score-v1",
+  "thresholds_digest": "a3b19b50d990",
+  "items_digest": "758e01ba6d39",
+  "n": 40,
+  "split": "test",
+  "level": "beginner",
+  "date": "20260820",
+  "detection_accuracy": 0.9259259259259259,
+  "over_correction_rate": 0.23076923076923078,
+  "format_compliance_rate": 1.0,
+  "unusable_verdicts": 0,
+  "stage": "raw",
+  "retrieval_version": "retrieval-v2",
+  "validation_fired": {
+    "on_needs_correction": 0,
+    "on_already_natural": 0
+  },
+  "grounded_items": 21,
+  "japanese_left_unquoted": 3,
+  "latency_ms": {
+    "median": 5199,
+    "p95": 15468
+  },
+  "manual_check_ids": [
+    "eval-003",
+    "eval-027",
+    "eval-051",
+    "eval-075",
+    "eval-099"
+  ],
+  "scorer_checked_on": "20260819-1741",
+  "results_redacted": true,
+  "results": []
+}

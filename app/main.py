@@ -28,18 +28,20 @@ from app.limits import (  # noqa: E402
     code_matches,
     max_turns,
     spend_tokens,
+    spend_tts_chars,
 )
-from app.theme import CONTACT, NOTICE, STYLE  # noqa: E402
+from app.theme import CONTACT, NOTICE, SPEECH_CAVEAT, STYLE, VOICE_NOTICE  # noqa: E402
 from correction import CorrectionResult  # noqa: E402
 from dialogue import LEVELS, SCENES, Utterance, opening_line, reply  # noqa: E402
 from graph.correction_graph import run as run_correction  # noqa: E402
+from speech.voice import SpeechError, synthesise, transcribe  # noqa: E402
 
 load_dotenv()
 
 st.set_page_config(page_title="Japanese Speaking Coach", page_icon="🗣️")
 st.markdown(STYLE, unsafe_allow_html=True)
 
-SESSION_KEYS = ("scene", "level", "history", "failure", "corrections")
+SESSION_KEYS = ("scene", "level", "history", "failure", "corrections", "heard")
 
 
 def history() -> list[Utterance]:
@@ -152,6 +154,7 @@ def render_conversation() -> None:
             else:
                 history().append(Utterance("partner", answer))
                 st.write(answer)
+                speak(answer)
                 # After the reply is on screen, and never rendered: the whole point
                 # of a separate correction call is that the learner does not see it
                 # until they have stopped talking.
@@ -174,14 +177,86 @@ def render_conversation() -> None:
             f"This demo stops at {max_turns()} sentences per conversation. "
             "End the conversation to see your corrections."
         )
-    elif learner_text := st.chat_input("日本語で書いてください"):
-        history().append(Utterance("learner", learner_text))
-        st.session_state["failure"] = None
-        st.rerun()
+    else:
+        render_input()
 
     st.divider()
     if st.button("End the conversation"):
         end_session()
+        st.rerun()
+
+
+def speak(text: str) -> None:
+    """Read one line aloud, and say that the voice is synthetic.
+
+    A failure here is a caption, not an error: the reply is already on screen and
+    the conversation can continue without sound. Losing the audio is a smaller
+    problem than an error box where a reply should be.
+    """
+    try:
+        spend_tts_chars(text)
+        audio = synthesise(text)
+    except (LimitReached, SpeechError) as exc:
+        st.caption(f"(no audio this time: {exc})")
+        return
+    st.audio(audio, format="audio/wav", autoplay=True)
+    st.caption(VOICE_NOTICE)
+
+
+def render_input() -> None:
+    """Speak, check what was heard, then send it.
+
+    THE CHECK IN THE MIDDLE IS NOT OPTIONAL. Transcription gets sentences wrong —
+    「少し遅れます」 came back as 「少しお借りします」 on 2026-08-20 — and a wrong
+    sentence sent straight on would be corrected as if the learner had said it. A
+    beginner cannot tell whether the correction or the transcription was at fault,
+    so they are shown the text and given the button before anything is judged.
+    """
+    heard: str | None = st.session_state.get("heard")
+
+    if heard is None:
+        st.caption(SPEECH_CAVEAT)
+        recording = st.audio_input("話してください")
+        if recording is not None:
+            with st.spinner("…"):
+                try:
+                    st.session_state["heard"] = transcribe(recording.getvalue())
+                except SpeechError as exc:
+                    st.session_state["heard"] = ""
+                    st.session_state["heard_error"] = str(exc)
+            st.rerun()
+        if typed := st.chat_input("または、日本語で書いてください"):
+            history().append(Utterance("learner", typed))
+            st.session_state["failure"] = None
+            st.rerun()
+        return
+
+    if not heard:
+        st.warning(
+            st.session_state.pop("heard_error", None)
+            or "Nothing was heard. Please try recording again."
+        )
+        if st.button("Record again", type="primary"):
+            st.session_state.pop("heard", None)
+            st.rerun()
+        return
+
+    st.write("**Is this exactly what you said?**")
+    st.info(heard)
+    # Not "does this look right". The transcriber repairs mistakes, so a learner
+    # nodding at a corrected sentence is the failure this step exists to catch.
+    st.caption(
+        "If it changed anything — a particle, an ending, a missing word — say it "
+        "again or type it, or that mistake will not be corrected."
+    )
+    send, again = st.columns(2)
+    if send.button("Yes, send it", type="primary", use_container_width=True):
+        history().append(Utterance("learner", heard))
+        st.session_state.pop("heard", None)
+        st.session_state["failure"] = None
+        st.rerun()
+    if again.button("No, say it again", use_container_width=True):
+        st.session_state.pop("heard", None)
         st.rerun()
 
 

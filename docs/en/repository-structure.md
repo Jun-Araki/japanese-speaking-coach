@@ -23,8 +23,10 @@ japanese-speaking-coach/
 │   └── thresholds.toml        Validation thresholds. Never inline these in code
 ├── .steering/                 Per-task documents, one directory per piece of work
 │   └── YYYYMMDD-title/        requirements.md, design.md, tasklist.md
-├── app/                       Streamlit UI, single page
-│   └── main.py                Conversation screen. **Community Cloud entry point**
+├── app/                       The Streamlit screen. One screen only
+│   ├── main.py                The conversation screen. **The Community Cloud entry point, fixed permanently**
+│   ├── limits.py              Daily token and speech caps, and the shared code. **Counted before the call, not after**
+│   └── theme.py               CSS and the notices. **The synthetic-voice line and the speech caveat live here**
 ├── dialogue/                  Conversation node
 │   ├── scenes.py              Scenes and levels. **glossary.md §3 and §4 are the source**
 │   └── reply.py               `reply()`. Partner prompt and the one-to-two sentence cap
@@ -35,7 +37,19 @@ japanese-speaking-coach/
 │                              second call to the model
 ├── tests/                     pytest. **No tests call the model** — generated Japanese
 │                              has no fixed right answer to assert against
-├── retrieval/                 (planned) Chroma indexing and search
+├── graph/                     LangGraph. **Both the screen and the API go through this**
+│   └── correction_graph.py    retrieve -> correct -> validate. **Check 3 is not in it** (measured, not adopted)
+├── api/                       FastAPI: `GET /health`, `POST /chat`, `POST /check`
+│   └── main.py                **The Docker entry point.** Not started on Community Cloud (one process, one entry)
+├── speech/                    Voice
+│   └── voice.py               Transcription and synthesis. **Transcription can erase a learner's mistake** (architecture.md)
+├── retrieval/                 Search over the grammar reference
+│   ├── chunks.py              **Split by section** — never one article per chunk
+│   └── index.py               Embedding and Chroma. **The index is built in memory at startup** (a persisted one goes stale)
+├── Dockerfile                 The API container. **CPU torch pinned explicitly** (the PyPI build drags in 2GB of CUDA)
+├── compose.yaml               Two services: the API and the screen
+├── requirements.txt           What the deployment installs
+├── requirements-no-retrieval.txt  **The swap-in when the free tier cannot take the embedding stack**
 ├── nlp/                       Japanese word processing
 │   ├── tokenize.py            SudachiPy tokenization — Japanese writes no word spaces
 │   ├── frequency.py           Difficulty tiers, cut from the BCCWJ list by coverage
@@ -45,7 +59,6 @@ japanese-speaking-coach/
 │   ├── rater/                 The second rater's kit and the returned ratings
 │   ├── script.py              Fixed conversation script. **Uses no evaluation item**
 │   └── level_compliance.py    Vocabulary level of replies (first shot and after the gate)
-├── api/                       (planned) FastAPI application
 └── data/
     ├── evaluation/            120 evaluation items as JSON — a public artefact
     │   └── candidates/        Unverified candidates: raw material for items.json, not the record

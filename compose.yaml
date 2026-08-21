@@ -1,0 +1,35 @@
+# Two services over one image and one graph: the HTTP layer, and the screen.
+#
+# The screen is here so that `docker compose up` gives a reviewer the whole thing on
+# one command. It is NOT how the demo is deployed — Community Cloud runs app/main.py
+# directly from a fixed entry point — so the two must not drift: both import the same
+# graph, and neither has a copy of the correction path.
+services:
+  api:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      # Read from the host, never baked into the image. An API key in a layer is an
+      # API key in every copy of that image.
+      GEMINI_API_KEY: ${GEMINI_API_KEY:?set GEMINI_API_KEY in your environment}
+      TTS_MODEL: ${TTS_MODEL:-gemini-2.5-flash-preview-tts}
+      TRANSCRIBE_MODEL: ${TRANSCRIBE_MODEL:-gemini-2.5-flash}
+
+  app:
+    build: .
+    command:
+      - streamlit
+      - run
+      - app/main.py
+      - --server.port=8501
+      - --server.address=0.0.0.0
+    ports:
+      - "8501:8501"
+    environment:
+      GEMINI_API_KEY: ${GEMINI_API_KEY:?set GEMINI_API_KEY in your environment}
+      # Unset by default, which leaves the demo open — the shared code exists for the
+      # public URL, not for a container on someone's laptop.
+      ACCESS_CODE: ${ACCESS_CODE:-}
+      DAILY_TOKEN_LIMIT: ${DAILY_TOKEN_LIMIT:-200000}
+      DAILY_TTS_CHAR_LIMIT: ${DAILY_TTS_CHAR_LIMIT:-50000}

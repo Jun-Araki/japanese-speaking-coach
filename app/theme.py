@@ -70,8 +70,21 @@ NOTICE: Final = (
     "session for good. The replies are generated, so they can be wrong."
 )
 
-# Shown once audio is in. Written now so that adding the feature cannot ship without
-# the sentence that has to go with it.
 VOICE_NOTICE: Final = (
     "The voice you hear is synthesised by an AI. It is not a recording of a person."
+)
+
+# MEASURED, NOT SUSPECTED. Five sentences carrying real learner mistakes were spoken
+# and transcribed back on 2026-08-20: four came back with the mistake repaired —
+# 「オフィスでいます」 became 「オフィスにいます」, 「毎日で走る」 became 「毎日走る」.
+# The transcriber is a language model, so it writes down what the speaker meant
+# rather than what they said, and a repaired sentence reaches the correction engine
+# looking correct.
+#
+# A beginner cannot see that this has happened, which is why it is written on the
+# screen rather than left in the README: they are the one person who cannot check.
+SPEECH_CAVEAT: Final = (
+    "**Speaking is for practice.** Transcription sometimes tidies up a mistake before "
+    "the correction engine sees it, so a sentence you got wrong can come back as "
+    "\"this one is fine\". **Type instead if you want every mistake caught.**"
 )

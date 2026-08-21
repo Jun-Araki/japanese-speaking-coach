@@ -12,8 +12,8 @@ disagree, the Japanese version is correct and this file needs updating.
 | Area | Choice | Why |
 |---|---|---|
 | LLM | **LangChain → Gemini** (decided 2026-08-03) | See "Choosing a provider" below |
-| Transcription | **Decided in early September** (Gemini first, OpenAI as fallback) | Same |
-| Text to speech | **Decided in early September** (same) | Both support Japanese. **Disclosing that the voice is AI-generated is done regardless of provider** |
+| Transcription | **Gemini** (`gemini-2.5-flash`, audio passed inline; built 2026-08-20) | **Provisional.** Chosen because no OpenAI key was available — see "Transcription erases the learner's mistakes" |
+| Text to speech | **Gemini** (`gemini-2.5-flash-preview-tts`) | **A preview model**; if it goes, the app falls back to text. **Disclosing that the voice is AI-generated is done regardless of provider** |
 | Tokenization | SudachiPy + SudachiDict (Apache-2.0) | Japanese has no spaces between words, so vocabulary-level checking requires morphological analysis |
 | Embeddings | sentence-transformers, multilingual | Retrieval over Japanese text |
 | Vector store | Chroma | Fastest local option, sufficient for a demo |
@@ -70,13 +70,57 @@ generation (WAV accepted, Japanese supported) and would keep everything on one k
 learner's mistakes more aggressively than a dedicated speech recogniser would**. That would
 erase exactly what this app exists to correct.
 
-> **`.env.example` carries OpenAI's transcription and speech models as candidates** (not wired
-> up). Whichever is adopted, **the private planning document and this file are updated together.**
-
-**This has to be decided by argument, not by measurement (revised 2026-08-16).** The original
+**This had to be decided by argument, not by measurement (revised 2026-08-16).** The original
 plan was to measure both transcribers against recordings transcribed by ear; **no audio is
-stored now, so that comparison cannot be run.** The decision therefore leans towards a dedicated
-speech model, on the reasoning above, and **the README says the choice was not measured.**
+stored now, so that comparison cannot be run.** The decision therefore leaned towards a dedicated
+speech model, on the reasoning above.
+
+> **Settled on 2026-08-20, and not the way the reasoning above recommended.** `OPENAI_API_KEY`
+> was never obtained, so voice was built on Gemini — and the concern above reproduced in
+> measurement. See below.
+
+## Transcription erases the learner's mistakes (measured 2026-08-20)
+
+**The concern above was right.** Five sentences carrying real learner mistakes from the dev split
+were synthesised and transcribed back: **the mistake survived in one of five**. 「オフィスで
+います」 came back as 「オフィスにいます」 and 「毎日で走る」 as 「毎日走る」 — particles and
+conjugations silently repaired. The same test on five *correct* sentences lost nothing but a
+proper noun: **sounds that are right are transcribed accurately, and sounds that are wrong are
+tidied up.** A language model writing the text behaves like a language model.
+
+**Tightening the prompt did not help.** Told explicitly that the speaker is a beginner, that
+grammar must not be corrected, and that an ungrammatical result is expected, the score stayed at
+one in five — different sentences survived, not more of them.
+
+**Other Gemini models were tried (2026-08-20)**, all on the same synthesised audio.
+
+| Model | Mistake survived |
+|---|---|
+| `gemini-2.5-flash` (in use) | 1/5 |
+| `gemini-2.5-pro` | could not be measured (HTTP error) |
+| `gemini-3.5-flash` | 1/5 |
+| `gemini-3.7-flash` | 1/5 |
+
+**The newer the model, the more fluently it repairs.** 3.5 and 3.7 turned 「払うたいです」 into a
+clean 「払いたいです」 — excellent transcription, and for this app the erasure of the mistake.
+**There is no move left inside Gemini.**
+
+**The same audio at temperature 0 does not even give the same answer twice**: 2.5-flash returned
+「私はオフィスにいます」 on one run and 「私はオフィスいます」 on another. **One in five is itself
+a noisy figure.**
+
+**The measurement cannot separate the two sides.** The audio was synthesised, so a mangled result
+may come from the speaking side rather than the listening side. Separating them needs recordings
+of real learners, and **this app stores no audio** — the same constraint that made the choice
+unmeasurable in the first place.
+
+**So this is how it stands.**
+
+- **Every published number is measured on text**, fed to the correction engine directly
+- **The screen says so above the microphone.** A beginner cannot see that a mistake was repaired,
+  so the warning belongs where they are, not only in the README
+- **The real fix is a dedicated speech recogniser** (`whisper-1` or similar). It needs a provider
+  key this project does not have.
 
 ## Constraints that shaped these choices
 

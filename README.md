@@ -112,9 +112,20 @@ measured **before** the real implementation exists, so the comparison is honest.
 
 | | Naive (single call) | This implementation |
 |---|---|---|
-| Detection accuracy (n=27) | **100%** | — |
-| **Over-correction rate (n=13)** | **69.2 – 76.9%** | — |
-| Correction validity | — | — |
+| Detection accuracy (n=27) | **100%** | **92.6%** (25/27) |
+| **Over-correction rate (n=13)** | **69.2 – 76.9%** | **23.1%** (3/13) |
+| Correction validity | — | not measured (single-rater) |
+
+**Read the second row.** The naive version wins on detection by correcting almost everything,
+including ten of the thirteen sentences that were already fine. This one gives up two detections
+and stops over-correcting seven of those ten. **A learner is not helped by a system that says
+"wrong" to sentences they got right**, which is the whole reason the second row exists.
+
+*Both columns: same 40 held-out items, same model (`gemini/gemini-2.5-flash`), same scorer
+(`score-v1`). The baseline ran on 11 August at prompt `baseline-v1`; this implementation on 20
+August at `correction-rag-v2` with `retrieval-v2`. The dataset file changed between them — one
+**dev** item was relabelled on 13 August — so the digests differ while **these 40 items and both
+denominators are identical**. That is stated rather than smoothed over.*
 
 *The baseline was measured on the held-out test split on 11 August, **before any validation code
 existed**, which is what makes the comparison honest. The same run was repeated three times under
@@ -125,22 +136,66 @@ it is useless to a learner. Run records: [`evals/runs/`](evals/runs/). Response 
 **not** measured — see [Progress](#progress). Metric definitions:
 [`docs/en/glossary.md`](docs/en/glossary.md).*
 
+### What each part contributes
+
+Every column below is the **same 80 dev items on the same day through the same model**, so the
+difference between two of them is the one thing that changed. Stages 2 and 3 are post-processing
+over stage 0's stored answers — no second call, so no sampling noise sits between the columns.
+
+| Stage | What it is | Detection (n=64) | Over-correction (n=16) |
+|---|---|---|---|
+| Baseline | one call, `baseline-v1` | 100.0% (64/64) | 56.2% (9/16) |
+| 0 | the real prompt, no retrieval, no checks | 93.8% (60/64) | 31.2% (5/16) |
+| 1 | 0 + retrieval in the prompt | 92.2% (59/64) | 25.0% (4/16) |
+| 1′ | 1 + one line of prompt (improvement cycle 1) | 92.2% (59/64) | **12.5%** (2/16) |
+| 1″ | 1′ + scene in the retrieval query (cycle 2) | **93.8%** (60/64) | **12.5%** (2/16) |
+| 2 | 1 + check 1 (rewrite-too-far) | identical to its input | identical |
+| 3 | 1 + check 3 | **not adopted — see below** | |
+
+**These are dev numbers and dev is the split that was tuned against, so the gaps are flattered.**
+The held-out figures in the next table are the ones to quote.
+
+**Check 1 fired on nothing.** Its threshold was set on the baseline's output, conservatively
+enough to discard no correct correction, and against this implementation the largest rewrite came
+to 0.818 against a floor of 0.85. It ships, and it currently does nothing — which is stated here
+rather than left for someone to discover in a run record.
+
+**Check 3 was measured against a bar written before its predicates existed, and failed on both.**
+The rule was "nothing could be cited, the edit is small, and the sentence was already fine", to be
+adopted only if it fired at least 20 points more often on already-natural sentences than on ones
+that needed correcting. Measured on dev: the politeness predicate fired on 6.2% of the first
+group and 43.8% of the second — the wrong direction, and it would have taken detection to 50%.
+The admission predicate fired on nothing at all: of the 29 corrections made without citing an
+article, not one conceded the original was fine. **The bar was not lowered to fit them.** The
+validation node ships with check 1 and check 2 and without check 3.
+
 ### Targets
 
 These targets are for **this implementation**, not for the baseline above. The baseline already
 scores 100% on detection and fails badly on over-correction; beating it means holding detection
 while bringing over-correction down.
 
-| Metric | Target (20 September 2026) | This implementation |
-|---|---|---|
-| Detection accuracy | ≥ 85% | — |
-| Over-correction rate | ≤ 15% | — |
-| Correction validity | ≥ 85% | — |
-| Second-rater agreement | **not measured** | see below |
-| Retrieval hit rate (n=16) | ≥ 80% | — |
-| Retrieval abstention rate (n=4) | reported, no target | — |
-| Level compliance (n=90) | ≥ 90% after regeneration | **98.9%** after regeneration, **94.4%** first-shot (±5pt on the first-shot figure) |
-| Testers | 2–3, with three written comments | — |
+| Metric | Target | This implementation | Met |
+|---|---|---|---|
+| Detection accuracy (n=27, held-out) | ≥ 85% | **92.6%** (25/27), 95% CI [76.6, 97.9] | yes |
+| Over-correction rate (n=13, held-out) | ≤ 15% | **23.1%** (3/13), 95% CI [8.2, 50.3] | **no — one item short** |
+| Correction validity | ≥ 85% | **not measured** — single-rater, see below | — |
+| Second-rater agreement | — | **not obtained**, see below | — |
+| Retrieval hit rate (n=16) | ≥ 80% | **81.2%** (13/16), 95% CI [57.0, 93.4] | yes |
+| Retrieval abstention rate (n=2) | reported, no target | 0 of 2 abstain at `score_min` | — |
+| Level compliance (n=90) | ≥ 90% after regeneration | **98.9%** after regeneration, **94.4%** first-shot (±5pt on the first-shot figure) | yes |
+| Testers | 2–3, with three written comments | — | — |
+
+**Over-correction misses its target on the held-out split, and that is the number to read.**
+On the dev split — the one the prompt was tuned against — it is 12.5% (2/16). On the 40 items
+that were touched twice and never in between it is 23.1% (3/13). The gap between those two is
+what tuning against a split does, and it is the reason the held-out figure is the one in the
+table. **One item is 7.7 points on that denominator**: two items instead of three would read
+15.4% and still miss.
+
+**Both intervals are wide enough to matter.** 3 of 13 could be anywhere from 8% to 50% at 95%
+confidence. The measurement says this implementation over-corrects far less than the baseline —
+which it does, by 54 points — and does **not** say it has reached 15%.
 
 **The level-compliance figure to read is the first-shot one.** The post-regeneration number is
 produced by gating with the same function that measures it, so it is **not independent
@@ -181,18 +236,80 @@ floor, with their dependence on it stated. They are never added together. Rollin
 figure would let the score floor be tuned until the number improved, and nothing in this
 repository would show that it had been.
 
-### The correction engine is measured on text, and the speech stage is not measured at all
+### Two improvement cycles, including what they broke
 
-The system has two stages: speech→text and text→correction. Measuring only end-to-end cannot
-tell you which one failed — **transcription silently repairs learner mistakes**, so a correct
-correction engine can look broken. Correction figures are therefore produced by feeding the
-evaluation items directly to the engine, bypassing the app and the microphone entirely.
+The rule for a cycle: pick the metric furthest from its target **from the measurements, not from a
+hunch**, change exactly one thing, and re-measure on the same split with the same model and the
+same scorer. Record it either way.
 
-**The speech stage is not measured.** Measuring it would mean keeping learner recordings and
-transcribing them by ear, and this project keeps no audio at all (see [Privacy](#privacy)).
-Every correction figure here is therefore text-in, text-out, and **the accuracy a learner
-experiences through a microphone is lower than the numbers above.** How much lower is unknown.
-Saying so is more useful than an estimate nobody could check.
+**Cycle 1 — over-correction, 25.0% to 12.5% (dev).** It was the only published metric outside its
+target, and three of the four remaining over-corrections were the same move: an honorific prefix
+added, a pronoun the speaker had chosen removed. One line went into the prompt — *a politer or
+more idiomatic version is an upgrade, not a correction* — written as a general rule rather than as
+a list of the sentences it was found on.
+
+**Six items moved to net two.** Four improved and two got worse, and one of the two that got worse
+is the same shape as two the change fixed: 「あなたは田中さんですか？」 started being corrected
+while 「あなた、どこですか。」 stopped. The rule handles that class better; it does not handle it
+reliably.
+
+**Cycle 2 — retrieval hit rate, 75.0% to 81.2%.** Diagnosed on the ten threshold items only,
+because reading the misses in the twenty measurement items would make the published number
+self-marked. The query was the learner's sentence and nothing else, so a sentence whose problem is
+politeness offered no cue at all — the politeness floor is set by *who is being spoken to*, and no
+ranking over the sentence can recover it. Prepending the scene's politeness tier took the
+threshold block from 5 of 8 to 7 of 8.
+
+**Three formulations were tried there, and all three are reported.** Pasting in the full
+requirement paragraph scored the same 5 of 8 as the sentence alone, and returned the politeness
+article first for *every* item: several sentences of English swamp a ten-character query. Length
+was the whole difference between the attempt that failed and the one that worked.
+
+That second cycle also made `score_min` selectable. On 19 August the pre-registered rule could not
+choose a floor — only 5 of 8 items had their annotated article in the top 3, against a requirement
+of 7 — and the recorded answer was 0.0 with *"check 3 could not be operated at this reference
+size"*. The ranking improved, not the requirement: `recall_floor_items` is still 7.
+
+**A version that nothing could record turned up on the way.** Cycle 2 changed the query text,
+which is code — neither the prompt version nor the threshold digest moves for it, so two run
+records either side would have differed in their numbers and in nothing that explained why. Run
+records now carry `retrieval_version`.
+
+### Speaking is offered, and it quietly weakens the thing this app is for
+
+**Measured on 20 August, before shipping it.** Five sentences carrying real learner mistakes were
+spoken and transcribed back. **Four came back with the mistake repaired**: 「オフィスでいます」
+became 「オフィスにいます」, 「毎日で走る」 became 「毎日走る」. Only one survived intact. The
+same test on five *correct* sentences lost nothing but a proper noun.
+
+The transcriber is a language model, so it writes down what the speaker **meant**. A repaired
+sentence reaches the correction engine looking correct, the engine says "this one is fine", and
+the learner is never told about a mistake they actually made — which is the entire function of
+this app, removed silently.
+
+**Tightening the transcription prompt did not fix it.** Told explicitly that the speaker is a
+beginner, that grammar must not be corrected, and that an ungrammatical result is expected, the
+score stayed at one in five; different sentences survived, not more of them.
+
+**Nor did a better model.** The same audio through `gemini-3.5-flash` and `gemini-3.7-flash`
+also scored one in five — and repaired more fluently, turning 「払うたいです」 into a clean
+「払いたいです」. That is excellent transcription and, here, the erasure of the mistake. The same
+audio at temperature 0 does not even return the same text twice, so one in five is itself noisy.
+
+**What this measurement cannot separate**, and does not pretend to: the audio was synthesised, so
+a mangled result may come from the speaking side rather than the listening side. Telling them
+apart needs recordings of real learners, and **this app stores no audio** — the same reason the
+provider could not be chosen by measurement in the first place
+([`docs/en/architecture.md`](docs/en/architecture.md)).
+
+So the app says so on the screen, above the microphone, rather than leaving a beginner — the one
+person who cannot check — to find out: *speaking is for practice; type if you want every mistake
+caught*. **Every published number on this page was measured on text**, through the engine
+directly, with no speech stage involved.
+
+The planned fix is a dedicated speech-recognition model rather than a language model
+transcribing, which is what the architecture document argued for before any of this was built.
+It needs a provider key this project does not have yet.
 
 ### Known ways evaluations break, and what is done about them
 
@@ -209,27 +326,34 @@ Saying so is more useful than an estimate nobody could check.
 
 ```mermaid
 graph TB
-    U[Learner] -->|voice| ST[Streamlit, single page]
-    ST -->|REST + shared access code| API[FastAPI]
-    API --> G[LangGraph]
+    U[Learner] -->|speaks or types| ST["Streamlit, single page<br/>shared access code, daily caps"]
+    ST -->|"speech (may repair mistakes)"| STT[Transcription]
+    STT -->|"learner confirms the text"| ST
 
-    subgraph G [LangGraph]
-        DLG[Dialogue node]
-        COR[Correction node]
-        RET[Retrieval node]
-        VAL[Validation node]
-        DLG -.parallel.- COR
-        RET --> COR
-        COR --> VAL
-        VAL -->|reject, once| COR
+    ST --> G
+    API["FastAPI<br/>/health /chat /check"] --> G
+
+    subgraph G ["LangGraph — the same graph for both callers"]
+        RET[retrieve] --> COR[correct]
+        COR --> VAL["validate<br/>checks 1 and 2 only"]
     end
 
-    DLG --> TTS[Text to speech]
-    COR --> MEM[Session memory only, nothing persisted]
-    RET --> CH[(Chroma)]
-    VAL --> NLP[SudachiPy tokenizer]
-    ST --> STT[Transcription]
+    DLG["Dialogue node<br/>separate call, 1-2 sentences"] --> TTS[Text to speech]
+    ST --> DLG
+    RET --> CH[("Chroma<br/>36 sections, built at startup")]
+    VAL -.->|"regeneration path"| DLG
+    DLG --> NLP[SudachiPy tokenizer]
+    VAL --> OUT["Review screen<br/>shown only after the conversation ends"]
+    G --> NONE["Nothing is stored<br/>no database, no file, no log"]
 ```
+
+**Two callers, one graph.** The screen calls the graph in-process — Streamlit Community Cloud
+runs one process from one entry file, so it cannot call the API over HTTP — and the API calls
+the same graph. Neither can drift into behaving differently from what was measured.
+
+**Corrections never interrupt the conversation.** They run per turn, out of sight, and are shown
+only when the learner ends the session. Being told mid-sentence that you made a mistake is how
+beginners stop speaking.
 
 **Why this is not a thin wrapper around a language model.** The correction is emitted as
 structured output and then checked by deterministic Python:
@@ -238,8 +362,9 @@ structured output and then checked by deterministic Python:
   a threshold, it is a different sentence, not a correction, and is discarded
 - **Vocabulary level** — the AI's reply is tokenised and regenerated if too many words sit
   above the learner's level
-- **Over-correction suppression** — if nothing was retrieved to ground the reason and the
-  original sentence is already natural, it falls back to "no correction needed"
+- ~~**Over-correction suppression**~~ — **measured against a bar set in advance, and not
+  adopted.** The section above says what it scored. A check that fails its own criterion does
+  not ship, and the criterion was not lowered to let it through
 
 The baseline table above exists to show what those checks are worth.
 
@@ -274,8 +399,48 @@ Full table with the reasoning for each choice: [`docs/en/architecture.md`](docs/
 
 ## Running it
 
-Not yet runnable. `docker compose up` will bring up the UI and the API — there is no database —
-and the instructions land here once that exists.
+There is no database, so there is nothing to migrate and nothing to clean up.
+
+```bash
+export GEMINI_API_KEY=...        # read from the environment, never from a file in the repo
+uv sync
+uv run streamlit run app/main.py # the screen, on http://localhost:8501
+uv run uvicorn api.main:app      # the API, on http://localhost:8000
+```
+
+Or both at once, in containers:
+
+```bash
+GEMINI_API_KEY=... docker compose up
+```
+
+**The compose file and the Dockerfile are written and have not been built yet** — the image
+pins CPU-only torch, because `pip install torch` on Linux drags in about two gigabytes of CUDA
+libraries for a machine that has no GPU. That is stated here rather than left as a surprise for
+whoever runs it first.
+
+Check what a running build can actually do:
+
+```bash
+curl localhost:8000/health
+```
+
+It answers with the model, the prompt version and **whether retrieval is available** — a
+deployment that lost the embedding stack says so, instead of returning "ok" with the grounding
+silently gone.
+
+### Reproducing the measurements
+
+```bash
+uv run python -m evals.score --implementation engine-rag --split dev   # the numbers above
+uv run python -m evals.restage --run evals/runs/<id>-raw-dev.json --stage validated
+uv run python -m evals.retrieval_measure --choose    # picks score_min on ten items
+uv run python -m evals.retrieval_measure --measure   # the hit rate, on twenty others
+```
+
+Every run writes a record to [`evals/runs/`](evals/runs/) carrying the model, the prompt version,
+the scorer version, the dataset digest, the threshold digest and the retrieval version — enough
+to say what produced a number, months later.
 
 ## Data, sources and licences
 
@@ -337,11 +502,13 @@ because it exists.
 - [x] Baseline measured on the 40-item test split
 - [x] Tokenization and the vocabulary-level check, with compliance measured
 - [x] Validation nodes: rewrite-too-far, and regeneration on over-level replies
-- [ ] Retrieval (Chroma, embeddings) and the retrieval hit rate
-- [ ] Baseline vs implementation comparison table
-- [ ] FastAPI + LangGraph
-- [ ] Docker Compose and a deployed demo
-- [ ] Voice input and output
+- [x] Retrieval (Chroma, embeddings) and the retrieval hit rate
+- [x] Baseline vs implementation comparison table, on the held-out split
+- [x] Two improvement cycles, both recorded including what they broke
+- [x] Check 3 measured against its pre-registered bar, and **not adopted**
+- [x] FastAPI + LangGraph
+- [x] Voice input and output — **shipped with a measured limitation, above**
+- [ ] Docker Compose **written but not yet built**, and a deployed demo
 - [ ] Two or three testers, three written comments
 
 **What is deliberately not on this list:** response time, cost per turn, any measurement of the

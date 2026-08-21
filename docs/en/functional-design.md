@@ -72,8 +72,28 @@ in the validation node:
    sentence exceeds the threshold, it is a different sentence, not a correction; discard it.
 2. **Vocabulary level check** — tokenize the AI reply and regenerate if it contains too
    many words above the learner's level.
-3. **Over-correction suppression** — if no grounding was retrieved and the original sentence
-   is already natural, fall back to "no correction needed".
+3. ~~**Over-correction suppression**~~ — **measured and not adopted (2026-08-20). See below.**
+
+**Checks 1 and 2 ship; check 3 does not (settled 2026-08-20).**
+
+- **Check 1 is in and currently fires on nothing.** Its threshold (normalised edit distance
+  0.85) was set on the baseline's output, conservatively enough to discard no correct
+  correction, and the largest rewrite this implementation produced was 0.818. **"Present and
+  doing nothing" is stated rather than left to be discovered.**
+- **Check 3 failed the bar registered before its predicates existed** (fire at least 20 points
+  more often on already-natural sentences than on ones needing correction). The politeness
+  predicate scored **-37.5pt — the wrong direction** — and would have taken detection accuracy
+  to 50%; the admission predicate **fired on nothing at all**. **The bar was not lowered to fit
+  them.**
+
+The order they run in is in `graph/correction_graph.py`:
+
+```
+retrieve -> correct -> validate
+```
+
+**The screen and the API go through that same graph.** Two entry points over one graph, so the
+screen cannot drift into behaving differently from what was measured.
 
 This is what the baseline comparison is designed to prove: the naive single-call
 implementation is measured on the same data, and the two are reported side by side.
@@ -115,7 +135,16 @@ implementation is measured on the same data, and the two are reported side by si
 | `needs_correction` | boolean | Required. Anything other than a boolean counts as a format failure |
 | `corrected_sentence` | string \| null | Required when `needs_correction` is true. **Repairs the sentence they wrote**; it is not a better sentence of the model's own |
 | `reason_en` | string \| null | Same. **One or two sentences of English.** Japanese quoted inside 「」 to point at a word is allowed |
-| `grounding_ids` | array of string | **Always empty until retrieval lands on 30 August** (changed from "until week 2" to "early September" on 2026-08-16, then pulled forward with the schedule on 2026-08-18). **The key is carried from the start** — adding it later would mean rebuilding stored data |
+| `grounding_ids` | array of string | **Filled from 2026-08-20.** The retrieved sections go **into the prompt**, and only the article ids the model says it **used** are kept. **Ids it invented are dropped**, so a hallucinated citation reaches neither the learner nor check 3. **Never attached afterwards** — that would show an article the model never read |
+
+**Why grounding is not stapled on afterwards:** with a hit rate of 81.2% and no floor, roughly
+**one citation in four would name an unrelated article**. A source the model did not read is not
+a source; it is decoration.
+
+**`discarded`** — a correction the validation node threw away is recorded **in full, not as a
+flag**. When the real implementation scores below the baseline, the first thing to suspect is
+that the check discarded corrections that were fine, and a boolean cannot answer that. `POST
+/check` returns it too, so a discard is visible from outside rather than only in a run record.
 
 When `needs_correction` is false, `corrected_sentence` and `reason_en` are **normalised to
 null**. A sentence judged not to need changing has nothing to show, whatever the model chose
