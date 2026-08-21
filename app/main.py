@@ -65,7 +65,15 @@ _adopt_secrets()
 st.set_page_config(page_title="Japanese Speaking Coach", page_icon="🗣️")
 st.markdown(STYLE, unsafe_allow_html=True)
 
-SESSION_KEYS = ("scene", "level", "history", "failure", "corrections", "heard", "caveat_seen")
+SESSION_KEYS = (
+    "scene",
+    "level",
+    "history",
+    "failure",
+    "corrections",
+    "caveat_seen",
+    "used_speech",
+)
 
 
 def history() -> list[Utterance]:
@@ -93,6 +101,7 @@ def start_session(scene: str, level: str) -> None:
 
 def end_session() -> None:
     st.session_state["review"] = corrections()
+    st.session_state["review_used_speech"] = bool(st.session_state.get("used_speech"))
     for key in SESSION_KEYS:
         st.session_state.pop(key, None)
 
@@ -228,63 +237,46 @@ def speak(text: str) -> None:
 
 
 def render_input() -> None:
-    """Speak, check what was heard, then send it.
+    """Speak or type. What is transcribed is sent straight on.
 
-    THE CHECK IN THE MIDDLE IS NOT OPTIONAL. Transcription gets sentences wrong —
-    「少し遅れます」 came back as 「少しお借りします」 on 2026-08-20 — and a wrong
-    sentence sent straight on would be corrected as if the learner had said it. A
-    beginner cannot tell whether the correction or the transcription was at fault,
-    so they are shown the text and given the button before anything is judged.
+    A CONFIRMATION STEP WAS BUILT AND THEN REMOVED (2026-08-21). It showed the
+    transcription and asked "is this exactly what you said?" before sending, because
+    transcription repairs learner mistakes and a repaired sentence is corrected as
+    though the learner had said it. Used on the deployed app it cost a button press
+    and a paragraph of English on every single turn, which for a beginner having a
+    five-turn conversation is most of the interaction — so it went.
+
+    What replaces it is not nothing. The transcription appears in the conversation as
+    the learner's own line, where they can see it, and the review screen says that
+    spoken sentences were transcribed and may have been altered. That is weaker than
+    a gate and it is the trade that was chosen deliberately: a warning nobody reads
+    because it blocks them protects nobody either.
     """
-    heard: str | None = st.session_state.get("heard")
+    if not st.session_state.get("caveat_seen"):
+        # Once per session. Repeated above every recording, it trains people to skip
+        # it, which costs more than the reminder gains.
+        st.caption(SPEECH_CAVEAT)
+        st.session_state["caveat_seen"] = True
 
-    if heard is None:
-        # Once per session, on the first turn. Repeating a paragraph above every
-        # recording trains people to skip it, which costs more than the reminder
-        # gains — and the short line on the confirmation step carries it afterwards.
-        if not st.session_state.get("caveat_seen"):
-            st.caption(SPEECH_CAVEAT)
-            st.session_state["caveat_seen"] = True
-        recording = st.audio_input("話してください")
-        if recording is not None:
-            with st.spinner("…"):
-                try:
-                    st.session_state["heard"] = transcribe(recording.getvalue())
-                except SpeechError as exc:
-                    st.session_state["heard"] = ""
-                    st.session_state["heard_error"] = str(exc)
-            st.rerun()
-        if typed := st.chat_input("または、日本語で書いてください"):
-            history().append(Utterance("learner", typed))
-            st.session_state["failure"] = None
-            st.rerun()
-        return
-
-    if not heard:
-        st.warning(
-            st.session_state.pop("heard_error", None)
-            or "Nothing was heard. Please try recording again."
-        )
-        if st.button("Record again", type="primary"):
-            st.session_state.pop("heard", None)
-            st.rerun()
-        return
-
-    st.write("**Is this exactly what you said?**")
-    st.info(heard)
-    # Short, because it is read every turn by someone whose English is not their
-    # first language either. The full explanation is above the microphone, where it
-    # is read once. Not "does this look right": the transcriber repairs mistakes, and
-    # a learner nodding at a repaired sentence is what this step exists to catch.
-    st.caption("Different from what you said? Say it again, or type it.")
-    send, again = st.columns(2)
-    if send.button("Yes, send it", type="primary", use_container_width=True):
+    recording = st.audio_input("話してください")
+    if recording is not None:
+        with st.spinner("…"):
+            try:
+                heard = transcribe(recording.getvalue())
+            except SpeechError as exc:
+                st.warning(str(exc))
+                return
+        if not heard:
+            st.warning("Nothing was heard. Please try again.")
+            return
         history().append(Utterance("learner", heard))
-        st.session_state.pop("heard", None)
+        st.session_state["used_speech"] = True
         st.session_state["failure"] = None
         st.rerun()
-    if again.button("No, say it again", use_container_width=True):
-        st.session_state.pop("heard", None)
+
+    if typed := st.chat_input("または、日本語で書いてください"):
+        history().append(Utterance("learner", typed))
+        st.session_state["failure"] = None
         st.rerun()
 
 
@@ -320,6 +312,15 @@ def render_review() -> None:
                 st.write(f"→ {answer.corrected_sentence}")
                 if answer.reason_en:
                     st.caption(answer.reason_en)
+
+    if st.session_state.get("review_used_speech"):
+        # The one thing the removed confirmation step used to catch, said once where
+        # it does not interrupt anything.
+        st.caption(
+            "Sentences you spoke were written down automatically. If a word came out "
+            "differently from what you said, the correction above is for what was "
+            "written down — not for what you said."
+        )
 
     unchecked = len(results) - len(checked)
     if unchecked:
