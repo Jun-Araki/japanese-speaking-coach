@@ -136,3 +136,37 @@ class TestTranscribe:
         voice.transcribe(b"RIFF....")
 
         assert seen["generationConfig"]["temperature"] == 0
+
+
+class TestProviderErrorsDoNotEscape:
+    """A failure to read one line aloud must not end the conversation.
+
+    On 2026-08-21 a 4xx from the synthesis endpoint came out of this module as
+    `urllib.error.HTTPError`, went past a caller catching `SpeechError`, and took the
+    whole deployed page down mid-conversation. Callers can only handle the error type
+    this module documents, so this is where the conversion has to happen.
+    """
+
+    def test_an_http_error_becomes_a_speech_error(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        import urllib.error
+
+        def refuse(request: object, timeout: float) -> object:
+            raise urllib.error.HTTPError("https://example.test", 429, "Too Many Requests", {}, None)  # type: ignore[arg-type]
+
+        monkeypatch.setattr(voice.urllib.request, "urlopen", refuse)
+
+        with pytest.raises(voice.SpeechError, match="429"):
+            voice.synthesise("おはようございます。")
+
+    def test_a_network_failure_becomes_a_speech_error(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        def unreachable(request: object, timeout: float) -> object:
+            raise TimeoutError("timed out")
+
+        monkeypatch.setattr(voice.urllib.request, "urlopen", unreachable)
+
+        with pytest.raises(voice.SpeechError, match="could not be reached"):
+            voice.transcribe(b"RIFF....")

@@ -34,7 +34,7 @@ from app.theme import CONTACT, NOTICE, SPEECH_CAVEAT, STYLE, VOICE_NOTICE  # noq
 from correction import CorrectionResult  # noqa: E402
 from dialogue import LEVELS, SCENES, Utterance, opening_line, reply  # noqa: E402
 from graph.correction_graph import run as run_correction  # noqa: E402
-from speech.voice import SpeechError, synthesise, transcribe  # noqa: E402
+from speech.voice import synthesise, transcribe  # noqa: E402
 
 load_dotenv()
 
@@ -229,8 +229,12 @@ def speak(text: str) -> None:
     try:
         spend_tts_chars(text)
         audio = synthesise(text)
-    except (LimitReached, SpeechError) as exc:
-        st.caption(f"(no audio this time: {exc})")
+    except Exception as exc:  # noqa: BLE001 - see below
+        # Deliberately broad. The reply is already on screen and the conversation can
+        # continue without sound, so NOTHING that happens while reading a line aloud
+        # may end the session. A 4xx escaped a narrower clause here on 2026-08-21 and
+        # took the whole page down mid-conversation.
+        st.caption(f"(no audio this time: {type(exc).__name__}: {exc})")
         return
     st.audio(audio, format="audio/wav", autoplay=True)
     st.caption(VOICE_NOTICE)
@@ -258,13 +262,17 @@ def render_input() -> None:
         st.caption(SPEECH_CAVEAT)
         st.session_state["caveat_seen"] = True
 
-    recording = st.audio_input("話してください")
+    # A KEY THAT CHANGES EVERY TURN. Without it the widget hands back the same
+    # recording after the rerun, the same sentence is transcribed and sent again, and
+    # the conversation runs away on its own — three identical turns appeared on the
+    # deployed app on 2026-08-21 before anyone touched the microphone a second time.
+    recording = st.audio_input("話してください", key=f"microphone-{len(history())}")
     if recording is not None:
         with st.spinner("…"):
             try:
                 heard = transcribe(recording.getvalue())
-            except SpeechError as exc:
-                st.warning(str(exc))
+            except Exception as exc:  # noqa: BLE001 - a failed recording is not a crash
+                st.warning(f"That recording could not be read. Please try again. ({exc})")
                 return
         if not heard:
             st.warning("Nothing was heard. Please try again.")

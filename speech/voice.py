@@ -31,6 +31,7 @@ import base64
 import json
 import os
 import struct
+import urllib.error
 import urllib.request
 from typing import Any, Final
 
@@ -77,13 +78,28 @@ def _key() -> str:
 
 
 def _post(model: str, payload: dict[str, Any]) -> dict[str, Any]:
+    """One call, with every network failure arriving as SpeechError.
+
+    THE PROVIDER'S EXCEPTIONS MUST NOT ESCAPE THIS MODULE. On 2026-08-21 a 4xx from
+    the synthesis endpoint came out of here as `urllib.error.HTTPError`, went past a
+    caller that was catching `SpeechError`, and took the whole page down mid
+    conversation — a failure to read one line aloud ended the session. Callers can
+    only be expected to handle the error type this module documents.
+    """
     request = urllib.request.Request(
         _ENDPOINT.format(model=model),
         data=json.dumps(payload).encode(),
         headers={"x-goog-api-key": _key(), "Content-Type": "application/json"},
     )
-    with urllib.request.urlopen(request, timeout=_TIMEOUT) as response:
-        result: dict[str, Any] = json.load(response)
+    try:
+        with urllib.request.urlopen(request, timeout=_TIMEOUT) as response:
+            result: dict[str, Any] = json.load(response)
+    except urllib.error.HTTPError as exc:
+        # The status is the part worth showing: 429 means the demo is being used,
+        # 400 means this build is wrong, and they need different responses.
+        raise SpeechError(f"{model} answered {exc.code} {exc.reason}") from exc
+    except (urllib.error.URLError, TimeoutError, json.JSONDecodeError) as exc:
+        raise SpeechError(f"{model} could not be reached: {exc}") from exc
     return result
 
 
