@@ -38,6 +38,30 @@ from speech.voice import SpeechError, synthesise, transcribe  # noqa: E402
 
 load_dotenv()
 
+
+def _adopt_secrets() -> None:
+    """Copy Streamlit's secrets into the environment, without overwriting it.
+
+    Every other entry point — the API, the evaluation scripts, the container — reads
+    `os.environ`, and `llm.py` is the single place the key is looked up. Community
+    Cloud puts deployment secrets in `st.secrets`, so without this bridge the
+    deployed app is the one caller that cannot find a key that is correctly set, and
+    the failure looks like "no API key" on a page where one was configured.
+
+    Local values win: a developer with a key already exported should not have it
+    replaced by whatever is in a secrets file.
+    """
+    try:
+        secrets = dict(st.secrets)
+    except Exception:  # noqa: BLE001 - no secrets file locally is the normal case
+        return
+    for name, value in secrets.items():
+        if isinstance(value, str) and not os.environ.get(name):
+            os.environ[name] = value
+
+
+_adopt_secrets()
+
 st.set_page_config(page_title="Japanese Speaking Coach", page_icon="🗣️")
 st.markdown(STYLE, unsafe_allow_html=True)
 
