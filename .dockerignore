@@ -1,0 +1,30 @@
+# What must never reach the image. Without this file the build context was 2GB and
+# the COPY layer carried a virtualenv, a git history and a corpus of zip files that
+# the container has no use for.
+.venv/
+.git/
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+__pycache__/
+**/__pycache__/
+*.pyc
+
+# Measurements and working notes. The container runs the app; it does not reproduce
+# the evaluation, and evals/runs is 400KB of JSON that only grows.
+.steering/
+docs/
+tests/
+evals/runs/
+evals/rater/
+evals/retrieval/
+
+# Word-frequency archives, several hundred megabytes, already excluded from git for
+# licensing reasons and rebuilt on demand with `python -m nlp.frequency --build`.
+data/frequency/
+
+# Local only.
+.env
+PLAN.md
+interview-stories/
+.obsidian/

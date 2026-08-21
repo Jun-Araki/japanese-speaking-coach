@@ -26,6 +26,13 @@ ENV PYTHONUNBUFFERED=1 \
     # and the runtime agree on one location.
     HF_HOME=/opt/models
 
+# The user is created BEFORE anything is copied. `chown -R` after the fact rewrites
+# every file it touches into a new layer — on 2026-08-21 that one line added 2.5GB to
+# an image that already contained the same bytes once.
+RUN useradd --create-home --uid 10001 coach \
+    && mkdir -p /app /opt/models \
+    && chown coach /app /opt/models
+
 WORKDIR /app
 
 # Dependencies first, so editing a source file does not reinstall torch.
@@ -39,10 +46,11 @@ RUN python -c "\
 from sentence_transformers import SentenceTransformer; \
 SentenceTransformer('intfloat/multilingual-e5-small')"
 
-COPY . .
+# Ownership is set as the files are copied, not afterwards. What arrives is governed
+# by .dockerignore — without it the context was 2GB of virtualenv and git history.
+COPY --chown=coach . .
 
 # Nothing here writes anything, so the container has no reason to run as root.
-RUN useradd --create-home --uid 10001 coach && chown -R coach /app /opt/models
 USER coach
 
 EXPOSE 8000

@@ -414,10 +414,16 @@ Or both at once, in containers:
 GEMINI_API_KEY=... docker compose up
 ```
 
-**The compose file and the Dockerfile are written and have not been built yet** — the image
-pins CPU-only torch, because `pip install torch` on Linux drags in about two gigabytes of CUDA
-libraries for a machine that has no GPU. That is stated here rather than left as a surprise for
-whoever runs it first.
+The image is **3.8GB**, most of it torch and the embedding model, which is baked in so the first
+request does not wait for a download. It pins CPU-only torch: `pip install torch` on Linux drags
+in about two gigabytes of CUDA libraries for a machine that has no GPU.
+
+*Built and run before this paragraph was written. Two faults came out of doing so rather than
+from reading it: a missing `.dockerignore` was shipping a virtualenv and a git history inside
+the image — 9.8GB, and `chown -R` afterwards duplicated the lot — and the container's own health
+check caught a race where two simultaneous requests each tried to build the vector index and the
+second one lost. Two people opening the app at the same moment is what a meetup looks like, so
+that one mattered.*
 
 Check what a running build can actually do:
 

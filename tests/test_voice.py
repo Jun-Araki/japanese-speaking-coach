@@ -10,6 +10,8 @@ from __future__ import annotations
 
 import base64
 import struct
+import urllib.error
+import urllib.request
 from typing import Any
 
 import pytest
@@ -150,12 +152,12 @@ class TestProviderErrorsDoNotEscape:
     def test_an_http_error_becomes_a_speech_error(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        import urllib.error
-
         def refuse(request: object, timeout: float) -> object:
-            raise urllib.error.HTTPError("https://example.test", 429, "Too Many Requests", {}, None)  # type: ignore[arg-type]
+            raise urllib.error.HTTPError(
+                "https://example.test", 429, "Too Many Requests", {}, None  # type: ignore[arg-type]
+            )
 
-        monkeypatch.setattr(voice.urllib.request, "urlopen", refuse)
+        monkeypatch.setattr(urllib.request, "urlopen", refuse)
 
         with pytest.raises(voice.SpeechError, match="429"):
             voice.synthesise("おはようございます。")
@@ -166,7 +168,7 @@ class TestProviderErrorsDoNotEscape:
         def unreachable(request: object, timeout: float) -> object:
             raise TimeoutError("timed out")
 
-        monkeypatch.setattr(voice.urllib.request, "urlopen", unreachable)
+        monkeypatch.setattr(urllib.request, "urlopen", unreachable)
 
         with pytest.raises(voice.SpeechError, match="could not be reached"):
             voice.transcribe(b"RIFF....")

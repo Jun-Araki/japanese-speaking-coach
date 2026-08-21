@@ -22,6 +22,7 @@ from __future__ import annotations
 import os
 from dataclasses import dataclass
 from functools import lru_cache
+from threading import Lock
 from typing import TYPE_CHECKING, Any, Final
 
 from config import threshold
@@ -124,23 +125,38 @@ def embed_query(sentence: str, scene: str | None = None) -> list[float]:
     return [float(value) for value in _model().encode(query_text(sentence, scene))]
 
 
+# Building the index takes a few seconds — a model load and 36 embeddings — and
+# `lru_cache` does not hold a lock while it runs. Two requests arriving in that window
+# both build, and the second one fails with "Collection [grammar] already exists".
+# Found by the container's own health check on 2026-08-21, and it is not a test-only
+# problem: two people opening the app at the same moment is what a meetup looks like.
+_BUILDING = Lock()
+
+
 @lru_cache(maxsize=1)
 def collection() -> Any:
-    """The index, built on first use and kept for the life of the process."""
+    """The index, built once on first use and kept for the life of the process."""
     import chromadb
 
-    chunks = load_chunks()
-    client = chromadb.EphemeralClient()
-    store = client.create_collection(name=COLLECTION, metadata={"hnsw:space": SPACE})
-    store.add(
-        ids=[chunk.id for chunk in chunks],
-        embeddings=embed_passages(chunks),  # type: ignore[arg-type]
-        documents=[chunk.body for chunk in chunks],
-        metadatas=[
-            {"article_id": chunk.article_id, "heading": chunk.heading} for chunk in chunks
-        ],
-    )
-    return store
+    with _BUILDING:
+        client = chromadb.EphemeralClient()
+        # get_or_create, not create: with the lock this cannot race, and without the
+        # idempotent call a retry after any failure would hit a half-built collection
+        # and report "already exists" instead of whatever actually went wrong.
+        store = client.get_or_create_collection(name=COLLECTION, metadata={"hnsw:space": SPACE})
+        if store.count():
+            return store
+
+        chunks = load_chunks()
+        store.add(
+            ids=[chunk.id for chunk in chunks],
+            embeddings=embed_passages(chunks),  # type: ignore[arg-type]
+            documents=[chunk.body for chunk in chunks],
+            metadatas=[
+                {"article_id": chunk.article_id, "heading": chunk.heading} for chunk in chunks
+            ],
+        )
+        return store
 
 
 def search(sentence: str, top_k: int | None = None, scene: str | None = None) -> list[Result]:
