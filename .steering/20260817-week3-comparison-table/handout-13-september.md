@@ -33,6 +33,9 @@ Access code: `____________`  *(I will tell you)*
 
 *Stuck on the first line? Try:* 「おはようございます。」 *or* 「はじめまして。〇〇です。」
 
+**On an iPhone, press ▶ to hear the reply.** Safari does not let a page play sound on its own.
+On a laptop it plays by itself.
+
 ### Two things worth knowing
 
 - **If you want every mistake caught, type instead of speaking.** The app writes down what it

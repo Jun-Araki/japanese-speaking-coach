@@ -64,9 +64,12 @@ STYLE: Final = """
   }
   .corrected { color: var(--accent); }
 
-  /* Small enough to read as a button rather than a media player. Safari on iOS will
-     not autoplay, so the control has to be there; everywhere else it has already
-     played by the time anyone looks at it. */
+  /* Small enough to read as a button rather than a media player.
+     SAFARI ON iOS WILL NOT AUTOPLAY UNMUTED AUDIO without a user gesture on the same
+     rendering of the page, and the reply arrives on a later rerun than the tap that
+     asked for it — so on a phone this control is the only way to hear the line, and
+     on a laptop it has already played by the time anyone looks at it. Muted autoplay
+     is the documented exception and is no use to a speaking app. */
   audio.reply-audio {
     height: 34px;
     max-width: 220px;
