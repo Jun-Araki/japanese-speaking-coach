@@ -238,17 +238,17 @@ def speak(text: str) -> None:
         # took the whole page down mid-conversation.
         st.caption(f"(no audio this time: {type(exc).__name__}: {exc})")
         return
-    # A hidden element rather than st.audio: the player put a scrub bar, a duration
-    # and a menu under every line the partner said, which is furniture around a
-    # two-second sentence. The audio simply plays.
+    # AUTOPLAY AND A CONTROL, because neither alone works everywhere. Hiding the
+    # player entirely was tried on 2026-08-21: it plays on a laptop and is silent on
+    # an iPhone, where Safari refuses to autoplay audio and the learner is left with
+    # no way to hear the line at all. Streamlit's own player is the other extreme — a
+    # scrub bar, a duration and an overflow menu around two seconds of speech.
     #
-    # THE COST IS THAT THERE IS NO REPLAY BUTTON. If a browser refuses to autoplay —
-    # Safari on iOS does, unless the page has been touched — the line is silent and
-    # nothing on screen offers a way to hear it. The text is always there, so nothing
-    # is lost that the learner cannot read.
+    # So: it plays by itself where the browser allows it, and where it does not there
+    # is something to press. The CSS keeps it to the size of a button.
     encoded = base64.b64encode(audio).decode()
     st.markdown(
-        f'<audio autoplay style="display:none">'
+        f'<audio class="reply-audio" controls autoplay>'
         f'<source src="data:audio/wav;base64,{encoded}" type="audio/wav"></audio>',
         unsafe_allow_html=True,
     )

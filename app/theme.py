@@ -64,6 +64,16 @@ STYLE: Final = """
   }
   .corrected { color: var(--accent); }
 
+  /* Small enough to read as a button rather than a media player. Safari on iOS will
+     not autoplay, so the control has to be there; everywhere else it has already
+     played by the time anyone looks at it. */
+  audio.reply-audio {
+    height: 34px;
+    max-width: 220px;
+    margin-top: 0.4rem;
+    opacity: 0.75;
+  }
+
   /* The review. Right and wrong are told apart by colour as well as by words: a
      learner scanning five sentences should see which ones need attention before
      reading any English. Moss and vermilion rather than a traffic-light green and
