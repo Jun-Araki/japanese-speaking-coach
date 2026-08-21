@@ -26,6 +26,9 @@ CONTACT: Final = "jun7772006@gmail.com"
 
 # One accent, used for the corrected sentence and nothing else, so that the single
 # coloured thing on the page is the thing the learner came for.
+# The palette lives in .streamlit/config.toml, which is applied before anything
+# renders; a phone in dark mode ignored the CSS below and served white-on-black.
+# What stays here is what the theme section cannot say.
 STYLE: Final = """
 <style>
   :root {
@@ -34,7 +37,6 @@ STYLE: Final = """
     --accent: #7a5c3e;
     --rule: #e2d9cb;
   }
-  .stApp { background: var(--paper); color: var(--sumi); }
   h1, h2, h3 {
     font-family: "Hiragino Mincho ProN", "Yu Mincho", Georgia, serif;
     font-weight: 500;

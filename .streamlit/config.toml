@@ -1,0 +1,23 @@
+# The look, set here rather than only in CSS.
+#
+# Injected CSS was not enough: a phone in dark mode gets Streamlit's dark theme, and
+# the app came back white-on-black with none of the paper-and-ink palette. The theme
+# section is applied before anything renders and is not something a viewer's system
+# setting can override, so the page looks the same to everybody. app/theme.py still
+# carries the CSS that this cannot express — the hairline rules, the serif headings,
+# the accent used only on a corrected sentence.
+[theme]
+base = "light"
+backgroundColor = "#faf6ef"
+secondaryBackgroundColor = "#f2ece1"
+textColor = "#1c1a17"
+primaryColor = "#7a5c3e"
+font = "serif"
+
+[server]
+# The recordings are short — a beginner says one sentence — and the transcription
+# limit in speech/voice.py is 8MB. This stops anything larger reaching the process.
+maxUploadSize = 10
+
+[browser]
+gatherUsageStats = false
