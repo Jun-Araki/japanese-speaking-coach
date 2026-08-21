@@ -17,3 +17,4 @@ python-dotenv==1.2.2
 sudachipy==0.6.11
 sudachidict-core==20260723
 langgraph==1.2.10
+streamlit-webrtc==0.77.0

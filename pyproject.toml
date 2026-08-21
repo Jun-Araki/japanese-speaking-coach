@@ -44,6 +44,10 @@ dependencies = [
     "langgraph",
     "fastapi",
     "uvicorn",
+    # Continuous listening: the microphone stays open and the turn ends on silence,
+    # instead of a press to start and a press to stop. Added 2026-08-21 when that
+    # became a requirement for the applications rather than a nice-to-have.
+    "streamlit-webrtc",
 ]
 
 [dependency-groups]

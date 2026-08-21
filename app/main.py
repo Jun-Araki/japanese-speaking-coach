@@ -24,6 +24,7 @@ from dotenv import load_dotenv
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
+from app import continuous  # noqa: E402
 from app.limits import (  # noqa: E402
     LimitReached,
     access_code,
@@ -254,6 +255,27 @@ def speak(text: str) -> None:
     )
 
 
+def _send_recording(audio: bytes) -> None:
+    """Transcribe one turn's audio and put it in the conversation.
+
+    Shared by both input paths, so the continuous stream and the button reach the
+    correction engine by exactly the same route.
+    """
+    with st.spinner("…"):
+        try:
+            heard = transcribe(audio)
+        except Exception as exc:  # noqa: BLE001 - a failed recording is not a crash
+            st.warning(f"That recording could not be read. Please try again. ({exc})")
+            return
+    if not heard:
+        st.warning("Nothing was heard. Please try again.")
+        return
+    history().append(Utterance("learner", heard))
+    st.session_state["used_speech"] = True
+    st.session_state["failure"] = None
+    st.rerun()
+
+
 def render_input() -> None:
     """Speak or type. What is transcribed is sent straight on.
 
@@ -276,25 +298,26 @@ def render_input() -> None:
         st.caption(SPEECH_CAVEAT)
         st.session_state["caveat_seen"] = True
 
+    if continuous.enabled():
+        # The microphone stays open and silence ends the turn. Falls through to the
+        # button below if the stream never connects — a hall with a locked-down
+        # network is a place this has to keep working, not a place to show an error.
+        heard_audio = continuous.listen(st.container())
+        if heard_audio is not None:
+            _send_recording(heard_audio)
+        if typed := st.chat_input("または、日本語で書いてください"):
+            history().append(Utterance("learner", typed))
+            st.session_state["failure"] = None
+            st.rerun()
+        return
+
     # A KEY THAT CHANGES EVERY TURN. Without it the widget hands back the same
     # recording after the rerun, the same sentence is transcribed and sent again, and
     # the conversation runs away on its own — three identical turns appeared on the
     # deployed app on 2026-08-21 before anyone touched the microphone a second time.
     recording = st.audio_input("話してください", key=f"microphone-{len(history())}")
     if recording is not None:
-        with st.spinner("…"):
-            try:
-                heard = transcribe(recording.getvalue())
-            except Exception as exc:  # noqa: BLE001 - a failed recording is not a crash
-                st.warning(f"That recording could not be read. Please try again. ({exc})")
-                return
-        if not heard:
-            st.warning("Nothing was heard. Please try again.")
-            return
-        history().append(Utterance("learner", heard))
-        st.session_state["used_speech"] = True
-        st.session_state["failure"] = None
-        st.rerun()
+        _send_recording(recording.getvalue())
 
     if typed := st.chat_input("または、日本語で書いてください"):
         history().append(Utterance("learner", typed))

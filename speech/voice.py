@@ -103,16 +103,22 @@ def _post(model: str, payload: dict[str, Any]) -> dict[str, Any]:
     return result
 
 
-def wav_header(sample_count: int) -> bytes:
-    """A RIFF header for the raw PCM the synthesis endpoint returns."""
-    byte_rate = _PCM_RATE * _PCM_CHANNELS * _PCM_BITS // 8
+def wav_header(sample_count: int, rate: int = _PCM_RATE) -> bytes:
+    """A RIFF header for raw PCM.
+
+    The rate is a parameter because two callers need different ones: synthesis comes
+    back at 24kHz, and the microphone is resampled to 16kHz before it is sent. A
+    header that lies about the rate plays at the wrong speed and transcribes as
+    gibberish, with nothing on screen suggesting why.
+    """
+    byte_rate = rate * _PCM_CHANNELS * _PCM_BITS // 8
     block_align = _PCM_CHANNELS * _PCM_BITS // 8
     return (
         b"RIFF"
         + struct.pack("<I", 36 + sample_count)
         + b"WAVEfmt "
         + struct.pack(
-            "<IHHIIHH", 16, 1, _PCM_CHANNELS, _PCM_RATE, byte_rate, block_align, _PCM_BITS
+            "<IHHIIHH", 16, 1, _PCM_CHANNELS, rate, byte_rate, block_align, _PCM_BITS
         )
         + b"data"
         + struct.pack("<I", sample_count)

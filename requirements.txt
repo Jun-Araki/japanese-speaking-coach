@@ -16,6 +16,12 @@ sudachipy==0.6.11
 sudachidict-core==20260723
 langgraph==1.2.10
 
+# Continuous listening. streamlit-webrtc brings aiortc and PyAV; all four resolve on
+# Python 3.14, which was checked before any of it was written. If the microphone will
+# not connect on the deployed app, CONTINUOUS_VOICE=0 puts the press-to-talk screen
+# back without a rebuild.
+streamlit-webrtc==0.77.0
+
 # Retrieval. If the build runs out of space or time, swap this file for
 # requirements-no-retrieval.txt: the app degrades to ungrounded corrections on its
 # own and /health says so, and no published number depends on the deployed build.
