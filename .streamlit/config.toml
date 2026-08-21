@@ -14,6 +14,12 @@ textColor = "#1c1a17"
 primaryColor = "#7a5c3e"
 font = "serif"
 
+[client]
+# Hides the developer menu, and with it the keyboard shortcuts behind it — pressing
+# "C" was opening a "Clear caches" dialog on a learner's screen, which is a button
+# that should not exist for someone practising Japanese.
+toolbarMode = "viewer"
+
 [server]
 # The recordings are short — a beginner says one sentence — and the transcription
 # limit in speech/voice.py is 8MB. This stops anything larger reaching the process.

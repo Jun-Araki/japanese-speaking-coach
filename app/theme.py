@@ -36,6 +36,8 @@ STYLE: Final = """
     --sumi: #1c1a17;
     --accent: #7a5c3e;
     --rule: #e2d9cb;
+    --moss: #4a6b3d;
+    --vermilion: #a8452f;
   }
   h1, h2, h3 {
     font-family: "Hiragino Mincho ProN", "Yu Mincho", Georgia, serif;
@@ -61,6 +63,27 @@ STYLE: Final = """
     border-color: var(--sumi);
   }
   .corrected { color: var(--accent); }
+
+  /* The review. Right and wrong are told apart by colour as well as by words: a
+     learner scanning five sentences should see which ones need attention before
+     reading any English. Moss and vermilion rather than a traffic-light green and
+     red — the palette is unbleached paper and sumi, and pure #f00 on it looks like
+     an error dialog rather than a correction. */
+  .review-card {
+    border: 1px solid var(--rule);
+    border-left: 3px solid var(--rule);
+    border-radius: 2px;
+    padding: 0.9rem 1.1rem;
+    margin-bottom: 0.9rem;
+  }
+  .review-card.ok { border-left-color: var(--moss); }
+  .review-card.fixed { border-left-color: var(--vermilion); }
+  .review-said { font-weight: 600; }
+  .review-card.fixed .review-said { color: var(--vermilion); }
+  .review-fixed-line { color: var(--moss); font-weight: 600; margin-top: 0.35rem; }
+  .review-ok-line { color: var(--moss); margin-top: 0.35rem; }
+  .review-why { color: #5c564d; font-size: 0.92rem; margin-top: 0.5rem; }
+  .review-source { color: #8a8375; font-size: 0.82rem; margin-top: 0.35rem; }
 </style>
 """
 

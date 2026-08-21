@@ -16,6 +16,7 @@ import base64
 import os
 import sys
 from dataclasses import replace
+from html import escape
 from pathlib import Path
 
 import streamlit as st
@@ -325,22 +326,35 @@ def render_review() -> None:
         answer = result.correction
         if answer is None:
             continue
-        with st.container(border=True):
-            st.markdown(f"**{result.learner_sentence}**")
-            if not answer.needs_correction:
-                st.write("This one is fine as it is.")
-            else:
-                st.write(f"→ {answer.corrected_sentence}")
-                if answer.reason_en:
-                    st.caption(answer.reason_en)
+        # Written as one block of HTML rather than assembled from widgets, so that the
+        # colour belongs to the card. EVERY PIECE IS ESCAPED: three of these four
+        # strings came out of a language model, and one of them is echoed back from
+        # whatever the learner said.
+        said = escape(result.learner_sentence)
+        if not answer.needs_correction:
+            st.markdown(
+                f'<div class="review-card ok">'
+                f'<div class="review-said">{said}</div>'
+                f'<div class="review-ok-line">This one is fine as it is.</div>'
+                f"</div>",
+                unsafe_allow_html=True,
+            )
+            continue
 
-    if st.session_state.get("review_used_speech"):
-        # The one thing the removed confirmation step used to catch, said once where
-        # it does not interrupt anything.
-        st.caption(
-            "Sentences you spoke were written down automatically. If a word came out "
-            "differently from what you said, the correction above is for what was "
-            "written down — not for what you said."
+        why = ""
+        if answer.reason_en:
+            why = f'<div class="review-why">{escape(answer.reason_en)}</div>' 
+        source = ""
+        if answer.grounding_ids:
+            cited = ", ".join(escape(one) for one in answer.grounding_ids)
+            source = f'<div class="review-source">Reference: {cited}</div>'
+        st.markdown(
+            f'<div class="review-card fixed">'
+            f'<div class="review-said">{said}</div>'
+            f'<div class="review-fixed-line">→ {escape(answer.corrected_sentence or "")}</div>'
+            f"{why}{source}"
+            f"</div>",
+            unsafe_allow_html=True,
         )
 
     unchecked = len(results) - len(checked)
