@@ -12,6 +12,7 @@ state. They are collected out of sight and only the review renders them.
 
 from __future__ import annotations
 
+import base64
 import os
 import sys
 from dataclasses import replace
@@ -30,7 +31,7 @@ from app.limits import (  # noqa: E402
     spend_tokens,
     spend_tts_chars,
 )
-from app.theme import CONTACT, NOTICE, SPEECH_CAVEAT, STYLE, VOICE_NOTICE  # noqa: E402
+from app.theme import CONTACT, NOTICE, SPEECH_CAVEAT, STYLE  # noqa: E402
 from correction import CorrectionResult  # noqa: E402
 from dialogue import LEVELS, SCENES, Utterance, opening_line, reply  # noqa: E402
 from graph.correction_graph import run as run_correction  # noqa: E402
@@ -236,8 +237,20 @@ def speak(text: str) -> None:
         # took the whole page down mid-conversation.
         st.caption(f"(no audio this time: {type(exc).__name__}: {exc})")
         return
-    st.audio(audio, format="audio/wav", autoplay=True)
-    st.caption(VOICE_NOTICE)
+    # A hidden element rather than st.audio: the player put a scrub bar, a duration
+    # and a menu under every line the partner said, which is furniture around a
+    # two-second sentence. The audio simply plays.
+    #
+    # THE COST IS THAT THERE IS NO REPLAY BUTTON. If a browser refuses to autoplay —
+    # Safari on iOS does, unless the page has been touched — the line is silent and
+    # nothing on screen offers a way to hear it. The text is always there, so nothing
+    # is lost that the learner cannot read.
+    encoded = base64.b64encode(audio).decode()
+    st.markdown(
+        f'<audio autoplay style="display:none">'
+        f'<source src="data:audio/wav;base64,{encoded}" type="audio/wav"></audio>',
+        unsafe_allow_html=True,
+    )
 
 
 def render_input() -> None:

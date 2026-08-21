@@ -65,13 +65,19 @@ STYLE: Final = """
 """
 
 NOTICE: Final = (
-    "**Before you start.** What you write is sent to an AI model outside this app "
-    "to generate the reply and the corrections, so do not type anything private — "
-    "no names, addresses, passwords or work information. **Nothing you write is "
-    "stored**: there is no database and no log, and closing the page ends the "
-    "session for good. The replies are generated, so they can be wrong."
+    "**Before you start.** What you say or write is sent to an AI model outside this "
+    "app to generate the reply and the corrections, so do not say anything private — "
+    "no names, addresses, passwords or work information. **Nothing is stored**: there "
+    "is no database, no recording and no log, and closing the page ends the session "
+    "for good. The replies are generated, so they can be wrong, and **the voice you "
+    "hear is synthesised — it is not a recording of a person.**"
 )
 
+# DISCLOSURE, SAID ONCE. Speech-synthesis terms require telling people the voice is
+# generated, and it is a line item in the definition of done. It used to sit under
+# every audio player, where it was read once and then became furniture — so it moved
+# into the notice on the start screen, which is read before anyone speaks. Repeating
+# it every turn was noise; removing it altogether is not an option.
 VOICE_NOTICE: Final = (
     "The voice you hear is synthesised by an AI. It is not a recording of a person."
 )
