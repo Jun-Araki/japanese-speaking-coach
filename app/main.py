@@ -65,7 +65,7 @@ _adopt_secrets()
 st.set_page_config(page_title="Japanese Speaking Coach", page_icon="🗣️")
 st.markdown(STYLE, unsafe_allow_html=True)
 
-SESSION_KEYS = ("scene", "level", "history", "failure", "corrections", "heard")
+SESSION_KEYS = ("scene", "level", "history", "failure", "corrections", "heard", "caveat_seen")
 
 
 def history() -> list[Utterance]:
@@ -239,7 +239,12 @@ def render_input() -> None:
     heard: str | None = st.session_state.get("heard")
 
     if heard is None:
-        st.caption(SPEECH_CAVEAT)
+        # Once per session, on the first turn. Repeating a paragraph above every
+        # recording trains people to skip it, which costs more than the reminder
+        # gains — and the short line on the confirmation step carries it afterwards.
+        if not st.session_state.get("caveat_seen"):
+            st.caption(SPEECH_CAVEAT)
+            st.session_state["caveat_seen"] = True
         recording = st.audio_input("話してください")
         if recording is not None:
             with st.spinner("…"):
@@ -267,12 +272,11 @@ def render_input() -> None:
 
     st.write("**Is this exactly what you said?**")
     st.info(heard)
-    # Not "does this look right". The transcriber repairs mistakes, so a learner
-    # nodding at a corrected sentence is the failure this step exists to catch.
-    st.caption(
-        "If it changed anything — a particle, an ending, a missing word — say it "
-        "again or type it, or that mistake will not be corrected."
-    )
+    # Short, because it is read every turn by someone whose English is not their
+    # first language either. The full explanation is above the microphone, where it
+    # is read once. Not "does this look right": the transcriber repairs mistakes, and
+    # a learner nodding at a repaired sentence is what this step exists to catch.
+    st.caption("Different from what you said? Say it again, or type it.")
     send, again = st.columns(2)
     if send.button("Yes, send it", type="primary", use_container_width=True):
         history().append(Utterance("learner", heard))
