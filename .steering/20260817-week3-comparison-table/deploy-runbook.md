@@ -13,11 +13,14 @@
 
 ## 0. 先に直す2件（本体作業とは別。**当日気づくと詰む**）
 
-- [ ] **アプリが private になっている疑いを解消する。**
-      `curl -sI https://nihongo-coach.streamlit.app/` が `/-/login` へ 303 で飛ぶ状態だと、
-      **9/13 に会場でインドの参加者が自分のスマホから開けない。**
-      Cloud の **Settings → Sharing → "Anyone with the link can view"** にして public に戻す。
-      **アプリ内の共有コードは別物**（こちらは残す。§2-5 の「共有コード1本」）
+- [x] **公開設定は完了（2026-08-21 確認）。** Settings → Sharing は
+      **「This app is public and searchable」**（Community Cloud にはこの2択しかない。
+      「Anyone with the link」は存在しない）。**スマホのシークレットタブで開けることを確認済み。**
+
+> **`curl` で判定してはいけない。** `curl -sI https://nihongo-coach.streamlit.app/` は
+> **public でも 303 で `/-/auth/app` へ飛ぶ。** Cloud は JavaScript も Cookie も持たない
+> クライアントを認証側へ回すためで、**private の証拠にならない。**
+> 2026-08-21 にこれで1時間ほど誤診した。**判定はブラウザのシークレットタブで行う。**
 - [ ] **Python のバージョンを確認する。** Cloud 側は 3.14、手元の `.venv` は 3.12。
       **Advanced settings → Python version** で確認できる。下の依存はどちらでも解決する想定
 
@@ -69,9 +72,10 @@ MAX_TURNS = "20"
 - [ ] 1往復して**訂正が出典つきで出る**か。出典が無いなら §3 の分岐に入っている
 - [ ] **ターン上限に当たったときの表示**（20文で入力欄が閉じる）
 
-## 5. まだ無いもの
+## 5. 状態（2026-08-21 現在）
 
-- **音声は未実装。** 9/13 に間に合わなければテキスト版のまま手渡す（応募開始は動かさない）
+- **音声は実装済み**（録音→書き起こし→会話、返事の読み上げ）。**ただし書き起こしが
+  学習者の誤りを直すことがある**ので、画面に注意書きを出している（[design.md](design.md) §12）
 - **Docker はこの手順の対象外。** `fastapi` / `uvicorn` はそちらの入口
 
 ---
