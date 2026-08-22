@@ -48,6 +48,12 @@ dependencies = [
     # instead of a press to start and a press to stop. Added 2026-08-21 when that
     # became a requirement for the applications rather than a nice-to-have.
     "streamlit-webrtc",
+    # Imported directly by app/continuous.py, and arriving transitively today
+    # anyway: numpy through streamlit, av through streamlit-webrtc. Named here
+    # because a file that imports a package should not depend on another package
+    # continuing to want it.
+    "numpy",
+    "av",
 ]
 
 [dependency-groups]

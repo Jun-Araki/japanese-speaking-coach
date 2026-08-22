@@ -76,8 +76,22 @@ st.set_page_config(page_title="Japanese Speaking Coach", page_icon="🗣️")
 st.markdown(STYLE, unsafe_allow_html=True)
 
 
+def warming_enabled() -> bool:
+    """Whether to build the index at page load. Off makes it lazy again.
+
+    THE ESCAPE HATCH IS FOR MEMORY, NOT FOR SPEED. Warming means the embedding model
+    is loaded on every boot rather than only when a correction first needs it, so a
+    deployment that used to survive by never touching it now loads several hundred
+    megabytes at startup. If the free tier cannot hold that, `WARM_RETRIEVAL=0`
+    returns to loading it on demand with an environment variable and no rebuild —
+    the same door `CONTINUOUS_VOICE=0` opens for a venue whose network will not
+    carry WebRTC.
+    """
+    return os.environ.get("WARM_RETRIEVAL", "1").strip().lower() not in {"0", "false", "no"}
+
+
 @st.cache_resource(show_spinner=False)
-def _warm_retrieval() -> threading.Thread:
+def _warm_retrieval() -> threading.Thread | None:
     """Start building the index while the learner is still choosing a scene.
 
     THE FIRST CORRECTION PAYS FOR THE INDEX. Loading the embedding model and
@@ -101,6 +115,9 @@ def _warm_retrieval() -> threading.Thread:
     on a page the learner has not touched yet. Nor may it call st.* : it is off the
     script's thread and has no context to draw into.
     """
+
+    if not warming_enabled():
+        return None
 
     def warm() -> None:
         with contextlib.suppress(Exception):
