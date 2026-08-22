@@ -178,9 +178,15 @@ Day 7（8/16 日・8h）を丸ごと移してきたものである。** 移動�
 
 ## 8/22（土）— RAG：埋め込みと索引（2.0h）※上へ前倒し済み
 
-- [ ] sentence-transformers の多言語モデルで埋め込み → **Chroma に登録**（1.5h）
+- [x] sentence-transformers の多言語モデルで埋め込み → **Chroma に登録**（1.5h）
       — **索引は起動時に作る**
-- [ ] `retrieval.search(sentence)` の骨格を置く（0.5h）— **上位3件と id と類似度を返す**
+      — **2026-08-22 に印だけ直した**（実装は 8/20 に入っている）。`retrieval/index.py` の
+        `collection()`。`pyproject.toml` に `chromadb` と `sentence-transformers` あり
+      — **なお「起動時に作る」は 8/22 に本当になった**——それまでは最初に触った訂正の中で
+        作られており、1 ターン目に 15.1 秒乗っていた（[latency の tasklist](../20260821-latency/tasklist.md) A3）
+- [x] `retrieval.search(sentence)` の骨格を置く（0.5h）— **上位3件と id と類似度を返す**
+      — `Result(chunk_id, article_id, heading, body, score)` を `top_k`（既定 3）件返す。
+        **`score_min` は search では掛けない**（掛けると公開している hit rate が閾値で動く）
 
 ## 8/22（土・2026-08-20 に前倒しで実施）— FastAPI ＋ LangGraph
 
@@ -202,8 +208,10 @@ Day 7（8/16 日・8h）を丸ごと移してきたものである。** 移動�
 
 ## 8/23（日）— RAG：検索を繋ぐ・週の締め（2.0h）※検索は前倒し済み
 
-- [ ] `retrieval.search(sentence)` を仕上げる（1.0h）
-- [ ] **`grounding_ids` を検索結果由来にする**（0.5h）— **現状はモデルの JSON 出力を拾っている**
+- [x] `retrieval.search(sentence)` を仕上げる（1.0h）— **2026-08-22 に印だけ直した**
+- [x] **`grounding_ids` を検索結果由来にする**（0.5h）— ~~現状はモデルの JSON 出力を拾っている~~
+      — **正確には「検索結果で絞る」形**（`correction/engine.py`）。モデルが挙げた id のうち
+        **検索が実際に返した記事の id だけ**を残す。**検索が返していない記事は名乗れない**
 - [x] **注意書き・利用上限・共有アクセスコード**（2026-08-20）
       — `app/theme.py` の `NOTICE`：**外部の AI に送られる／私的な情報を書かない／何も保存しない／
         返答は生成物なので誤りうる**＋連絡先。開始画面に表示
@@ -377,10 +385,15 @@ Day 7（8/16 日・8h）を丸ごと移してきたものである。** 移動�
 - [ ] **①列が空であることと、その理由が表に書いてある**
 - [ ] **`dev` から5件を手で照合し、`scorer_checked_on` が埋まっている**
 - [ ] **測る前に書いた予想**（[design.md](design.md) §9）と実測を突き合わせ、**外れた場合は外れたと書いてある**
-- [ ] `pyproject.toml` に `chroma` / `sentence-transformers` が入り、Chroma への登録まで動いている
-- [ ] **`retrieval.search(sentence)` が上位3件と id と類似度を返す**
-- [ ] **`grounding_ids` が検索結果由来になっている**（モデルの JSON 出力を拾うのをやめた）
-- [ ] **`data/grammar/` × 120件の引用検査 pytest を、Chroma に載せる前に通した**
+- [x] `pyproject.toml` に `chroma` / `sentence-transformers` が入り、Chroma への登録まで動いている
+- [x] **`retrieval.search(sentence)` が上位3件と id と類似度を返す**
+- [x] **`grounding_ids` が検索結果由来になっている**（モデルの JSON 出力をそのまま拾うのをやめ、
+      **検索が返した記事の id で絞る**形にした）
+- [x] **`data/grammar/` × 120件の引用検査 pytest を、Chroma に載せる前に通した**
+      — `tests/test_grammar_reference.py` ／ `tests/test_retrieval_kit.py`（2026-08-22 に再実行して通過）
+
+> **上の4項目は 2026-08-22 に印だけ直した。** 実装は 8/20 に入っていたのに `[ ]` のまま残っており、
+> **完了条件が実物より遅れていた。** 中身を1つずつ読んで確認したうえで印を直している。
 - [x] **第2週 tasklist が閉じている**（実績工数は「計測できず」で記入済み。2026-08-19 に閉じた）
 - [ ] `ruff` / `mypy` / `pytest` 通過
 

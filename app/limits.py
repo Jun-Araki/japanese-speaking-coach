@@ -24,6 +24,7 @@ from __future__ import annotations
 
 import os
 import secrets
+import time
 from datetime import date
 from typing import Final
 
@@ -34,11 +35,22 @@ _CHARS_PER_TOKEN: Final = 2.0
 DEFAULT_DAILY_TOKENS: Final = 200_000
 DEFAULT_DAILY_TTS_CHARS: Final = 50_000
 
+# How long to stop asking for speech after the provider says we are asking too
+# often. A minute, because the free tier's limit is a per-minute one — measured on
+# 2026-08-22, when one person practising alone was enough to reach it.
+DEFAULT_TTS_COOLDOWN: Final = 60
+
 # One session's worth of turns, the same number the API enforces. Duplicated as a
 # default rather than imported, because the app must not need the API to run.
 DEFAULT_MAX_TURNS: Final = 20
 
 _used: dict[tuple[str, date], int] = {}
+
+# When speech may be asked for again, on the monotonic clock. Process-wide on
+# purpose: THE LIMIT IS THE API KEY'S, NOT THE LEARNER'S. One deployment, one key,
+# and everyone at a meetup shares it — so a 429 caused by one tab has to quiet all
+# of them, or the others spend the recovery window refusing each other.
+_tts_quiet_until: float = 0.0
 
 
 class LimitReached(RuntimeError):
@@ -98,13 +110,35 @@ def _spend(kind: str, amount: int, cap: int, today: date | None) -> None:
     _used[key] = _used.get(key, 0) + amount
 
 
+def tts_cooldown() -> int:
+    return _limit("TTS_COOLDOWN_SECONDS", DEFAULT_TTS_COOLDOWN)
+
+
+def start_tts_cooldown(now: float | None = None) -> None:
+    """Stop asking for speech for a while, because the provider said to.
+
+    Called when synthesis comes back 429. Asking again immediately is not merely
+    rude: each refused request is still a request, so it lengthens the window it is
+    waiting out, and it costs the learner a second of waiting to be told no.
+    """
+    global _tts_quiet_until
+    _tts_quiet_until = (time.monotonic() if now is None else now) + tts_cooldown()
+
+
+def tts_is_quiet(now: float | None = None) -> bool:
+    """Whether speech is currently being skipped without being asked for."""
+    return (time.monotonic() if now is None else now) < _tts_quiet_until
+
+
 def used(kind: str, today: date | None = None) -> int:
     return _used.get((kind, today or date.today()), 0)
 
 
 def reset() -> None:
     """For tests. Nothing in the app calls this."""
+    global _tts_quiet_until
     _used.clear()
+    _tts_quiet_until = 0.0
 
 
 def access_code() -> str | None:

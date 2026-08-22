@@ -67,7 +67,17 @@ TRANSCRIBE_PROMPT: Final = (
 
 
 class SpeechError(RuntimeError):
-    """Raised when audio could not be transcribed or synthesised."""
+    """Raised when audio could not be transcribed or synthesised.
+
+    Carries the HTTP status when there was one, because callers need to tell the
+    kinds apart: 429 means "stop asking for a while and everyone gets some", and a
+    400 means this build is wrong. Sniffing the number out of the message string
+    would work until someone reworded the message.
+    """
+
+    def __init__(self, message: str, status: int | None = None) -> None:
+        super().__init__(message)
+        self.status = status
 
 
 def _key() -> str:
@@ -95,12 +105,35 @@ def _post(model: str, payload: dict[str, Any]) -> dict[str, Any]:
         with urllib.request.urlopen(request, timeout=_TIMEOUT) as response:
             result: dict[str, Any] = json.load(response)
     except urllib.error.HTTPError as exc:
-        # The status is the part worth showing: 429 means the demo is being used,
-        # 400 means this build is wrong, and they need different responses.
-        raise SpeechError(f"{model} answered {exc.code} {exc.reason}") from exc
+        # THE STATUS IS NOT ENOUGH, AND 2026-08-22 IS WHY. A 400 reached the screen
+        # as "answered 400 Bad Request" and nothing else, which is a sentence with no
+        # next step in it: the provider puts the actual complaint in the response
+        # body, and this clause used to drop the body on the floor. On 13 September
+        # that caption is all anyone will have.
+        raise SpeechError(
+            f"{model} answered {exc.code} {exc.reason}: {_why(exc)}", status=exc.code
+        ) from exc
     except (urllib.error.URLError, TimeoutError, json.JSONDecodeError) as exc:
         raise SpeechError(f"{model} could not be reached: {exc}") from exc
     return result
+
+
+def _why(exc: urllib.error.HTTPError) -> str:
+    """The provider's own explanation, out of the error body.
+
+    Trimmed, because this ends up in a caption under a chat message rather than in a
+    log. Anything unreadable comes back as a plain note rather than as a second
+    failure: a body that cannot be parsed must not replace the status that could be.
+    """
+    try:
+        body = exc.read().decode("utf-8", "replace")
+    except Exception:  # noqa: BLE001 - the body is a bonus, never a requirement
+        return "no details in the response"
+    try:
+        message = str(json.loads(body)["error"]["message"])
+    except (json.JSONDecodeError, KeyError, TypeError):
+        message = body.strip() or "no details in the response"
+    return message[:200]
 
 
 def wav_header(sample_count: int, rate: int = _PCM_RATE) -> bytes:
@@ -123,6 +156,30 @@ def wav_header(sample_count: int, rate: int = _PCM_RATE) -> bytes:
         + b"data"
         + struct.pack("<I", sample_count)
     )
+
+
+def playback_seconds(wav: bytes) -> float:
+    """How long a WAV takes to play, read out of its own header.
+
+    The continuous listener needs this. The reply is handed to the browser to play
+    and the microphone starts collecting in the same breath, so the collector has to
+    know how long the app will be talking in order to throw those frames away rather
+    than transcribe its own voice. Bytes are the only thing available at that point:
+    nothing here plays the audio, so nothing here is told when it finished.
+
+    Anything that is not a WAV this module produced is reported as zero, which turns
+    the discard off rather than guessing a length — an over-long guess would eat the
+    beginning of the learner's sentence.
+    """
+    if len(wav) < 44 or wav[:4] != b"RIFF":
+        return 0.0
+    byte_rate: int = struct.unpack("<I", wav[28:32])[0]
+    declared: int = struct.unpack("<I", wav[40:44])[0]
+    if byte_rate <= 0:
+        return 0.0
+    # The smaller of what the header claims and what actually arrived: a truncated
+    # download would otherwise be reported at its intended length.
+    return min(declared, len(wav) - 44) / byte_rate
 
 
 def synthesise(text: str, model: str | None = None, voice: str | None = None) -> bytes:

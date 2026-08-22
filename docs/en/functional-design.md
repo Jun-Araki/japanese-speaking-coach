@@ -51,8 +51,8 @@ Scene + level select ──▶ Conversation (record ▸ reply ▸ repeat) ──
 ```
 
 The state is decided by which keys exist in `st.session_state`: `scene` means conversation,
-`review` means review, neither means selection. **Corrections accumulate during the
-conversation but are never rendered outside the review.**
+`review` means review, neither means selection. **Corrections are all run once the
+conversation ends, and are never rendered outside the review.**
 
 - The learner's own transcribed sentence is **always** shown, with a **Say again** button
   (never make them retype). ~~The count of presses is a proxy for transcription quality.~~
@@ -60,8 +60,11 @@ conversation but are never rendered outside the review.**
   is sparing the learner from retyping, not producing a metric.
 - Only the **AI's** reply text can be hidden; hiding it turns the session into listening
   practice. ~~Which mode was used is recorded.~~ → **Not recorded** (same reason).
-- Corrections never interrupt the conversation. The correction node runs every turn in the
-  background and results appear only in the review.
+- Corrections never interrupt the conversation. The correction node runs **once the
+  conversation is over, over all of the learner's sentences at once (five at a time)**, and
+  results appear only in the review. **Changed from per-turn on 2026-08-22**: the principle
+  was always this, but the implementation ran on the turn, so the learner waited 4.78 seconds
+  every turn for a result that was deliberately not shown to them.
 
 ## Core flow: why this is not a thin wrapper
 
@@ -187,7 +190,7 @@ Session state lives in `st.session_state` and nowhere else.
 | `scene` / `level` | The chosen scene and level. **Their presence means "in conversation"** (this drives the screen flow) |
 | `show_ai_text` | Whether the AI's reply text is shown |
 | `turns` | The sequence of transcripts and AI replies |
-| `corrections` | Correction results accumulated in the background each turn. **Never rendered outside the review** |
+| `corrections` | Correction results, produced in one batch when the conversation ends. **Never rendered outside the review** |
 | `review` | **Its presence means "in review"** |
 
 **Closing the tab erases all of it.** No learner name, no utterance, no audio, no correction

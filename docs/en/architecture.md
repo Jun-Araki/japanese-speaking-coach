@@ -13,7 +13,7 @@ disagree, the Japanese version is correct and this file needs updating.
 |---|---|---|
 | LLM | **LangChain → Gemini** (decided 2026-08-03) | See "Choosing a provider" below |
 | Transcription | **Gemini** (`gemini-2.5-flash`, audio passed inline; built 2026-08-20) | **Provisional.** Chosen because no OpenAI key was available — see "Transcription erases the learner's mistakes" |
-| Text to speech | **Gemini** (`gemini-2.5-flash-preview-tts`) | **A preview model**; if it goes, the app falls back to text. **Disclosing that the voice is AI-generated is done regardless of provider** |
+| Text to speech | **Gemini** (`gemini-2.5-flash-preview-tts`) | **A preview model**; if it goes, the app falls back to text. **One person alone reaches the free tier's rate limit** (see below). **Disclosing that the voice is AI-generated is done regardless of provider** |
 | Tokenization | SudachiPy + SudachiDict (Apache-2.0) | Japanese has no spaces between words, so vocabulary-level checking requires morphological analysis |
 | Embeddings | sentence-transformers, multilingual | Retrieval over Japanese text |
 | Vector store | Chroma | Fastest local option, sufficient for a demo |
@@ -121,6 +121,31 @@ unmeasurable in the first place.
   so the warning belongs where they are, not only in the README
 - **The real fix is a dedicated speech recogniser** (`whisper-1` or similar). It needs a provider
   key this project does not have.
+
+## Speech synthesis reaches the free tier's rate limit (measured 2026-08-22)
+
+**One person practising for a few turns is enough to get `429 Too Many Requests`.**
+Twelve short lines synthesised back to back were refused eleven times (`You exceeded
+your current quota`). A later run after a pause succeeded eleven times out of twelve,
+so **the limit is per minute rather than per day**.
+
+**Paying (Tier 1) would remove it, and we are not paying.** Speech output is $10.00
+per 1M tokens and text input $0.50 per 1M, which for the expected size of this demo
+(ten people, five turns each) is a few tens of cents. Staying free was chosen anyway
+(decided 2026-08-22).
+
+**So the audio is designed as a bonus rather than as a feature that must work.**
+
+- **A 429 stops synthesis being called for 60 seconds.** A refused request is still a
+  request, so asking through the window lengthens it. **The whole process goes quiet**
+  — the limit belongs to the API key, and one deployment has one key.
+- **The same line is synthesised once per session.**
+- **Nothing appears on screen when it does not play.** The reply is on screen as text,
+  so the practice still works, and `429 Too Many Requests` is not something a beginner
+  can act on. The reason goes to stderr instead.
+- **The correction path (the text model) does not hit this. Thirty simultaneous
+  corrections all succeeded** (2026-08-22). It is the preview speech model alone that
+  is tightly limited.
 
 ## Constraints that shaped these choices
 

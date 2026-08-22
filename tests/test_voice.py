@@ -60,6 +60,33 @@ class TestClosingASentence:
         assert voice.close_sentence("") == ""
 
 
+class TestPlaybackSeconds:
+    def test_reads_the_length_out_of_the_header(self) -> None:
+        # The listener throws away this many seconds of microphone before it starts
+        # judging, so that the app is not transcribed talking to itself.
+        raw = b"\x00\x01" * 24_000  # 24000 samples at 24kHz
+
+        assert voice.playback_seconds(voice.wav_header(len(raw)) + raw) == 1.0
+
+    def test_a_recording_at_the_microphone_rate_too(self) -> None:
+        raw = b"\x00\x01" * 8_000  # 8000 samples at 16kHz
+
+        assert voice.playback_seconds(voice.wav_header(len(raw), rate=16_000) + raw) == 0.5
+
+    def test_anything_that_is_not_a_wav_is_zero(self) -> None:
+        # Zero turns the discard off. Guessing a length instead would eat the
+        # beginning of the learner's sentence.
+        assert voice.playback_seconds(b"") == 0.0
+        assert voice.playback_seconds(b"not audio at all, but long enough to index into") == 0.0
+
+    def test_a_truncated_file_is_reported_at_the_length_that_arrived(self) -> None:
+        # The header still claims the full length; what matters is what will play.
+        raw = b"\x00\x01" * 24_000
+        cut = (voice.wav_header(len(raw)) + raw)[: 44 + len(raw) // 2]
+
+        assert voice.playback_seconds(cut) == 0.5
+
+
 class TestSynthesise:
     def test_wraps_the_raw_samples_in_a_wav_header(
         self, monkeypatch: pytest.MonkeyPatch
@@ -160,6 +187,46 @@ class TestProviderErrorsDoNotEscape:
         monkeypatch.setattr(urllib.request, "urlopen", refuse)
 
         with pytest.raises(voice.SpeechError, match="429"):
+            voice.synthesise("おはようございます。")
+
+    def test_the_provider_s_own_explanation_survives(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        # A status with no body is a sentence with no next step in it. On
+        # 2026-08-22 a 400 reached the screen as "answered 400 Bad Request" and
+        # nothing else, and the caption under a chat message is all anyone will
+        # have in a hall on 13 September.
+        import io
+
+        def refuse(request: object, timeout: float) -> object:
+            raise urllib.error.HTTPError(
+                "https://example.test",
+                400,
+                "Bad Request",
+                {},  # type: ignore[arg-type]
+                io.BytesIO(
+                    b'{"error": {"message": "Requested voice does not exist."}}'
+                ),
+            )
+
+        monkeypatch.setattr(urllib.request, "urlopen", refuse)
+
+        with pytest.raises(voice.SpeechError, match="Requested voice does not exist"):
+            voice.synthesise("おはようございます。")
+
+    def test_an_unreadable_body_does_not_replace_the_status(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        # The body is a bonus. Failing to read it must not lose the status that
+        # was already known.
+        def refuse(request: object, timeout: float) -> object:
+            raise urllib.error.HTTPError(
+                "https://example.test", 400, "Bad Request", {}, None  # type: ignore[arg-type]
+            )
+
+        monkeypatch.setattr(urllib.request, "urlopen", refuse)
+
+        with pytest.raises(voice.SpeechError, match="400"):
             voice.synthesise("おはようございます。")
 
     def test_a_network_failure_becomes_a_speech_error(

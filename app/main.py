@@ -1,23 +1,28 @@
 """The conversation screen.
 
 One screen with three states, as fixed in docs/ja/functional-design.md: pick a
-scene and a level, talk, then look back at it. This is text only -- voice arrives
-late in the schedule (late October), and putting it in before the corrections are any
-good would make a bad number impossible to attribute to either the transcription or
-the correction.
+scene and a level, talk, then look back at it. Speech arrived on 2026-08-20, after
+the corrections were measured and not before -- shipping it earlier would have made a
+bad number impossible to attribute to either the transcription or the correction, and
+the transcription turned out to repair the learner's mistakes, which is exactly the
+kind of thing that has to be measurable separately.
 
-Corrections run on every turn but nothing about them reaches the conversation
-state. They are collected out of sight and only the review renders them.
+Corrections run once, when the conversation is ended, and nothing about them
+reaches the conversation state until the review renders them. They used to run on
+every turn -- out of sight, but not out of the learner's way, since the turn waited
+for them. See app/corrections.py.
 """
 
 from __future__ import annotations
 
 import base64
+import contextlib
 import os
 import sys
-from dataclasses import replace
+import threading
 from html import escape
 from pathlib import Path
+from typing import Any, Final
 
 import streamlit as st
 from dotenv import load_dotenv
@@ -25,6 +30,7 @@ from dotenv import load_dotenv
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from app import continuous  # noqa: E402
+from app.corrections import correct_all  # noqa: E402
 from app.limits import (  # noqa: E402
     LimitReached,
     access_code,
@@ -32,12 +38,13 @@ from app.limits import (  # noqa: E402
     max_turns,
     spend_tokens,
     spend_tts_chars,
+    start_tts_cooldown,
+    tts_is_quiet,
 )
 from app.theme import CONTACT, NOTICE, SPEECH_CAVEAT, STYLE  # noqa: E402
 from correction import CorrectionResult  # noqa: E402
 from dialogue import LEVELS, SCENES, Utterance, opening_line, reply  # noqa: E402
-from graph.correction_graph import run as run_correction  # noqa: E402
-from speech.voice import synthesise, transcribe  # noqa: E402
+from speech.voice import SpeechError, playback_seconds, synthesise, transcribe  # noqa: E402
 
 load_dotenv()
 
@@ -68,6 +75,46 @@ _adopt_secrets()
 st.set_page_config(page_title="Japanese Speaking Coach", page_icon="🗣️")
 st.markdown(STYLE, unsafe_allow_html=True)
 
+
+@st.cache_resource(show_spinner=False)
+def _warm_retrieval() -> threading.Thread:
+    """Start building the index while the learner is still choosing a scene.
+
+    THE FIRST CORRECTION PAYS FOR THE INDEX. Loading the embedding model and
+    embedding 36 sections takes about 15 seconds, and it happened on whichever call
+    asked for it first — so the first thing the learner ever waited for was the
+    slowest thing the app does. Nothing about it needs the learner: the corpus is
+    eight files that do not change. Starting it at page load spends that time
+    against the setup screen, which is a screen someone is reading anyway.
+
+    CACHED SO IT HAPPENS ONCE PER PROCESS. Streamlit re-runs this file top to
+    bottom on every interaction; a thread started at module level would be a new
+    thread on every click. `st.cache_resource` is the one thing here that is not
+    re-run, so the thread is started inside it.
+
+    AFTER set_page_config, NOT BEFORE. That call has to be the first Streamlit
+    command in the script, and a cached function is entitled to draw a spinner —
+    hence show_spinner=False as well, since there is nothing to wait for.
+
+    NOTHING IT DOES CAN FAIL LOUDLY. A build without retrieval still corrects, just
+    ungrounded, and the warm-up must not be the thing that turns that into an error
+    on a page the learner has not touched yet. Nor may it call st.* : it is off the
+    script's thread and has no context to draw into.
+    """
+
+    def warm() -> None:
+        with contextlib.suppress(Exception):
+            from retrieval.index import collection
+
+            collection()
+
+    thread = threading.Thread(target=warm, name="warm-retrieval", daemon=True)
+    thread.start()
+    return thread
+
+
+_warm_retrieval()
+
 SESSION_KEYS = (
     "scene",
     "level",
@@ -76,7 +123,13 @@ SESSION_KEYS = (
     "corrections",
     "caveat_seen",
     "used_speech",
+    "spoken",
+    "audio_cache",
 )
+
+# One conversation's worth of replies, at roughly 90KB of WAV each. `max_turns()`
+# defaults to 20, so the cap is the conversation rather than a guess.
+MAX_CACHED_LINES: Final = 20
 
 
 def history() -> list[Utterance]:
@@ -100,6 +153,10 @@ def start_session(scene: str, level: str) -> None:
     st.session_state["failure"] = None
     st.session_state["history"] = [Utterance("partner", opening_line(scene))]
     st.session_state["corrections"] = []
+    # The opening line is marked read already, because it is not read: the scene's
+    # greeting is on screen before anyone has said anything, and a page that starts
+    # talking to a room by itself is not what this is.
+    st.session_state["spoken"] = 0
 
 
 def end_session() -> None:
@@ -107,26 +164,6 @@ def end_session() -> None:
     st.session_state["review_used_speech"] = bool(st.session_state.get("used_speech"))
     for key in SESSION_KEYS:
         st.session_state.pop(key, None)
-
-
-def record_correction(sentence: str, scene: str, level: str) -> None:
-    """Judge one learner sentence and put the result away until the review.
-
-    A correction that fails must not interrupt the conversation: the learner is
-    mid-sentence and the result is not due until they finish. The sentence is still
-    recorded, with nothing attached, so a failure shows up as a gap in the review
-    instead of vanishing.
-    """
-    try:
-        # Through the graph, which is also what the API calls: retrieve, correct,
-        # validate. Two paths into one graph rather than two copies of the same
-        # three steps — a screen that corrects differently from the endpoint is a
-        # screen the measurements do not describe.
-        state = run_correction(sentence, scene, level)
-        result = replace(state["result"], correction=state.get("correction"))
-    except Exception:
-        result = CorrectionResult(sentence, correction=None, attempts=0, format_problems=())
-    corrections().append(result)
 
 
 def render_setup() -> None:
@@ -163,38 +200,49 @@ def render_conversation() -> None:
     st.title(SCENES[scene])
     st.caption(f"{LEVELS[level]} · write in Japanese · corrections come at the end")
 
-    for utterance in history():
+    # The audio's place on the page, claimed in whichever bubble is last. It is
+    # claimed here as well as in the reply block below because a reply written on an
+    # earlier run is drawn by this loop, and that reply may still be owed its audio.
+    audio_slot: Any | None = None
+
+    for index, utterance in enumerate(history()):
         role = "user" if utterance.speaker == "learner" else "assistant"
         with st.chat_message(role):
             st.write(utterance.text)
+            if utterance.speaker == "partner" and index == len(history()) - 1:
+                audio_slot = st.empty()
 
     awaiting_reply = bool(history()) and history()[-1].speaker == "learner"
     failure: str | None = st.session_state.get("failure")
 
+    # THE ORDER OF THIS FUNCTION IS THE FEATURE. Everything below is drawn in the
+    # order the learner needs it, not the order it is produced in: the reply first,
+    # then the box they type or speak into, then the sound, then the button that ends
+    # the conversation — and last of all the loop that waits for them to talk, which
+    # blocks until they do. Anything drawn after that loop is drawn after the turn is
+    # already over, which means it is not drawn at all.
     if awaiting_reply and failure is None:
-        learner_sentence = history()[-1].text
-        with st.chat_message("assistant"), st.spinner("…"):
-            try:
-                # Counted before the call, not after: a cap that is checked
-                # afterwards is a cap the next request has already crossed. The
-                # whole conversation goes into the estimate because the whole
-                # conversation goes into the prompt.
-                spend_tokens("".join(utterance.text for utterance in history()))
-                answer = reply(scene, level, history())
-            except LimitReached as capped:
-                st.session_state["failure"] = str(capped)
-                st.rerun()
-            except Exception as exc:  # shown to the learner, never swallowed
-                st.session_state["failure"] = f"{type(exc).__name__}: {exc}"
-                st.rerun()
-            else:
-                history().append(Utterance("partner", answer))
-                st.write(answer)
-                speak(answer)
-                # After the reply is on screen, and never rendered: the whole point
-                # of a separate correction call is that the learner does not see it
-                # until they have stopped talking.
-                record_correction(learner_sentence, scene, level)
+        with st.chat_message("assistant"):
+            with st.spinner("…"):
+                try:
+                    # Counted before the call, not after: a cap that is checked
+                    # afterwards is a cap the next request has already crossed. The
+                    # whole conversation goes into the estimate because the whole
+                    # conversation goes into the prompt.
+                    spend_tokens("".join(utterance.text for utterance in history()))
+                    answer = reply(scene, level, history())
+                except LimitReached as capped:
+                    st.session_state["failure"] = str(capped)
+                    st.rerun()
+                except Exception as exc:  # shown to the learner, never swallowed
+                    st.session_state["failure"] = f"{type(exc).__name__}: {exc}"
+                    st.rerun()
+            history().append(Utterance("partner", answer))
+            st.write(answer)
+            # The audio's place in this bubble, claimed now and filled in further
+            # down. Reserving it is what lets the player sit under the reply it
+            # belongs to while being produced after the input box exists.
+            audio_slot = st.empty()
 
     if failure is not None:
         # A canned Japanese line here would read as a reply and teach the learner
@@ -204,6 +252,7 @@ def render_conversation() -> None:
             st.session_state["failure"] = None
             st.rerun()
 
+    listening: tuple[Any, Any] | None = None
     learner_turns = sum(1 for utterance in history() if utterance.speaker == "learner")
     if learner_turns >= max_turns():
         # A cap reached mid-conversation ends it rather than silently ignoring what
@@ -214,31 +263,136 @@ def render_conversation() -> None:
             "End the conversation to see your corrections."
         )
     else:
-        render_input()
+        listening = render_input()
+
+    # AFTER THE INPUT BOX, AND THAT IS WHAT MOVED. Synthesis takes about 4.3 seconds,
+    # and it used to run before the input box was drawn — so the learner sat looking
+    # at a reply they could not answer for the length of it. Drawn in this order the
+    # box is on screen and usable while the audio is still being made.
+    #
+    # ASKED OF THE CONVERSATION, NOT OF THIS RUN. "Did I generate a reply just now"
+    # is the wrong question and cost the audio entirely when it was asked on
+    # 2026-08-22: the microphone widget triggers a rerun of its own while the four
+    # seconds of synthesis are still running, the run producing the audio is thrown
+    # away, and the next run has nothing to say because the reply is already in the
+    # history. Recording which line has been read aloud makes the next run finish the
+    # job instead — the same shape as `awaiting_reply` above, which is why a failed
+    # reply is retried rather than lost.
+    #
+    # WHAT IT STILL COSTS, PLAINLY: send the next sentence while the audio is being
+    # made and this turn's line is not read aloud, because the conversation has moved
+    # on and reading it then would be reading the wrong line. Nothing becomes
+    # unreadable — the reply is on screen as text.
+    spoken_seconds = 0.0
+    last = len(history()) - 1
+    if audio_slot is not None and st.session_state.get("spoken") != last:
+        spoken_seconds = speak(history()[last].text, audio_slot)
+        # After, never before: a run cancelled mid-synthesis has to leave the line
+        # marked unspoken, or the retry this whole arrangement exists for never runs.
+        st.session_state["spoken"] = last
 
     st.divider()
     if st.button("End the conversation"):
+        # READ FROM THE HISTORY, NOT FROM A RUNNING TALLY. Every learner line is in
+        # there, including the ones whose reply failed — those used to go
+        # uncorrected, because the old per-turn call sat in the branch that only
+        # runs when a reply came back. The count on the review screen now matches
+        # what the learner actually said.
+        said = [utterance.text for utterance in history() if utterance.speaker == "learner"]
+        if said:
+            # BEFORE end_session(), which pops the scene and the level. The
+            # correction needs both, and they are gone the moment it runs.
+            noun = "sentence" if len(said) == 1 else "sentences"
+            with st.spinner(f"Checking your {len(said)} {noun}…"):
+                st.session_state["corrections"] = correct_all(said, scene, level)
         end_session()
         st.rerun()
 
+    # LAST, BECAUSE IT BLOCKS. This waits for the learner to speak and then stop
+    # speaking, and it returns straight into a rerun — so every line above it has
+    # already reached the browser and nothing below it would.
+    if listening is not None:
+        context, status = listening
+        heard_audio = continuous.collect_turn(context, status, skip_seconds=spoken_seconds)
+        if heard_audio is not None:
+            _send_recording(heard_audio)
 
-def speak(text: str) -> None:
-    """Read one line aloud, and say that the voice is synthetic.
 
-    A failure here is a caption, not an error: the reply is already on screen and
-    the conversation can continue without sound. Losing the audio is a smaller
-    problem than an error box where a reply should be.
+def _audio_for(text: str) -> bytes:
+    """The line as audio, made once per session however many times it is asked for.
+
+    A RUN CANCELLED MID-SYNTHESIS IS A REQUEST ALREADY PAID FOR. The microphone
+    widget reruns the script while the four seconds of synthesis are still going, and
+    the next run synthesises the same sentence again — the first call still reached
+    the provider, still cost its characters and still counted against a rate limit
+    that turned out to be easy to reach (429s on 2026-08-22, from one person
+    practising). Remembering the bytes makes the second attempt free instead.
+
+    KEPT PER SESSION, NOT PER PROCESS. A module-level cache would be the obvious
+    place and would also let one learner's reply be held in memory after they close
+    the tab, and handed to whoever produces the same sentence next. This is the
+    partner's words rather than the learner's, so it is a small thing — and this
+    project's answer to small privacy questions is the same as its answer to large
+    ones. It goes when the conversation goes, with the rest of SESSION_KEYS.
     """
-    try:
+    cache: dict[str, bytes] = st.session_state.setdefault("audio_cache", {})
+    if text not in cache:
+        # Counted only on a real call: a cache hit sends no characters anywhere.
         spend_tts_chars(text)
-        audio = synthesise(text)
+        made = synthesise(text)
+        if len(cache) >= MAX_CACHED_LINES:
+            cache.pop(next(iter(cache)))
+        cache[text] = made
+    return cache[text]
+
+
+def _no_audio(text: str, exc: Exception) -> None:
+    """Say why the line was not read aloud, where only the operator will see it."""
+    print(f"[speak] no audio for {text!r}: {exc}", file=sys.stderr, flush=True)
+
+
+def speak(text: str, slot: Any) -> float:
+    """Read one line aloud, into a place already claimed on the page.
+
+    Returns how long the clip plays for, which the listener needs in order to throw
+    away the frames in which the app can be heard talking. Zero when nothing plays,
+    which correctly turns that discard off.
+
+    A failure here is silence, not an error: the reply is already on screen and the
+    conversation can continue without sound. Losing the audio is a smaller problem
+    than an error box where a reply should be — and, since 2026-08-22, smaller than a
+    line of provider English under a beginner's first sentence in Japanese.
+    """
+    if tts_is_quiet():
+        # The provider told us to stop asking, recently enough that it still means
+        # it. Skipped without a request, which is the only response to a rate limit
+        # that actually helps: the window it is waiting out gets shorter rather
+        # than longer, and the learner is not charged a second of waiting to be
+        # refused. Nothing is drawn -- the reply is on screen as text.
+        return 0.0
+
+    # BOTH CLAUSES END THE SAME WAY, AND THAT IS THE POINT: SILENT TO THE LEARNER,
+    # LOUD IN THE LOG. The error used to be printed under the reply, where it was a
+    # line of English a beginner can do nothing about — "answered 429 Too Many
+    # Requests" is not a thing to hand someone practising 「おはようございます」.
+    # Whoever is running the demo does need it, so it goes to stderr, which is where
+    # the host keeps its logs.
+    try:
+        audio = _audio_for(text)
+    except SpeechError as exc:
+        if exc.status == 429:
+            # Everyone at a meetup shares one key, so this quiets every tab this
+            # process is serving, not just the one that asked.
+            start_tts_cooldown()
+        _no_audio(text, exc)
+        return 0.0
     except Exception as exc:  # noqa: BLE001 - see below
         # Deliberately broad. The reply is already on screen and the conversation can
         # continue without sound, so NOTHING that happens while reading a line aloud
         # may end the session. A 4xx escaped a narrower clause here on 2026-08-21 and
         # took the whole page down mid-conversation.
-        st.caption(f"(no audio this time: {type(exc).__name__}: {exc})")
-        return
+        _no_audio(text, exc)
+        return 0.0
     # AUTOPLAY AND A CONTROL, because neither alone works everywhere. Hiding the
     # player entirely was tried on 2026-08-21: it plays on a laptop and is silent on
     # an iPhone, where Safari refuses to autoplay audio and the learner is left with
@@ -248,11 +402,12 @@ def speak(text: str) -> None:
     # So: it plays by itself where the browser allows it, and where it does not there
     # is something to press. The CSS keeps it to the size of a button.
     encoded = base64.b64encode(audio).decode()
-    st.markdown(
+    slot.markdown(
         f'<audio class="reply-audio" controls autoplay>'
         f'<source src="data:audio/wav;base64,{encoded}" type="audio/wav"></audio>',
         unsafe_allow_html=True,
     )
+    return playback_seconds(audio)
 
 
 def _send_recording(audio: bytes) -> None:
@@ -276,8 +431,18 @@ def _send_recording(audio: bytes) -> None:
     st.rerun()
 
 
-def render_input() -> None:
-    """Speak or type. What is transcribed is sent straight on.
+def render_input() -> tuple[Any, Any] | None:
+    """Draw the input box. Returns the open microphone, for the caller to collect from.
+
+    NOTHING HERE WAITS. It used to: the continuous listener drew its widget and then
+    blocked in the same call until the learner had spoken, so the reply's audio and
+    the button that ends the conversation — both written below this call — were never
+    reached on any turn where the microphone connected. The stream is opened here and
+    the waiting is done by the caller, last, once the page is complete.
+
+    The returned pair is the stream context and the container the status line belongs
+    in. The container is made here because that is where it appears on the page; it is
+    written into later, from a call sitting much further down the file.
 
     A CONFIRMATION STEP WAS BUILT AND THEN REMOVED (2026-08-21). It showed the
     transcription and asked "is this exactly what you said?" before sending, because
@@ -302,14 +467,13 @@ def render_input() -> None:
         # The microphone stays open and silence ends the turn. Falls through to the
         # button below if the stream never connects — a hall with a locked-down
         # network is a place this has to keep working, not a place to show an error.
-        heard_audio = continuous.listen(st.container())
-        if heard_audio is not None:
-            _send_recording(heard_audio)
+        status = st.container()
+        context = continuous.open_stream()
         if typed := st.chat_input("または、日本語で書いてください"):
             history().append(Utterance("learner", typed))
             st.session_state["failure"] = None
             st.rerun()
-        return
+        return context, status
 
     # A KEY THAT CHANGES EVERY TURN. Without it the widget hands back the same
     # recording after the rerun, the same sentence is transcribed and sent again, and
@@ -323,6 +487,9 @@ def render_input() -> None:
         history().append(Utterance("learner", typed))
         st.session_state["failure"] = None
         st.rerun()
+    # The button path has nothing to collect later: `st.audio_input` hands back a
+    # finished recording rather than a stream, so it never blocked in the first place.
+    return None
 
 
 def render_review() -> None:

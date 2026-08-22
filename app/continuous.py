@@ -41,6 +41,11 @@ TARGET_RATE: Final = 16_000
 # How long to wait for the next frame before giving up on the stream.
 FRAME_TIMEOUT: Final = 3.0
 
+# The receiver's queue holds this many frames (`audio_receiver_size=256` below, at
+# 20ms each). Draining never reads more than a queue's worth, so a stream that
+# delivers frames in bursts cannot keep the drain running forever.
+BACKLOG_LIMIT: Final = 256
+
 
 def enabled() -> bool:
     """Whether to listen continuously. Off puts the button back."""
@@ -74,14 +79,25 @@ def _wav(chunks: list[np.ndarray]) -> bytes:
     return wav_header(len(pcm.tobytes()), rate=TARGET_RATE) + pcm.tobytes()
 
 
-def listen(status: Any) -> bytes | None:
-    """Stream until the turn ends. Returns the audio, or None if it did not.
+# TWO CALLS, NOT ONE, AND THE SPLIT IS THE POINT. This used to be a single `listen()`
+# that drew the widget and then blocked in the frame loop until the learner stopped
+# talking. Everything the screen wanted to draw after the input box — the reply being
+# read aloud, the button that ends the conversation — therefore never ran on any turn
+# where the microphone actually connected: the loop did not return, and the rerun that
+# followed it wiped the run. The audio only played when the stream had FAILED, which
+# is a feature that works when it is broken.
+#
+# So opening the microphone and collecting from it are separate calls now, and
+# everything that has to reach the page goes between them.
 
-    The loop belongs to one script run: Streamlit reruns after a turn is sent, and
-    the next run starts a new detector. That is why the detector holds no audio and
-    the caller holds no detector.
+
+def open_stream() -> Any:
+    """Put the microphone on the page and return at once, without waiting for a word.
+
+    Draws the widget and nothing else. The returned context is handed back to
+    `collect_turn` once the rest of the page has been drawn.
     """
-    context = webrtc_streamer(
+    return webrtc_streamer(
         key="listener",
         mode=WebRtcMode.SENDONLY,
         audio_receiver_size=256,
@@ -89,13 +105,66 @@ def listen(status: Any) -> bytes | None:
         media_stream_constraints={"audio": True, "video": False},
         desired_playing_state=True,
     )
+
+
+def collect_turn(context: Any, status: Any, skip_seconds: float = 0.0) -> bytes | None:
+    """Stream until the turn ends. Returns the audio, or None if it did not.
+
+    The loop belongs to one script run: Streamlit reruns after a turn is sent, and
+    the next run starts a new detector. That is why the detector holds no audio and
+    the caller holds no detector.
+
+    Two things are thrown away before the detector is fed anything, and they are not
+    the same thing.
+
+    THE BACKLOG, WHICH IS THE PAST. The receiver is a queue holding the last five
+    seconds of sound, not a live tap: by the time this is called the script has spent
+    seconds transcribing, replying and synthesising, and every one of those seconds is
+    sitting in the queue waiting to be read. None of it can be an answer to a reply the
+    learner had not heard yet, and feeding it to the detector is worse than losing it —
+    the detector sets its noise floor from the first half second it is given, so the
+    tail of the learner's PREVIOUS sentence would become the definition of silence.
+    So the queue is emptied first. `get_frames` hands back the whole backlog in one
+    call and blocks for a single frame when there is none, so a batch of one is how
+    "caught up with real time" announces itself.
+
+    THEN `skip_seconds`, WHICH IS THE APP TALKING. The reply is handed to the browser
+    to play immediately before this is called, so the next few seconds of microphone
+    may be the app's own voice — and a detector that hears the app speak decides the
+    learner spoke, then decides they stopped, and sends the app's own sentence back to
+    be corrected. Browsers do echo cancellation by default and it would probably not
+    happen; "probably" is not a thing to find out in a hall on 13 September.
+
+    THE ORDER OF THOSE TWO IS THE WHOLE POINT, and getting it wrong is not a smaller
+    version of getting it right. Discarding `skip_seconds` without draining first
+    discards `skip_seconds` OF THE BACKLOG — seconds recorded before the reply existed
+    — and lets the echo through untouched. Written that way on 2026-08-22 and caught
+    the same day by reading the receiver's implementation rather than the tests, which
+    were passing because the fake queue had no backlog to be wrong about.
+
+    WHAT IT COSTS: a learner who reads the reply on screen and starts answering before
+    it is spoken has that beginning dropped. That is the same trade already made by
+    drawing the input box first — they can act on the reply early, and the audio for
+    that turn is what gives way.
+    """
     if not context.state.playing or context.audio_receiver is None:
         status.caption("Starting the microphone…")
         return None
 
     detector = TurnDetector()
     chunks: list[np.ndarray] = []
+    dropped = 0.0
     status.caption("Listening. Speak when you are ready — I will wait for you to stop.")
+
+    read = 0
+    while read < BACKLOG_LIMIT:
+        try:
+            backlog = context.audio_receiver.get_frames(timeout=FRAME_TIMEOUT)
+        except Exception:  # noqa: BLE001 - a stalled stream is not a crash
+            return None
+        read += len(backlog)
+        if len(backlog) <= 1:
+            break
 
     while True:
         try:
@@ -106,8 +175,12 @@ def listen(status: Any) -> bytes | None:
             continue
         for frame in frames:
             samples = _mono_16k(frame)
-            chunks.append(samples)
             seconds = len(samples) / TARGET_RATE
+            if dropped < skip_seconds:
+                # Not kept and not judged: these frames may be the app's own voice.
+                dropped += seconds
+                continue
+            chunks.append(samples)
             if detector.push(samples.tolist(), seconds):
                 if detector.timed_out:
                     status.caption(

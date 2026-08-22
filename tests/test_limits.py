@@ -22,6 +22,46 @@ def clean() -> None:
     limits.reset()
 
 
+class TestQuietingDownAfterA429:
+    """The response to being rate-limited is to stop asking, not to ask again.
+
+    Measured on 2026-08-22: one person practising alone reached the free tier's
+    speech limit, and every refused request is still a request — so asking through
+    the window makes the window longer and costs the learner a second of waiting to
+    be told no.
+    """
+
+    def test_a_cooldown_starts_quiet_and_ends_loud(self) -> None:
+        limits.start_tts_cooldown(now=1_000.0)
+
+        assert limits.tts_is_quiet(now=1_000.0)
+        assert limits.tts_is_quiet(now=1_000.0 + limits.tts_cooldown() - 1)
+        assert not limits.tts_is_quiet(now=1_000.0 + limits.tts_cooldown())
+
+    def test_nothing_is_quiet_until_the_provider_says_so(self) -> None:
+        # Silence by default would mean a deployment that never speaks until it has
+        # first been refused, which is exactly backwards.
+        assert not limits.tts_is_quiet(now=1_000.0)
+
+    def test_the_length_is_configurable(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.setenv("TTS_COOLDOWN_SECONDS", "5")
+
+        limits.start_tts_cooldown(now=1_000.0)
+
+        assert limits.tts_is_quiet(now=1_004.0)
+        assert not limits.tts_is_quiet(now=1_005.0)
+
+    def test_it_is_process_wide_rather_than_per_learner(self) -> None:
+        # The limit belongs to the API key, and one deployment has one key. A
+        # per-session cooldown would have every other tab spend the recovery window
+        # refusing each other.
+        limits.start_tts_cooldown(now=1_000.0)
+
+        assert limits.tts_is_quiet(now=1_000.0)
+        limits.reset()
+        assert not limits.tts_is_quiet(now=1_000.0)
+
+
 class TestDailyCaps:
     def test_refuses_the_request_that_would_cross_the_cap(
         self, monkeypatch: pytest.MonkeyPatch

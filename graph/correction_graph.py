@@ -23,6 +23,7 @@ means.
 
 from __future__ import annotations
 
+import threading
 from typing import Any, TypedDict
 
 from langgraph.graph import END, START, StateGraph
@@ -110,12 +111,20 @@ def build() -> Any:
 
 _GRAPH: Any = None
 
+# BUILT ONCE EVEN WHEN FIVE CALLERS ARRIVE TOGETHER. Since 2026-08-22 the screen
+# corrects a whole conversation at once, five threads at a time, and the first five
+# all find `_GRAPH` empty and all build one. Nothing is corrupted by that — each gets
+# a working graph and the last assignment wins — but it is four compilations nobody
+# asked for on the one call the learner is watching a spinner for.
+_BUILDING = threading.Lock()
+
 
 def graph() -> Any:
     global _GRAPH
-    if _GRAPH is None:
-        _GRAPH = build()
-    return _GRAPH
+    with _BUILDING:
+        if _GRAPH is None:
+            _GRAPH = build()
+        return _GRAPH
 
 
 def run(sentence: str, scene: str, level: str) -> CorrectionState:
