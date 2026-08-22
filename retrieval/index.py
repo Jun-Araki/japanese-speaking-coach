@@ -22,7 +22,7 @@ from __future__ import annotations
 import os
 from dataclasses import dataclass
 from functools import lru_cache
-from threading import Lock
+from threading import RLock
 from typing import TYPE_CHECKING, Any, Final
 
 from config import threshold
@@ -67,11 +67,35 @@ def model_name() -> str:
     return os.environ.get("EMBEDDING_MODEL", DEFAULT_MODEL)
 
 
+# ONE LOCK FOR BOTH LOADS, HELD ACROSS THE CACHE LOOKUP. `lru_cache` decides whether
+# it has an answer BEFORE any lock inside the function body can be taken, so five
+# threads calling `search()` for the first time all miss, all enter, and all load. That
+# stopped being hypothetical when the corrections started running in parallel: several
+# hundred megabytes of weights loaded five times is wasted seconds here and no memory
+# left on Community Cloud. Wrapping the cached function in a plain one that takes the
+# lock first means the threads behind the first one find the cache already filled.
+#
+# REENTRANT, NOT PLAIN. `collection()` calls `embed_passages()` which calls `_model()`,
+# so one thread takes this lock twice; a `Lock` would deadlock every time.
+#
+# It replaces the `Lock` added on 2026-08-21, when the container's own health check
+# built the collection twice and the second build failed with "Collection [grammar]
+# already exists". That lock sat inside the function body and so never covered the
+# lookup — but the reason it is a lock at all has not changed: two people opening the
+# app at the same moment is what a meetup looks like.
+_INIT_LOCK: Final = RLock()
+
+
 @lru_cache(maxsize=1)
-def _model() -> SentenceTransformer:
+def _load_model() -> SentenceTransformer:
     from sentence_transformers import SentenceTransformer
 
     return SentenceTransformer(model_name())
+
+
+def _model() -> SentenceTransformer:
+    with _INIT_LOCK:
+        return _load_model()
 
 
 def embed_passages(chunks: list[Chunk]) -> list[list[float]]:
@@ -125,38 +149,37 @@ def embed_query(sentence: str, scene: str | None = None) -> list[float]:
     return [float(value) for value in _model().encode(query_text(sentence, scene))]
 
 
-# Building the index takes a few seconds — a model load and 36 embeddings — and
-# `lru_cache` does not hold a lock while it runs. Two requests arriving in that window
-# both build, and the second one fails with "Collection [grammar] already exists".
-# Found by the container's own health check on 2026-08-21, and it is not a test-only
-# problem: two people opening the app at the same moment is what a meetup looks like.
-_BUILDING = Lock()
-
-
 @lru_cache(maxsize=1)
-def collection() -> Any:
-    """The index, built once on first use and kept for the life of the process."""
+def _build_collection() -> Any:
     import chromadb
 
-    with _BUILDING:
-        client = chromadb.EphemeralClient()
-        # get_or_create, not create: with the lock this cannot race, and without the
-        # idempotent call a retry after any failure would hit a half-built collection
-        # and report "already exists" instead of whatever actually went wrong.
-        store = client.get_or_create_collection(name=COLLECTION, metadata={"hnsw:space": SPACE})
-        if store.count():
-            return store
-
-        chunks = load_chunks()
-        store.add(
-            ids=[chunk.id for chunk in chunks],
-            embeddings=embed_passages(chunks),  # type: ignore[arg-type]
-            documents=[chunk.body for chunk in chunks],
-            metadatas=[
-                {"article_id": chunk.article_id, "heading": chunk.heading} for chunk in chunks
-            ],
-        )
+    client = chromadb.EphemeralClient()
+    # get_or_create, not create: under the lock this cannot race, and without the
+    # idempotent call a retry after any failure would hit a half-built collection
+    # and report "already exists" instead of whatever actually went wrong.
+    store = client.get_or_create_collection(name=COLLECTION, metadata={"hnsw:space": SPACE})
+    if store.count():
         return store
+
+    chunks = load_chunks()
+    store.add(
+        ids=[chunk.id for chunk in chunks],
+        embeddings=embed_passages(chunks),  # type: ignore[arg-type]
+        documents=[chunk.body for chunk in chunks],
+        metadatas=[{"article_id": chunk.article_id, "heading": chunk.heading} for chunk in chunks],
+    )
+    return store
+
+
+def collection() -> Any:
+    """The index, built once on first use and kept for the life of the process.
+
+    Serialised on `_INIT_LOCK`, for the reason written above it: the build is a model
+    load and 36 embeddings, and whatever arrives during it has to wait rather than
+    start a second one.
+    """
+    with _INIT_LOCK:
+        return _build_collection()
 
 
 def search(sentence: str, top_k: int | None = None, scene: str | None = None) -> list[Result]:
