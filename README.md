@@ -19,13 +19,20 @@ the easiest situations, and get told afterwards how to say it and why.
 1. Pick a scene — greeting, self-introduction, thanks, a simple request, saying you will be
    late, workplace politeness
 2. **Start conversation** — the AI speaks first
-3. Press the microphone and speak. The AI replies by voice. Repeat as many times as you like
+3. Speak. The microphone is already open and a second of silence ends your turn; the AI replies
+   by voice. Repeat as many times as you like
 4. **End conversation**
 5. **Review** — every sentence you said, what should have been corrected, a natural phrasing,
    and a one-to-two sentence reason in English
 
-Input is voice only. No Japanese keyboard is needed, and nobody is ever asked to retype a
-sentence the transcription got wrong — there is a **Say again** button instead.
+No Japanese keyboard is needed and nothing has to be pressed to talk; a keyboard is there for
+anyone who prefers it. A confirmation step that showed the transcription before sending was
+built and removed on 21 August: it cost a button press and a paragraph of English on every turn,
+which for a beginner having a five-turn conversation is most of the interaction. What replaces
+it is weaker and was chosen deliberately — the transcription appears as the learner's own line
+where they can see it, and the screen says in as many words that speaking can hide a mistake and
+that typing catches every one. `CONTINUOUS_VOICE=0` puts a record button back for a network that
+will not carry WebRTC.
 
 ## What it deliberately does not do
 
@@ -333,7 +340,7 @@ It needs a provider key this project does not have yet.
 graph TB
     U[Learner] -->|speaks or types| ST["Streamlit, single page<br/>shared access code, daily caps"]
     ST -->|"speech (may repair mistakes)"| STT[Transcription]
-    STT -->|"learner confirms the text"| ST
+    STT -->|"transcript goes straight in"| ST
 
     ST --> G
     API["FastAPI<br/>/health /chat /check"] --> G
@@ -489,11 +496,13 @@ measurement of the speech stage all become impossible. Those were dropped as met
 quietly worked around.
 
 Testers enter through **one shared access code**; no accounts, no names. Before the first turn the
-app will state that recordings go to external APIs, that confidential information should not be
-spoken, **that the AI voice is synthetic**, and will give a contact address. A per-session turn
-limit and a daily cap are planned as a cost guard, not as a measurement. **None of this is built
-yet** — see [Running it](#running-it); it is written here because it constrains the design, not
-because it exists.
+app states that recordings go to external APIs, that confidential information should not be
+spoken, **that the AI voice is synthetic**, and gives a contact address. A per-session turn limit
+and a daily cap are cost guards, not measurements: nothing is published from them, and they exist
+so that a link handed to a room cannot quietly run up a bill. **All of it is built** — the access
+gate, the notice, `MAX_TURNS`, and the daily token and character caps, which are counted in
+process, keyed by the calendar date and nothing else, and reset on restart. That last part is the
+accepted price of storing nothing.
 
 ## Documentation
 
@@ -519,7 +528,8 @@ because it exists.
 - [x] Check 3 measured against its pre-registered bar, and **not adopted**
 - [x] FastAPI + LangGraph
 - [x] Voice input and output — **shipped with a measured limitation, above**
-- [ ] Docker Compose **written but not yet built**, and a deployed demo
+- [x] Docker Compose, built and run — the image, `GET /health` reporting what the build can do
+- [ ] A deployed demo carrying the current code
 - [ ] Two or three testers, three written comments
 
 **What is deliberately not on this list:** response time, cost per turn, any measurement of the
