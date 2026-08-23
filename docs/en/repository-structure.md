@@ -25,13 +25,15 @@ japanese-speaking-coach/
 │   └── YYYYMMDD-title/        requirements.md, design.md, tasklist.md
 ├── app/                       The Streamlit screen. One screen only
 │   ├── main.py                The conversation screen. **The Community Cloud entry point, fixed permanently**
+│   ├── corrections.py         The end-of-conversation batch. **Returned in spoken order, with a ceiling on the width**
+│   ├── continuous.py          Listening without a button. **`CONTINUOUS_VOICE=0` puts the button back**
 │   ├── limits.py              Daily token and speech caps, and the shared code. **Counted before the call, not after**
 │   └── theme.py               CSS and the notices. **The synthetic-voice line and the speech caveat live here**
 ├── dialogue/                  Conversation node
 │   ├── scenes.py              Scenes and levels. **glossary.md §3 and §4 are the source**
 │   └── reply.py               `reply()`. Partner prompt and the one-to-two sentence cap
 ├── correction/                Correction node
-│   ├── engine.py              `check()`. Parses the structured output **itself** and
+│   ├── engine.py              `check()` and `check_with_retrieval()`. Parses the structured output **itself** and
 │   │                          also reports format compliance
 │   └── validation.py          Validation node. **Python run after generation**, never a
 │                              second call to the model

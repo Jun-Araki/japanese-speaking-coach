@@ -14,7 +14,9 @@ only symptom is a hit rate that is worse than it should be for no visible reason
 (.env.example says the same thing next to EMBEDDING_MODEL).
 
 THE MODEL IS LOADED ONCE. Several hundred megabytes of weights, so a module-level
-cache rather than a load per call; the first search pays for it and the rest do not.
+cache rather than a load per call. Since 2026-08-22 the app pays for it in a
+background thread at page load; with WARM_RETRIEVAL=0, or from any other caller, the
+first search pays for it instead. Either way the rest do not.
 """
 
 from __future__ import annotations
@@ -68,10 +70,10 @@ def model_name() -> str:
 
 
 # ONE LOCK FOR BOTH LOADS, HELD ACROSS THE CACHE LOOKUP. `lru_cache` decides whether
-# it has an answer BEFORE any lock inside the function body can be taken, so five
-# threads calling `search()` for the first time all miss, all enter, and all load. That
-# stopped being hypothetical when the corrections started running in parallel: several
-# hundred megabytes of weights loaded five times is wasted seconds here and no memory
+# it has an answer BEFORE any lock inside the function body can be taken, so every
+# thread calling `search()` for the first time misses, enters, and loads. That stopped
+# being hypothetical when the corrections started running in parallel: several hundred
+# megabytes of weights loaded once per thread is wasted seconds here and no memory
 # left on Community Cloud. Wrapping the cached function in a plain one that takes the
 # lock first means the threads behind the first one find the cache already filled.
 #

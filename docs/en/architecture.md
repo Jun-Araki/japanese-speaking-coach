@@ -17,7 +17,7 @@ disagree, the Japanese version is correct and this file needs updating.
 | Tokenization | SudachiPy + SudachiDict (Apache-2.0) | Japanese has no spaces between words, so vocabulary-level checking requires morphological analysis |
 | Embeddings | sentence-transformers, multilingual | Retrieval over Japanese text |
 | Vector store | Chroma | Fastest local option, sufficient for a demo |
-| Agent | LangGraph | Dialogue and correction run in parallel with a validation loop back — a real graph, not a chain |
+| Agent | LangGraph | The correction splits into retrieve / correct / validate with a loop back — a real graph, not a chain |
 | Database | **None** (decided 2026-08-16) | **Nothing a learner says, records or gets corrected is stored anywhere.** See "The decision to store nothing" below |
 | API | FastAPI | `POST /chat`, `POST /check`, `GET /health` |
 | UI | Streamlit | Fastest path to a public demo |

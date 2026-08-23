@@ -34,9 +34,9 @@ Voice is an input method; what gets corrected is *phrasing*, not phonemes. Pronu
 pitch-accent assessment are a different problem, and pretending otherwise would make the
 quality claims below meaningless.
 
-Corrections also never interrupt the conversation. They are computed every turn in the
-background and shown only at the end, because correcting a beginner mid-sentence is the
-fastest way to make them stop talking.
+Corrections also never interrupt the conversation. They are computed in one batch when the
+conversation ends, and shown only in the review, because correcting a beginner mid-sentence
+is the fastest way to make them stop talking.
 
 ## Why build this when good alternatives exist
 
@@ -356,8 +356,8 @@ graph TB
 runs one process from one entry file, so it cannot call the API over HTTP — and the API calls
 the same graph. Neither can drift into behaving differently from what was measured.
 
-**Corrections never interrupt the conversation.** They run per turn, out of sight, and are shown
-only when the learner ends the session. Being told mid-sentence that you made a mistake is how
+**Corrections never interrupt the conversation.** They all run when the learner ends the session,
+ten at a time, and are shown only in the review. Being told mid-sentence that you made a mistake is how
 beginners stop speaking.
 
 **Why this is not a thin wrapper around a language model.** The correction is emitted as

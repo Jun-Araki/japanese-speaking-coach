@@ -20,7 +20,7 @@ graph TB
         COR[Correction node]
         RET[Retrieval node]
         VAL[Validation node]
-        DLG -.parallel.- COR
+        DLG -.after the conversation.- COR
         RET --> COR
         COR --> VAL
         VAL -->|reject, once| COR
@@ -61,7 +61,7 @@ conversation ends, and are never rendered outside the review.**
 - Only the **AI's** reply text can be hidden; hiding it turns the session into listening
   practice. ~~Which mode was used is recorded.~~ → **Not recorded** (same reason).
 - Corrections never interrupt the conversation. The correction node runs **once the
-  conversation is over, over all of the learner's sentences at once (five at a time)**, and
+  conversation is over, over all of the learner's sentences at once (ten at a time)**, and
   results appear only in the review. **Changed from per-turn on 2026-08-22**: the principle
   was always this, but the implementation ran on the turn, so the learner waited 4.78 seconds
   every turn for a result that was deliberately not shown to them.

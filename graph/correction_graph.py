@@ -111,10 +111,10 @@ def build() -> Any:
 
 _GRAPH: Any = None
 
-# BUILT ONCE EVEN WHEN FIVE CALLERS ARRIVE TOGETHER. Since 2026-08-22 the screen
-# corrects a whole conversation at once, five threads at a time, and the first five
-# all find `_GRAPH` empty and all build one. Nothing is corrupted by that — each gets
-# a working graph and the last assignment wins — but it is four compilations nobody
+# BUILT ONCE EVEN WHEN TEN CALLERS ARRIVE TOGETHER. Since 2026-08-22 the screen
+# corrects a whole conversation at once, ten threads at a time, and every one of them
+# finds `_GRAPH` empty and builds one. Nothing is corrupted by that — each gets a
+# working graph and the last assignment wins — but it is nine compilations nobody
 # asked for on the one call the learner is watching a spinner for.
 _BUILDING = threading.Lock()
 

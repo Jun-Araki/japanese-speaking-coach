@@ -53,18 +53,45 @@ def enabled() -> bool:
 
 
 def _mono_16k(frame: av.AudioFrame) -> np.ndarray:
-    """One frame as mono float samples at the target rate."""
-    array = frame.to_ndarray()
-    # Interleaved stereo arrives as one row; average the channels so a headset with
-    # one live side does not read as half the loudness.
+    """One frame as mono float samples at the target rate.
+
+    PACKED AND PLANAR ARE BOTH STEREO AND LOOK NOTHING ALIKE, and getting that wrong
+    doubled every duration in this file until 2026-08-23. aiortc's Opus decoder is
+    fixed to `format="s16"`, `layout="stereo"` — s16 is PACKED, so `to_ndarray()`
+    returns a single row of interleaved LRLRLR samples, shape (1, 1920) for a 20ms
+    frame. Averaging rows, which is right for planar (2, 960), does nothing to that
+    single row: all 1920 samples survived, a third of them were kept by the
+    downsampling step, and 640 samples came back for 20ms of sound that should have
+    produced 320.
+
+    Everything downstream then ran on a clock that was exactly twice too fast. The
+    turn ended after half a second of silence rather than one — the cut-off
+    mid-sentence that speech/listen.py exists to avoid — a turn could run 15 seconds
+    rather than 30, and the WAV handed to the transcriber carried a 16kHz header over
+    samples worth 32kHz, so every spoken turn since the microphone stopped needing a
+    button was transcribed at half speed.
+
+    The channel count comes from the layout rather than from the array's shape,
+    because the shape cannot tell one channel from two when the samples are packed.
+    """
+    raw = frame.to_ndarray()
+    channels = len(frame.layout.channels)
+    array = raw.astype(np.float32)
     if array.ndim > 1 and array.shape[0] > 1:
+        # Planar: one row per channel.
         array = array.mean(axis=0)
-    array = array.reshape(-1).astype(np.float32)
-    if np.issubdtype(frame.to_ndarray().dtype, np.integer):
+    else:
+        array = array.reshape(-1)
+        if channels > 1:
+            # Packed: LRLRLR. Averaged rather than decimated, so that a headset with
+            # one live side does not read as half the loudness.
+            array = array.reshape(-1, channels).mean(axis=1)
+    if np.issubdtype(raw.dtype, np.integer):
         array = array / 32768.0
     if frame.sample_rate and frame.sample_rate != TARGET_RATE:
         # Nearest-sample resampling. Crude, and adequate: the detector reads loudness,
-        # and the transcriber is given the original frames re-encoded rather than this.
+        # and a beginner's sentence survives it — which is checked, not assumed, by
+        # tests/test_continuous.py timing a real decoded frame.
         step = frame.sample_rate / TARGET_RATE
         index = (np.arange(int(len(array) / step)) * step).astype(int)
         array = array[index]

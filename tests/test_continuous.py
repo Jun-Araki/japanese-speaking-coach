@@ -15,6 +15,7 @@ from __future__ import annotations
 
 from typing import Any
 
+import av
 import numpy as np
 import pytest
 
@@ -31,25 +32,75 @@ ECHO = 0.5  # the app's own voice coming back through the microphone
 BACKLOG = 0.9  # what was recorded while the script was busy, before this turn
 
 
-class FakeFrame:
-    """One frame of constant loudness. RMS of a constant array is the constant."""
+class TestOneFrameBecomesTheRightNumberOfSamples:
+    """The conversion that decides what time it is for everything downstream.
 
-    def __init__(self, level: float) -> None:
-        self._array = np.full(int(RATE * FRAME), level, dtype=np.float32)
-        self.sample_rate = RATE
+    aiortc's Opus decoder is fixed to s16 stereo — PACKED, so one interleaved row —
+    and until 2026-08-23 this file's fake frames were 1-D mono at the target rate,
+    which is the one shape that cannot expose the bug. A 20ms frame produced 640
+    samples instead of 320, so every duration in `collect_turn` was twice what had
+    really elapsed: the turn ended after half a second of silence rather than one,
+    and the transcriber was handed a 16kHz header over 32kHz of samples.
+    """
 
-    def to_ndarray(self) -> np.ndarray:
-        return self._array
+    def real_frame(self, layout: str, fmt: str) -> av.AudioFrame:
+        """A frame shaped the way the decoder actually delivers them: 20ms at 48kHz."""
+        channels = 2 if layout == "stereo" else 1
+        rows = channels if fmt.endswith("p") else 1
+        data = np.zeros((rows, 960 * channels // rows), dtype="<i2")
+        frame = av.AudioFrame.from_ndarray(data, format=fmt, layout=layout)
+        frame.sample_rate = 48_000
+        return frame
+
+    @pytest.mark.parametrize(
+        ("layout", "fmt"),
+        [("stereo", "s16"), ("stereo", "s16p"), ("mono", "s16")],
+    )
+    def test_twenty_milliseconds_stays_twenty_milliseconds(
+        self, layout: str, fmt: str
+    ) -> None:
+        samples = continuous._mono_16k(self.real_frame(layout, fmt))
+
+        assert len(samples) / RATE == pytest.approx(0.02, abs=0.001)
+
+    def test_a_headset_with_one_live_side_is_not_read_as_silence(self) -> None:
+        # Channels are averaged rather than decimated. Taking every other sample of
+        # an interleaved pair would return one channel and call it the room.
+        interleaved = np.zeros((1, 960 * 2), dtype="<i2")
+        interleaved[0, 0::2] = 16_384  # left speaking, right dead
+        frame = av.AudioFrame.from_ndarray(interleaved, format="s16", layout="stereo")
+        frame.sample_rate = 48_000
+
+        samples = continuous._mono_16k(frame)
+
+        assert len(samples) / RATE == pytest.approx(0.02, abs=0.001)
+        assert float(np.mean(samples)) == pytest.approx(0.25, abs=0.01)
+
+
+def one_frame(level: float) -> av.AudioFrame:
+    """20ms of constant loudness, shaped the way aiortc actually delivers it.
+
+    A REAL FRAME, NOT A STAND-IN. These used to be 1-D mono arrays already at the
+    target rate, which meant `_mono_16k` was never exercised by anything that had a
+    channel layout or a resampling step — and it was wrong in both for two days
+    without a single test noticing. Packed s16 stereo at 48kHz is what the decoder
+    produces, so that is what the tests feed it.
+    """
+    value = int(level * 32767)
+    data = np.full((1, 960 * 2), value, dtype="<i2")
+    frame = av.AudioFrame.from_ndarray(data, format="s16", layout="stereo")
+    frame.sample_rate = 48_000
+    return frame
 
 
 class FakeReceiver:
     """The real receiver's two behaviours: dump the backlog, then trickle."""
 
-    def __init__(self, backlog: list[FakeFrame], live: list[FakeFrame]) -> None:
+    def __init__(self, backlog: list[av.AudioFrame], live: list[av.AudioFrame]) -> None:
         self._backlog = list(backlog)
         self._live = list(live)
 
-    def get_frames(self, timeout: float) -> list[FakeFrame]:
+    def get_frames(self, timeout: float) -> list[av.AudioFrame]:
         if self._backlog:
             everything, self._backlog = self._backlog, []
             return everything
@@ -63,11 +114,11 @@ class BurstReceiver:
     own stop condition. Two frames a call is what a script slow enough to let the
     queue refill between reads would see."""
 
-    def __init__(self, supply: list[FakeFrame], per_call: int = 2) -> None:
+    def __init__(self, supply: list[av.AudioFrame], per_call: int = 2) -> None:
         self._supply = list(supply)
         self._per_call = per_call
 
-    def get_frames(self, timeout: float) -> list[FakeFrame]:
+    def get_frames(self, timeout: float) -> list[av.AudioFrame]:
         if not self._supply:
             raise RuntimeError("the stream stalled")
         batch, self._supply = self._supply[: self._per_call], self._supply[self._per_call :]
@@ -82,8 +133,8 @@ class FakeState:
 class FakeContext:
     def __init__(
         self,
-        live: list[FakeFrame],
-        backlog: list[FakeFrame] | None = None,
+        live: list[av.AudioFrame],
+        backlog: list[av.AudioFrame] | None = None,
         playing: bool = True,
     ) -> None:
         self.state = FakeState(playing)
@@ -98,11 +149,11 @@ class FakeStatus:
         self.captions.append(text)
 
 
-def frames(*runs: tuple[float, float]) -> list[FakeFrame]:
+def frames(*runs: tuple[float, float]) -> list[av.AudioFrame]:
     """Frames for a series of (seconds, loudness) runs."""
-    made: list[FakeFrame] = []
+    made: list[av.AudioFrame] = []
     for seconds, level in runs:
-        made.extend(FakeFrame(level) for _ in range(int(round(seconds / FRAME))))
+        made.extend(one_frame(level) for _ in range(int(round(seconds / FRAME))))
     return made
 
 

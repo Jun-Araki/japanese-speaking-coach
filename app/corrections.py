@@ -52,7 +52,7 @@ def correct_one(sentence: str, scene: str, level: str) -> CorrectionResult:
 
     Nothing raised in here reaches the caller. This runs inside a worker, on a
     batch that is one press away from the review screen, and an exception escaping
-    one sentence would take the other four down with it.
+    one sentence would take the rest of the batch down with it.
     """
     try:
         # Through the graph, which is also what the API calls: retrieve, correct,

@@ -109,7 +109,7 @@ def _post(model: str, payload: dict[str, Any]) -> dict[str, Any]:
         # as "answered 400 Bad Request" and nothing else, which is a sentence with no
         # next step in it: the provider puts the actual complaint in the response
         # body, and this clause used to drop the body on the floor. On 13 September
-        # that caption is all anyone will have.
+        # that one line of log is all anyone will have.
         raise SpeechError(
             f"{model} answered {exc.code} {exc.reason}: {_why(exc)}", status=exc.code
         ) from exc
@@ -121,9 +121,10 @@ def _post(model: str, payload: dict[str, Any]) -> dict[str, Any]:
 def _why(exc: urllib.error.HTTPError) -> str:
     """The provider's own explanation, out of the error body.
 
-    Trimmed, because this ends up in a caption under a chat message rather than in a
-    log. Anything unreadable comes back as a plain note rather than as a second
-    failure: a body that cannot be parsed must not replace the status that could be.
+    Trimmed, because this ends up on a single stderr line that whoever is running the
+    demo has to take in at a glance. Anything unreadable comes back as a plain note
+    rather than as a second failure: a body that cannot be parsed must not replace the
+    status that could be.
     """
     try:
         body = exc.read().decode("utf-8", "replace")

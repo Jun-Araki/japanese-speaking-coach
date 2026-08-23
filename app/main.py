@@ -302,10 +302,16 @@ def render_conversation() -> None:
     # unreadable — the reply is on screen as text.
     spoken_seconds = 0.0
     last = len(history()) - 1
-    if audio_slot is not None and st.session_state.get("spoken") != last:
+    if audio_slot is not None and st.session_state.get("spoken") != last and not tts_is_quiet():
+        # THE COOL-DOWN IS CHECKED HERE RATHER THAN INSIDE speak(), so that a line
+        # skipped without ever being attempted is not recorded as read. It changes
+        # nothing the learner hears and everything the flag means: "spoken" has to
+        # mean spoken, or nobody reading this later can rely on it for anything else.
         spoken_seconds = speak(history()[last].text, audio_slot)
         # After, never before: a run cancelled mid-synthesis has to leave the line
         # marked unspoken, or the retry this whole arrangement exists for never runs.
+        # A synthesis that WAS tried and failed is marked — retrying a 429 on the
+        # next rerun is how a rate limit gets worse rather than better.
         st.session_state["spoken"] = last
 
     st.divider()
@@ -380,14 +386,6 @@ def speak(text: str, slot: Any) -> float:
     than an error box where a reply should be — and, since 2026-08-22, smaller than a
     line of provider English under a beginner's first sentence in Japanese.
     """
-    if tts_is_quiet():
-        # The provider told us to stop asking, recently enough that it still means
-        # it. Skipped without a request, which is the only response to a rate limit
-        # that actually helps: the window it is waiting out gets shorter rather
-        # than longer, and the learner is not charged a second of waiting to be
-        # refused. Nothing is drawn -- the reply is on screen as text.
-        return 0.0
-
     # BOTH CLAUSES END THE SAME WAY, AND THAT IS THE POINT: SILENT TO THE LEARNER,
     # LOUD IN THE LOG. The error used to be printed under the reply, where it was a
     # line of English a beginner can do nothing about — "answered 429 Too Many

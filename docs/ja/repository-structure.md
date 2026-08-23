@@ -21,6 +21,8 @@ japanese-speaking-coach/
 │   └── YYYYMMDD-タイトル/      requirements.md, design.md, tasklist.md
 ├── app/                       Streamlit の画面。1画面のみ
 │   ├── main.py                会話画面。**Community Cloud の起動ファイルはこれ。恒久的に固定**
+│   ├── corrections.py         会話終了時の一括訂正。**発話順に返す。並列数は上限つき**
+│   ├── continuous.py          押さずに話す連続リッスン。**`CONTINUOUS_VOICE=0` でボタンに戻る**
 │   ├── limits.py              1日のトークン・音声合成の上限と共有コード。**呼ぶ前に数えて拒否する**
 │   └── theme.py               CSS と注意書き。**合成音声である旨・音声の限界の文言もここ**
 ├── dialogue/                  会話ノード

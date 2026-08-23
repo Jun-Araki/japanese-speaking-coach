@@ -24,6 +24,7 @@ from __future__ import annotations
 
 import os
 import secrets
+import threading
 import time
 from datetime import date
 from typing import Final
@@ -100,14 +101,22 @@ def spend_tts_chars(text: str, today: date | None = None) -> None:
     )
 
 
+# READ, COMPARE, WRITE — three steps, and Streamlit runs each session on its own
+# thread. Two people at a meetup crossing the same counter would each read the old
+# value and each write it back, so one of the two calls would be free. A guard that
+# undercounts under load is a guard that fails exactly when it is needed.
+_COUNTING = threading.Lock()
+
+
 def _spend(kind: str, amount: int, cap: int, today: date | None) -> None:
     key = (kind, today or date.today())
-    if _used.get(key, 0) + amount > cap:
-        raise LimitReached(
-            f"The daily {kind.replace('_', ' ')} limit for this demo has been reached. "
-            "It resets tomorrow."
-        )
-    _used[key] = _used.get(key, 0) + amount
+    with _COUNTING:
+        if _used.get(key, 0) + amount > cap:
+            raise LimitReached(
+                f"The daily {kind.replace('_', ' ')} limit for this demo has been reached. "
+                "It resets tomorrow."
+            )
+        _used[key] = _used.get(key, 0) + amount
 
 
 def tts_cooldown() -> int:
