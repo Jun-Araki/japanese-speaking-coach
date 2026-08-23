@@ -33,3 +33,16 @@ services:
       ACCESS_CODE: ${ACCESS_CODE:-}
       DAILY_TOKEN_LIMIT: ${DAILY_TOKEN_LIMIT:-200000}
       DAILY_TTS_CHAR_LIMIT: ${DAILY_TTS_CHAR_LIMIT:-50000}
+      MAX_TURNS: ${MAX_TURNS:-20}
+      # The same models the api service names, because this service transcribes and
+      # speaks too. Left implicit, the two halves of one image could be asked to use
+      # different models by whoever set only one of them.
+      TTS_MODEL: ${TTS_MODEL:-gemini-2.5-flash-preview-tts}
+      TRANSCRIBE_MODEL: ${TRANSCRIBE_MODEL:-gemini-2.5-flash}
+      # The three escape hatches, spelled out here so that someone running this can
+      # find them without reading the source. WebRTC needs a network that will carry
+      # it; the warm-up needs memory; the cool-down is how long a rate-limited
+      # provider is left alone.
+      CONTINUOUS_VOICE: ${CONTINUOUS_VOICE:-1}
+      WARM_RETRIEVAL: ${WARM_RETRIEVAL:-1}
+      TTS_COOLDOWN_SECONDS: ${TTS_COOLDOWN_SECONDS:-60}

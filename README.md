@@ -155,6 +155,11 @@ over stage 0's stored answers — no second call, so no sampling noise sits betw
 **These are dev numbers and dev is the split that was tuned against, so the gaps are flattered.**
 The held-out figures in the next table are the ones to quote.
 
+*One item is worth 1.6 points on detection (n=64) and 6.25 points on over-correction (n=16).
+Several rows above differ by exactly one item on detection, which is not a difference worth
+reading. The over-correction column is where the movement is, and it is movement in whole
+sentences: 9, then 5, then 4, then 2 of the 16 that were already fine.*
+
 **Check 1 fired on nothing.** Its threshold was set on the baseline's output, conservatively
 enough to discard no correct correction, and against this implementation the largest rewrite came
 to 0.818 against a floor of 0.85. It ships, and it currently does nothing — which is stated here

@@ -25,6 +25,7 @@ data/frequency/
 
 # Local only.
 .env
+.claude/
 PLAN.md
 interview-stories/
 .obsidian/

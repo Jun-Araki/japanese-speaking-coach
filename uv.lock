@@ -1328,12 +1328,15 @@ name = "japanese-speaking-coach"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
+    { name = "av" },
     { name = "chromadb" },
     { name = "fastapi" },
     { name = "langchain" },
     { name = "langchain-anthropic" },
     { name = "langchain-google-genai" },
     { name = "langgraph" },
+    { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
+    { name = "numpy", version = "2.5.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
     { name = "python-dotenv" },
     { name = "sentence-transformers" },
     { name = "streamlit" },
@@ -1353,12 +1356,14 @@ dev = [
 
 [package.metadata]
 requires-dist = [
+    { name = "av" },
     { name = "chromadb" },
     { name = "fastapi" },
     { name = "langchain" },
     { name = "langchain-anthropic" },
     { name = "langchain-google-genai" },
     { name = "langgraph" },
+    { name = "numpy" },
     { name = "python-dotenv" },
     { name = "sentence-transformers" },
     { name = "streamlit" },
