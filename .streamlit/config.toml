@@ -25,5 +25,24 @@ toolbarMode = "viewer"
 # limit in speech/voice.py is 8MB. This stops anything larger reaching the process.
 maxUploadSize = 10
 
+# NO FILE WATCHER, SO THAT THE LOG IS READABLE. The watcher walks every imported
+# module looking for local source files, and `transformers` imports its submodules
+# lazily on attribute access — so the walk itself triggers real imports of image
+# processors that want torchvision, which this app has no use for and does not
+# install. Streamlit catches each one and logs the traceback: several hundred lines,
+# every boot, on the deployment (seen 2026-08-24) and locally alike.
+#
+# The deploy runbook tells whoever is running the demo to read this log when the
+# audio goes quiet — `[speak] no audio for …` carries the reason, and a 429 there is
+# the free tier rather than a fault. One line in three hundred tracebacks, found on a
+# phone at a meetup, is a line nobody finds.
+#
+# WHAT IT COSTS is auto-reload while developing: edit a file and the running app no
+# longer restarts itself. That was already unreliable — on 2026-08-22 an edit to
+# app/limits.py left the running app throwing ImportError for a name that was right
+# there in the file, because the watcher reloads the entry script and not always what
+# it imports. Restarting was already the honest way to pick up a change.
+fileWatcherType = "none"
+
 [browser]
 gatherUsageStats = false
