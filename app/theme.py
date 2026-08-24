@@ -13,9 +13,10 @@ and how to reach a person. The first is the one they cannot work out for themsel
 and the second is a claim this project can actually make — there is no database, no
 file and no log line carrying a sentence.
 
-The AI-voice line is written now and shown when audio lands: hearing a synthetic
-voice and not being told it is synthetic is the version of this that a person could
-reasonably object to afterwards.
+The AI-voice line sits inside that notice, on the screen before anyone speaks, rather
+than beside the player: hearing a synthetic voice and not having been told it is
+synthetic is the version of this a person could reasonably object to afterwards, and
+being told once, up front, is what answers that.
 """
 
 from __future__ import annotations
@@ -100,13 +101,20 @@ STYLE: Final = """
 </style>
 """
 
+# SHORT ENOUGH TO BE READ, which is the only version that protects anybody. The first
+# draft ran to eighty-five words and said everything twice: "no names, addresses,
+# passwords or work information" after "nothing private", "closing the page ends the
+# session" after "nothing is stored". A learner standing at a meetup table skips a
+# paragraph that size, and a notice nobody reads is decoration.
+#
+# FOUR THINGS COULD NOT GO, and none of them did: that what is said leaves this
+# machine, that private things should not be said, that the voice is not a person,
+# and how to reach one (the line under this, in main.py). The rest was compression.
 NOTICE: Final = (
-    "**Before you start.** What you say or write is sent to an AI model outside this "
-    "app to generate the reply and the corrections, so do not say anything private — "
-    "no names, addresses, passwords or work information. **Nothing is stored**: there "
-    "is no database, no recording and no log, and closing the page ends the session "
-    "for good. The replies are generated, so they can be wrong, and **the voice you "
-    "hear is synthesised — it is not a recording of a person.**"
+    "**Before you start.** What you say goes to an AI outside this app, so say nothing "
+    "private — no names, addresses or passwords. **Nothing is stored**: no database, no "
+    "recording, no log. Replies can be wrong, and **the voice is AI-generated, not a "
+    "person's.**"
 )
 
 # DISCLOSURE, SAID ONCE. Speech-synthesis terms require telling people the voice is
