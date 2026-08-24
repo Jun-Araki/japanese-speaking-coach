@@ -353,6 +353,21 @@ def render_conversation() -> None:
         heard_audio = continuous.collect_turn(context, status, skip_seconds=spoken_seconds)
         if heard_audio is not None:
             _send_recording(heard_audio)
+        elif continuous.is_live(context):
+            # THE PAGE HAS TO GO ROUND AGAIN, or it is finished. Returning here used
+            # to end the script run with the stream still open and nothing left to
+            # wake it: the microphone widget only reruns the page when its own state
+            # changes, and a connected stream that has simply stopped delivering
+            # frames changes nothing. The learner was left looking at "Listening…"
+            # for ever, which is what happened on the deployed app on 2026-08-24.
+            #
+            # Only when the stream is up. When it is not, `collect_turn` returns
+            # immediately, the record button is on screen instead, and rerunning here
+            # would spin the page as fast as it could draw. With the stream up the
+            # frame loop has already waited out its timeout, so this goes round about
+            # once every few seconds.
+            print("[listen] no turn collected; listening again", file=sys.stderr, flush=True)
+            st.rerun()
 
 
 def _audio_for(text: str) -> bytes:
