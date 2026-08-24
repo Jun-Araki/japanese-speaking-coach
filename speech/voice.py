@@ -40,9 +40,27 @@ from typing import Any, Final
 DEFAULT_TTS_MODEL: Final = "gemini-2.5-flash-preview-tts"
 DEFAULT_TTS_VOICE: Final = "Kore"
 
-# Transcription rides on the ordinary text model, which takes audio inline. Using
-# the same model as the conversation keeps one provider and one key.
-DEFAULT_TRANSCRIBE_MODEL: Final = "gemini-2.5-flash"
+# Transcription rides on a text model that takes audio inline, and since 2026-08-24
+# it is the LITE one — which is both faster and, far more importantly, worse at
+# repairing the learner. Measured on the same five clips both ways:
+#
+#   gemini-2.5-flash          3.14s   「オフィスでいます」→「オフィスにいます」
+#   gemini-flash-lite-latest  1.90s   「オフィスでいます」→「オフィスでいます」
+#
+# The bigger model writes down what the speaker MEANT. That is excellent
+# transcription and, for an app whose whole function is telling a learner what they
+# got wrong, it is the erasure of the thing being practised —
+# docs/ja/architecture.md has carried that measurement, and this weakness, since
+# 2026-08-20. The lite model is less fluent and therefore more faithful: it kept the
+# wrong particle in two of the five and the dropped verb in a third.
+#
+# It costs a habit of putting spaces between words, which Japanese does not use and
+# `strip_spacing` below removes — in this layer, for the same reason the full stop is
+# restored in this layer.
+#
+# The text model of this family 404s on this key; only the audio path works. That is
+# why the conversation still runs on gemini-2.5-flash.
+DEFAULT_TRANSCRIBE_MODEL: Final = "gemini-flash-lite-latest"
 
 _ENDPOINT: Final = "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
 _TIMEOUT: Final = 60.0
@@ -303,7 +321,8 @@ def transcribe(audio: bytes, mime_type: str = "audio/wav", model: str | None = N
                     f"(finish reason: {_finish_reason(answer)})"
                 ) from exc
             continue
-        return close_sentence("".join(part.get("text", "") for part in parts).strip())
+        said = "".join(part.get("text", "") for part in parts).strip()
+        return close_sentence(strip_spacing(said))
 
     raise AssertionError("the loop above always returns or raises")
 
@@ -314,6 +333,33 @@ def _finish_reason(answer: dict[str, Any]) -> str:
         return str(answer["candidates"][0].get("finishReason", "not given"))
     except (KeyError, IndexError, TypeError):
         return str(answer.get("promptFeedback", {}).get("blockReason", "no candidates"))
+
+
+def strip_spacing(text: str) -> str:
+    """Take out the spaces a transcriber put between Japanese words.
+
+    JAPANESE DOES NOT WRITE THEM, so a learner never typed one and never said one.
+    The lite model returns 「スーパー に 買い物 し ます 。」 for a sentence spoken without
+    a pause anywhere in it — a tokeniser's habit showing through, not something about
+    the speech.
+
+    Left alone it reaches the correction engine, which would be judging a sentence
+    nobody wrote. Fixed here rather than in the correction prompt for the same reason
+    the full stop is: that prompt is the one every published number was measured on.
+
+    Spaces between ASCII words are kept. A learner saying a foreign name or a number
+    can legitimately produce one.
+    """
+    out: list[str] = []
+    for index, char in enumerate(text):
+        if char == " " and 0 < index < len(text) - 1:
+            before, after = text[index - 1], text[index + 1]
+            if not (before.isascii() and before.isalnum()) or not (
+                after.isascii() and after.isalnum()
+            ):
+                continue
+        out.append(char)
+    return "".join(out).strip()
 
 
 # Sentence-final punctuation, in the forms the transcription actually returns.

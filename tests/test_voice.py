@@ -60,6 +60,36 @@ class TestClosingASentence:
         assert voice.close_sentence("") == ""
 
 
+class TestStrippingWordSpacing:
+    """Japanese does not write spaces between words, so a learner never said one.
+
+    The lite transcription model returns 「スーパー に 買い物 し ます 。」 for a sentence
+    spoken without a pause in it — a tokeniser's habit showing through. Passed on, the
+    correction engine would be judging a sentence nobody wrote.
+    """
+
+    def test_spaces_between_japanese_words_go(self) -> None:
+        assert voice.strip_spacing("スーパー に 買い物 し ます 。") == "スーパーに買い物します。"
+
+    def test_the_learners_mistake_is_not_tidied_away_with_them(self) -> None:
+        # The wrong particle has to survive this: it is the thing being practised.
+        assert voice.strip_spacing("私 は オフィス で い ます 。") == "私はオフィスでいます。"
+
+    def test_a_space_inside_a_number_or_a_name_goes_too(self) -> None:
+        assert voice.strip_spacing("私は毎朝 6 時起きます。") == "私は毎朝6時起きます。"
+        spaced = "メール を Rahul さん に 送ります 。"
+        assert voice.strip_spacing(spaced) == "メールをRahulさんに送ります。"
+
+    def test_a_space_inside_an_english_phrase_stays(self) -> None:
+        # A learner saying a foreign phrase legitimately produces one, and English
+        # without its spaces is unreadable. The space where the English meets the
+        # Japanese goes, because Japanese does not write one there either.
+        assert voice.strip_spacing("Good morning です。") == "Good morningです。"
+
+    def test_a_sentence_with_no_spaces_is_untouched(self) -> None:
+        assert voice.strip_spacing("毎日で走る。") == "毎日で走る。"
+
+
 class TestPlaybackSeconds:
     def test_reads_the_length_out_of_the_header(self) -> None:
         # The listener throws away this many seconds of microphone before it starts
@@ -178,7 +208,7 @@ class TestTranscribe:
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         monkeypatch.setattr(
-            voice, "_post", lambda model, payload: answer_with_text(" 電車がまだ動きません ")
+            voice, "_post", lambda model, payload: answer_with_text(" 電車 が まだ 動きません ")
         )
 
         assert voice.transcribe(b"RIFF....") == "電車がまだ動きません。"

@@ -12,7 +12,7 @@ disagree, the Japanese version is correct and this file needs updating.
 | Area | Choice | Why |
 |---|---|---|
 | LLM | **LangChain → Gemini** (decided 2026-08-03) | See "Choosing a provider" below |
-| Transcription | **Gemini** (`gemini-2.5-flash`, audio passed inline; built 2026-08-20) | **Provisional.** Chosen because no OpenAI key was available — see "Transcription erases the learner's mistakes" |
+| Transcription | **Gemini** (`gemini-flash-lite-latest`, audio passed inline; changed 2026-08-24) | **Provisional.** Chosen because no OpenAI key was available — see "Transcription erases the learner's mistakes" |
 | Text to speech | **Gemini** (`gemini-2.5-flash-preview-tts`) | **A preview model**; if it goes, the app falls back to text. **One person alone reaches the free tier's rate limit** (see below). **Disclosing that the voice is AI-generated is done regardless of provider** |
 | Tokenization | SudachiPy + SudachiDict (Apache-2.0) | Japanese has no spaces between words, so vocabulary-level checking requires morphological analysis |
 | Embeddings | sentence-transformers, multilingual | Retrieval over Japanese text |
@@ -113,6 +113,30 @@ a noisy figure.**
 may come from the speaking side rather than the listening side. Separating them needs recordings
 of real learners, and **this app stores no audio** — the same constraint that made the choice
 unmeasurable in the first place.
+
+> ### Added 2026-08-24 — **trying to make it faster improved this instead**
+>
+> `gemini-flash-lite-latest` was tried to cut the wait before anything appears on
+> screen (the lite text model 404s on this key; **the audio path works**). Both models
+> measured on the same five clips:
+>
+> | | median | exact | mistake kept |
+> |---|---|---|---|
+> | `gemini-2.5-flash` (was) | 3.14s | 1/5 | **1/5** |
+> | `gemini-flash-lite-latest` (now) | **1.70s** | **3/5** | **4/5** |
+>
+> - 「オフィス**で**います」 and 「毎日**で**走る」: **the old model repaired both, the new one kept both**
+> - 「私は毎朝六時起きます」: the old model dropped the verb entirely; the new one kept it (六 vs 6 aside)
+> - **Same reasoning as the section above.** The more fluent the model, the more it
+>   writes down what was MEANT — which for this app is the erasure of the thing being
+>   practised. Being less fluent makes it more faithful.
+> - It costs spaces between words, which Japanese does not use. `strip_spacing`
+>   removes them, **in the same layer and for the same reason as the restored full
+>   stop**: the published numbers were measured on that correction prompt.
+>
+> **Still n=5.** The old 1/5 was also n=5, so the comparison is like for like, but the
+> caveat above about the spread applies to both. **This is not in the README yet**, and
+> should not be until it is measured over more than five clips.
 
 **So this is how it stands.**
 
