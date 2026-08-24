@@ -46,7 +46,13 @@ WARM_RETRIEVAL = "1"          # 0 で索引を起動時に作らず、必要に�
 
 ## 2. 依存ファイル
 
-**`requirements.txt` をそのまま使う。** 中身の要点は2つ。
+**Cloud は `requirements.txt` を読まない**（2026-08-24 にビルドログで判明）。
+`pyproject.toml` と `uv.lock` があるとそちらが優先され、ログに
+`WARN: More than one requirements file detected` と出る。**依存を変えるときは
+`pyproject.toml` を直して `uv lock` を実行すること。** `requirements.txt` の編集だけでは
+デプロイに反映されない。
+
+`requirements.txt` は **`pip install -r` と Docker イメージ**が読む。要点は2つ。
 
 - **`--extra-index-url https://download.pytorch.org/whl/cpu` と `torch==2.13.0+cpu`。**
   PyPI の `torch` を Linux で入れると **CUDA 一式（cudnn・nccl・cusparselt・nvshmem・triton）が

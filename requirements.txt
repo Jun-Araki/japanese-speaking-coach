@@ -1,4 +1,13 @@
-# What Streamlit Community Cloud installs. The full set, retrieval included.
+# The full set, retrieval included.
+#
+# NOT WHAT STREAMLIT COMMUNITY CLOUD INSTALLS, which this file claimed until
+# 2026-08-24. The build log says so plainly — it warns that more than one
+# requirements file was found and installs from pyproject.toml and uv.lock, which is
+# why ruff and uvicorn turned up in a deployment that names neither. The CPU pin
+# below was therefore doing nothing there: the lock resolved torch from PyPI and
+# brought cuda-toolkit and triton onto a machine with no GPU. pyproject.toml now
+# points torch at the same index this file does, so the two agree; this file is what
+# a `pip install -r` reads, and the Docker image is built from it.
 #
 # CPU TORCH, EXPLICITLY. `pip install torch` on Linux pulls the CUDA runtime with
 # it — nvidia-cudnn, nccl, cusparselt, nvshmem and triton — which is roughly two

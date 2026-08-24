@@ -54,6 +54,11 @@ dependencies = [
     # continuing to want it.
     "numpy",
     "av",
+    # DECLARED SO THAT IT CAN BE POINTED SOMEWHERE. torch arrives through
+    # sentence-transformers either way, but `[tool.uv.sources]` below only applies to
+    # this project's own dependencies — naming it transitively changes nothing, which
+    # is what the first attempt at this fix discovered.
+    "torch",
 ]
 
 [dependency-groups]
@@ -65,6 +70,33 @@ dev = [
     # without a server and without a port.
     "httpx",
 ]
+
+# TORCH FROM PYTORCH'S OWN CPU INDEX, ON LINUX ONLY.
+#
+# requirements.txt has said since it was written that `pip install torch` on Linux
+# brings the CUDA runtime with it, and pins the CPU build against PyTorch's index to
+# avoid roughly two gigabytes of GPU libraries on a free tier that has no GPU. On
+# 2026-08-24 the deployment log showed that argument had stopped applying: Streamlit
+# Community Cloud installs from pyproject.toml and uv.lock when they exist — it says
+# so in the build log, warning that more than one requirements file was found — and
+# the lock resolved torch from PyPI, so cuda-bindings, cuda-toolkit and triton were
+# installed on a machine that cannot use any of them. The build took over ten minutes
+# and the first attempt to wake the app timed out.
+#
+# Naming the index here puts the two paths back in agreement, so that the reason
+# written in requirements.txt is true of the deployment that actually happens.
+#
+# LINUX ONLY, because that index carries no macOS wheels and the PyPI build on macOS
+# is already CPU-only. `explicit = true` keeps every other package on PyPI: an index
+# added globally would be searched for everything and can resolve a package to
+# whatever it happens to mirror.
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+[tool.uv.sources]
+torch = [{ index = "pytorch-cpu", marker = "sys_platform == 'linux'" }]
 
 [tool.ruff]
 line-length = 100
