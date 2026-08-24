@@ -13,7 +13,7 @@ disagree, the Japanese version is correct and this file needs updating.
 |---|---|---|
 | LLM | **LangChain → Gemini** (decided 2026-08-03) | See "Choosing a provider" below |
 | Transcription | **Gemini** (`gemini-flash-lite-latest`, audio passed inline; changed 2026-08-24) | **Provisional.** Chosen because no OpenAI key was available — see "Transcription erases the learner's mistakes" |
-| Text to speech | **Gemini** (`gemini-2.5-flash-preview-tts`) | **A preview model**; if it goes, the app falls back to text. **One person alone reaches the free tier's rate limit** (see below). **Disclosing that the voice is AI-generated is done regardless of provider** |
+| Text to speech | **The browser's own voice** (default, changed 2026-08-24), or **Gemini** (`gemini-2.5-flash-preview-tts`) with `BROWSER_VOICE=0` | **No round trip, so it starts at once, with no rate limit and no bill.** The Gemini path is a preview model and **one person alone reaches the free tier's rate limit** (see below). **Disclosing that the voice is AI-generated is done either way** |
 | Tokenization | SudachiPy + SudachiDict (Apache-2.0) | Japanese has no spaces between words, so vocabulary-level checking requires morphological analysis |
 | Embeddings | sentence-transformers, multilingual | Retrieval over Japanese text |
 | Vector store | Chroma | Fastest local option, sufficient for a demo |

@@ -202,6 +202,25 @@ def loudest_sample(wav: bytes) -> float:
     return max(abs(value) for value in pcm) / 32768
 
 
+# Characters of Japanese per second of speech. Measured on this project's own
+# synthesis: 「おはようございます。お散歩ですか？」 is 17 characters and came back as 2.33
+# seconds of audio, which is an ordinary speaking pace.
+SPEAKING_RATE: Final = 7.3
+
+
+def speaking_seconds(text: str) -> float:
+    """Roughly how long a line takes to say. An estimate, and known to be one.
+
+    The browser's own voice does not report its length — it starts speaking and says
+    nothing about when it will stop — so when that is the voice being used, this is
+    all the listener has to decide how much microphone to throw away. Wrong in one
+    direction it leaves some of the app's voice in the recording; wrong in the other
+    it eats the start of the learner's answer. `playback_seconds` is exact and is
+    used instead whenever there is a file to measure.
+    """
+    return len(text) / SPEAKING_RATE
+
+
 def playback_seconds(wav: bytes) -> float:
     """How long a WAV takes to play, read out of its own header.
 

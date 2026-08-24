@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import base64
 import contextlib
+import json
 import os
 import sys
 import threading
@@ -49,6 +50,7 @@ from speech.voice import (  # noqa: E402
     SpeechError,
     loudest_sample,
     playback_seconds,
+    speaking_seconds,
     synthesise,
     transcribe,
 )
@@ -316,7 +318,19 @@ def render_conversation() -> None:
     # unreadable — the reply is on screen as text.
     spoken_seconds = 0.0
     last = len(history()) - 1
-    if audio_slot is not None and st.session_state.get("spoken") != last and not tts_is_quiet():
+    if audio_slot is not None and browser_voice_enabled():
+        # The browser's own voice: no round trip, no rate limit, and nothing to wait
+        # for. Drawn every run so the control stays pressable; spoken only the first
+        # time, so a rerun does not read the same line again.
+        first_time = st.session_state.get("spoken") != last
+        spoken_seconds = _speak_in_browser(
+            history()[last].text, audio_slot, announce=first_time
+        )
+        if first_time:
+            st.session_state["spoken"] = last
+        else:
+            spoken_seconds = 0.0
+    elif audio_slot is not None and st.session_state.get("spoken") != last and not tts_is_quiet():
         # THE COOL-DOWN IS CHECKED HERE RATHER THAN INSIDE speak(), so that a line
         # skipped without ever being attempted is not recorded as read. It changes
         # nothing the learner hears and everything the flag means: "spoken" has to
@@ -396,6 +410,99 @@ def _audio_for(text: str) -> bytes:
             cache.pop(next(iter(cache)))
         cache[text] = made
     return cache[text]
+
+
+def browser_voice_enabled() -> bool:
+    """Whether to let the browser read the reply, instead of sending for a recording.
+
+    ON BY DEFAULT SINCE 2026-08-24, and the reason is arithmetic. Asking the provider
+    for the audio costs 3.7 seconds on every turn and is refused outright once the
+    free tier's limit is reached, which one person practising alone manages in a
+    handful of turns. The browser's own voice starts immediately, cannot be rate
+    limited, and cannot disappear when a preview model does.
+
+    It was considered and rejected in the latency design on 2026-08-21 — "whether the
+    venue's devices have a Japanese voice cannot be known from here" — and the facts
+    that decided it have since changed. The path it lost to turns out to be silent
+    quite often by itself, and slow when it is not.
+
+    WHAT IT COSTS: the voice belongs to the device rather than to us, so it is more
+    mechanical, and a device with no Japanese voice installed says nothing at all.
+    `BROWSER_VOICE=0` restores the provider's voice exactly, with an environment
+    variable and no rebuild.
+    """
+    return os.environ.get("BROWSER_VOICE", "1").strip().lower() not in {"0", "false", "no"}
+
+
+def _speak_in_browser(text: str, slot: Any, *, announce: bool) -> float:
+    """Have the page say the line itself. Returns roughly how long it will take.
+
+    DRAWN ON EVERY RUN, SPOKEN ON ONE. The control has to survive a rerun or it is not
+    a control: the page goes round every few seconds while the microphone listens, and
+    a button that exists only on the run that produced the reply is gone before anyone
+    could press it. `announce` is what separates the two — false redraws the button
+    and stays quiet, so nobody gets the same sentence read to them twice.
+
+    A CONTROL AS WELL AS AN ATTEMPT, for the reason the provider's player has one:
+    iOS Safari will not start audio without a gesture on the same rendering of the
+    page, and a reply arrives on a later rerun than the tap that asked for it. So it
+    tries, and there is something to press where trying is not allowed.
+
+    The voice list loads asynchronously in some browsers, which is why this waits for
+    `voiceschanged` when it arrives empty rather than concluding there is no voice.
+    """
+    # THE LINE IS A LANGUAGE MODEL'S OUTPUT AND THIS IS AN IFRAME WITH SAME-ORIGIN
+    # ACCESS, which st.iframe's own documentation warns about by name. `json.dumps`
+    # makes a safe JavaScript string literal for quotes and backslashes but leaves
+    # `</script>` intact, and that alone closes the block and starts running markup.
+    # Escaping the slash is the standard answer and keeps the literal valid.
+    spoken = json.dumps(text).replace("</", "<\\/")
+    # Into the slot claimed in the reply's bubble, not wherever the script happens to
+    # be — which by this point is below the input box.
+    with slot:
+        st.iframe(
+            f"""
+            <div style="font:14px/1.5 Georgia,serif;color:#5b5347">
+              <button id="again" style="font:inherit;border:1px solid #cfc6b6;background:#f2ece1;
+                color:#1c1a17;border-radius:4px;padding:2px 10px;cursor:pointer">▶ もう一度</button>
+              <span id="note"></span>
+            </div>
+            <script>
+            const line = {spoken};
+            function japanese() {{
+              return (window.speechSynthesis.getVoices() || [])
+                .find(v => v.lang && v.lang.toLowerCase().startsWith("ja"));
+            }}
+            function say() {{
+              const voice = japanese();
+              if (!voice) {{
+                document.getElementById("note").textContent =
+                  " この端末には日本語の音声が入っていません。";
+                return;
+              }}
+              const said = new SpeechSynthesisUtterance(line);
+              said.voice = voice;
+              said.lang = "ja-JP";
+              window.speechSynthesis.cancel();
+              window.speechSynthesis.speak(said);
+            }}
+            document.getElementById("again").onclick = say;
+            if ({"true" if announce else "false"}) {{
+              if ((window.speechSynthesis.getVoices() || []).length === 0) {{
+                window.speechSynthesis.onvoiceschanged = () => {{
+                  window.speechSynthesis.onvoiceschanged = null;
+                  say();
+                }};
+              }} else {{
+                say();
+              }}
+            }}
+            </script>
+            """,
+            height=34,
+        )
+    # An estimate, because nothing reports back from in there. See speaking_seconds.
+    return speaking_seconds(text)
 
 
 def _no_audio(text: str, exc: Exception) -> None:
