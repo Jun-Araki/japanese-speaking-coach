@@ -479,24 +479,27 @@ def render_input() -> tuple[Any, Any] | None:
         st.session_state["caveat_seen"] = True
 
     if continuous.enabled():
-        # The microphone stays open and silence ends the turn. Falls through to the
-        # button below if the stream never connects — a hall with a locked-down
-        # network is a place this has to keep working, not a place to show an error.
+        # The microphone stays open and silence ends the turn.
+        #
+        # AND THE BUTTON IS THERE WHENEVER IT IS NOT. This comment used to say the
+        # screen "falls through to the button if the stream never connects" and the
+        # code returned before reaching it, so a learner whose WebRTC did not connect
+        # got "Starting the microphone…" and no way to speak at all — which is what
+        # happened on the deployed app on 2026-08-24. WebRTC needs STUN and often
+        # TURN, this app has the first and not the second, and a hall in Bangalore on
+        # 13 September is exactly where that runs out. A promise in a comment is not a
+        # fallback.
         status = st.container()
         context = continuous.open_stream()
+        if not continuous.is_live(context):
+            _offer_the_button()
         if typed := st.chat_input("または、日本語で書いてください"):
             history().append(Utterance("learner", typed))
             st.session_state["failure"] = None
             st.rerun()
         return context, status
 
-    # A KEY THAT CHANGES EVERY TURN. Without it the widget hands back the same
-    # recording after the rerun, the same sentence is transcribed and sent again, and
-    # the conversation runs away on its own — three identical turns appeared on the
-    # deployed app on 2026-08-21 before anyone touched the microphone a second time.
-    recording = st.audio_input("話してください", key=f"microphone-{len(history())}")
-    if recording is not None:
-        _send_recording(recording.getvalue())
+    _offer_the_button()
 
     if typed := st.chat_input("または、日本語で書いてください"):
         history().append(Utterance("learner", typed))
@@ -505,6 +508,19 @@ def render_input() -> tuple[Any, Any] | None:
     # The button path has nothing to collect later: `st.audio_input` hands back a
     # finished recording rather than a stream, so it never blocked in the first place.
     return None
+
+
+def _offer_the_button() -> None:
+    """Press to record one turn. The path that needs nothing but HTTP.
+
+    A KEY THAT CHANGES EVERY TURN. Without it the widget hands back the same
+    recording after the rerun, the same sentence is transcribed and sent again, and
+    the conversation runs away on its own — three identical turns appeared on the
+    deployed app on 2026-08-21 before anyone touched the microphone a second time.
+    """
+    recording = st.audio_input("話してください", key=f"microphone-{len(history())}")
+    if recording is not None:
+        _send_recording(recording.getvalue())
 
 
 def render_review() -> None:

@@ -147,6 +147,16 @@ def open_stream() -> Any:
     )
 
 
+def is_live(context: Any) -> bool:
+    """Whether the stream is actually carrying audio right now.
+
+    Asked before the turn is collected, so the screen can put a record button up when
+    the answer is no. WebRTC needs a network that will carry it and this app has STUN
+    and no TURN, so "no" is a state a hall can hold it in indefinitely.
+    """
+    return bool(context.state.playing) and context.audio_receiver is not None
+
+
 def collect_turn(context: Any, status: Any, skip_seconds: float = 0.0) -> bytes | None:
     """Stream until the turn ends. Returns the audio, or None if it did not.
 
@@ -187,8 +197,10 @@ def collect_turn(context: Any, status: Any, skip_seconds: float = 0.0) -> bytes 
     drawing the input box first — they can act on the reply early, and the audio for
     that turn is what gives way.
     """
-    if not context.state.playing or context.audio_receiver is None:
-        status.caption("Starting the microphone…")
+    if not is_live(context):
+        status.caption(
+            "Starting the microphone… if it does not connect, use the button or type."
+        )
         return None
 
     detector = TurnDetector()

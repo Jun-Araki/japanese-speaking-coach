@@ -238,12 +238,21 @@ class TestWhatDoesNotReachTheDetector:
 class TestTheStreamIsNotUp:
     def test_says_so_and_returns_nothing(self) -> None:
         # A hall with a locked-down network is a place this has to keep working,
-        # not a place to show an error.
+        # not a place to show an error. The caption names the two ways out, because
+        # the screen puts a record button up alongside it.
         status = FakeStatus()
         context: Any = FakeContext([], playing=False)
 
         assert continuous.collect_turn(context, status) is None
-        assert status.captions == ["Starting the microphone…"]
+        assert len(status.captions) == 1
+        assert "button" in status.captions[0]
+        assert not continuous.is_live(context)
+
+    def test_a_running_stream_is_live(self) -> None:
+        # What the screen asks before deciding whether to draw the button.
+        context: Any = FakeContext(frames((0.1, QUIET)))
+
+        assert continuous.is_live(context)
 
     def test_a_stalled_stream_is_not_a_crash(self) -> None:
         context: Any = FakeContext(frames((0.5, QUIET), (0.2, SPEECH)))
