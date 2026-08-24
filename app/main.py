@@ -44,7 +44,14 @@ from app.limits import (  # noqa: E402
 from app.theme import CONTACT, NOTICE, SPEECH_CAVEAT, STYLE  # noqa: E402
 from correction import CorrectionResult  # noqa: E402
 from dialogue import LEVELS, SCENES, Utterance, opening_line, reply  # noqa: E402
-from speech.voice import SpeechError, playback_seconds, synthesise, transcribe  # noqa: E402
+from speech.voice import (  # noqa: E402
+    SILENT_PEAK,
+    SpeechError,
+    loudest_sample,
+    playback_seconds,
+    synthesise,
+    transcribe,
+)
 
 load_dotenv()
 
@@ -142,6 +149,7 @@ SESSION_KEYS = (
     "used_speech",
     "spoken",
     "audio_cache",
+    "unheard",
 )
 
 # One conversation's worth of replies, at roughly 90KB of WAV each. `max_turns()`
@@ -228,6 +236,12 @@ def render_conversation() -> None:
             st.write(utterance.text)
             if utterance.speaker == "partner" and index == len(history()) - 1:
                 audio_slot = st.empty()
+
+    if unheard := st.session_state.pop("unheard", None):
+        # Drawn here rather than where it was decided, because that run ended in a
+        # rerun so that the microphone would be listening again by the time this is
+        # read.
+        st.warning(unheard)
 
     awaiting_reply = bool(history()) and history()[-1].speaker == "learner"
     failure: str | None = st.session_state.get("failure")
@@ -425,21 +439,64 @@ def speak(text: str, slot: Any) -> float:
     return playback_seconds(audio)
 
 
+def _unheard(message: str, reason: str) -> None:
+    """Tell the learner the turn did not land, and start listening again.
+
+    THE RERUN IS THE POINT. Saying so and returning left the script at the end of its
+    run with nothing listening — the microphone loop is the last statement of
+    `render_conversation`, so returning past it means the page is done. The learner
+    carried on talking into a page that had stopped paying attention, which is what
+    "no change" looks like from their side. The message goes through session state
+    because a rerun throws away whatever the current run has drawn.
+    """
+    st.session_state["unheard"] = message
+    print(f"[listen] {reason}", file=sys.stderr, flush=True)
+    st.rerun()
+
+
 def _send_recording(audio: bytes) -> None:
     """Transcribe one turn's audio and put it in the conversation.
 
     Shared by both input paths, so the continuous stream and the button reach the
     correction engine by exactly the same route.
     """
+    seconds = playback_seconds(audio)
+    peak = loudest_sample(audio)
+
+    if peak < SILENT_PEAK:
+        # DECIDED HERE, NOT BY THE MODEL, because the model does not decide it the way
+        # anyone would expect. Asked on 2026-08-24 to transcribe two seconds of
+        # digital silence — with a prompt that says "if there is no speech, output
+        # nothing at all" — it answered 「はい」. Three times, on three different silent
+        # inputs. Sent on, that becomes a sentence the learner never said, attributed
+        # to them in the conversation and then corrected. This app has exactly one
+        # thing it must not do, and inventing learner speech is it.
+        _unheard(
+            "Nothing was heard. Please try again — a little closer to the microphone.",
+            f"silent recording: {seconds:.1f}s, peak {peak:.4f}",
+        )
+
     with st.spinner("…"):
         try:
             heard = transcribe(audio)
+        except SpeechError as exc:
+            # The provider failing is not the learner failing, and the message no
+            # longer says it is.
+            _unheard(
+                "That did not come through. Please say it again.",
+                f"transcription failed on {seconds:.1f}s at peak {peak:.2f}: {exc}",
+            )
         except Exception as exc:  # noqa: BLE001 - a failed recording is not a crash
-            st.warning(f"That recording could not be read. Please try again. ({exc})")
-            return
+            _unheard(
+                "That did not come through. Please say it again.",
+                f"transcription error on {seconds:.1f}s at peak {peak:.2f}: "
+                f"{type(exc).__name__}: {exc}",
+            )
     if not heard:
-        st.warning("Nothing was heard. Please try again.")
-        return
+        _unheard(
+            "Nothing was heard. Please try again.",
+            f"empty transcription of {seconds:.1f}s at peak {peak:.2f}",
+        )
     history().append(Utterance("learner", heard))
     st.session_state["used_speech"] = True
     st.session_state["failure"] = None

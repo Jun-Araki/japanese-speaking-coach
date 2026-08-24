@@ -45,6 +45,63 @@ class TestLoudness:
         assert loudness([]) == 0.0
 
 
+class TestNoiseDoesNotAddUpToASentence:
+    """The count towards `min_speech` has to be one unbroken run.
+
+    It was a running total that never reset until 2026-08-24, so unrelated sounds
+    spread over several seconds latched the turn open and a second of quiet then
+    closed it — before the learner had said anything. What they saw was "Nothing was
+    heard" arriving while they were still mid-sentence.
+    """
+
+    def test_scattered_noises_do_not_open_a_turn(self) -> None:
+        detector = TurnDetector()
+        feed(detector, quiet(), 0.5)  # calibration
+
+        # A throat clear, a pause, a chair, a pause, a breath. Each under min_speech,
+        # and 0.6s of noise in total — more than the 0.35 that used to be enough.
+        for _ in range(3):
+            assert not feed(detector, speech(), 0.2)
+            assert not feed(detector, quiet(), 1.2)
+
+        assert not detector.started
+
+    def test_a_sentence_after_the_noises_still_works(self) -> None:
+        # The reset must not make the detector deaf to the sentence that follows.
+        detector = TurnDetector()
+        feed(detector, quiet(), 0.5)
+        feed(detector, speech(), 0.2)
+        feed(detector, quiet(), 1.2)
+
+        assert not feed(detector, speech(), 1.0)
+        assert detector.started
+        assert feed(detector, quiet(), 1.0)
+
+    def test_a_brief_hesitation_inside_a_sentence_does_not_reset_it(self) -> None:
+        # Shorter than the gap that ends a turn, so it must not undo the run either.
+        detector = TurnDetector()
+        feed(detector, quiet(), 0.5)
+        feed(detector, speech(), 0.3)
+        feed(detector, quiet(), 0.5)
+        feed(detector, speech(), 0.1)
+
+        assert detector.started
+
+
+class TestATurnIsAlwaysBounded:
+    def test_a_turn_that_never_starts_still_times_out(self) -> None:
+        # The timeout used to be gated on having started, so a microphone open in a
+        # quiet room — or one whose calibration caught the learner already talking and
+        # set the floor above their voice — blocked the script for ever behind a
+        # "Listening…" that would never change.
+        detector = TurnDetector(max_turn=3.0)
+        feed(detector, quiet(), 0.5)
+
+        assert feed(detector, quiet(), 3.0)
+        assert not detector.started
+        assert detector.timed_out
+
+
 class TestTurnEnds:
     def test_after_a_second_of_silence(self) -> None:
         detector = TurnDetector()

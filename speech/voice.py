@@ -33,6 +33,7 @@ import os
 import struct
 import urllib.error
 import urllib.request
+from array import array
 from typing import Any, Final
 
 # Preview, and named here so a run record or a bug report can say which one spoke.
@@ -159,6 +160,30 @@ def wav_header(sample_count: int, rate: int = _PCM_RATE) -> bytes:
     )
 
 
+# Below this peak there is nothing in the recording worth sending. Speech peaks well
+# above it even from a quiet speaker held at arm's length; a silent room, a muted
+# microphone and a stream that carried nothing all sit under it.
+SILENT_PEAK: Final = 0.02
+
+
+def loudest_sample(wav: bytes) -> float:
+    """The peak of a 16-bit WAV, as a fraction of full scale. Zero if unreadable.
+
+    PEAK, NOT RMS, and deliberately not the same question the turn detector asks.
+    That one decides whether the room is quiet RIGHT NOW, where a single click must
+    not read as speech, so it averages. This one asks whether the whole recording
+    contains anything at all, and for that the loudest moment is the answer: a five
+    second clip holding one short sentence has a low average and is not silent.
+    """
+    if len(wav) < 46 or wav[:4] != b"RIFF":
+        return 0.0
+    usable = (len(wav) - 44) // 2 * 2
+    pcm = array("h", wav[44 : 44 + usable])
+    if not pcm:
+        return 0.0
+    return max(abs(value) for value in pcm) / 32768
+
+
 def playback_seconds(wav: bytes) -> float:
     """How long a WAV takes to play, read out of its own header.
 
@@ -256,14 +281,39 @@ def transcribe(audio: bytes, mime_type: str = "audio/wav", model: str | None = N
         # "press it again" is a button this screen actually has.
         "generationConfig": {"temperature": 0},
     }
-    answer = _post(
-        model or os.environ.get("TRANSCRIBE_MODEL", DEFAULT_TRANSCRIBE_MODEL), payload
-    )
+    chosen = model or os.environ.get("TRANSCRIBE_MODEL", DEFAULT_TRANSCRIBE_MODEL)
+
+    # ONE RETRY, THE SAME ONE `synthesise` HAS, and for the same measured reason: this
+    # provider sometimes answers with a candidate carrying no content at all. Without
+    # it, that fault reached the learner as "Nothing was heard. Please try again." —
+    # the app telling someone who had just spoken a sentence that they had not.
+    for attempt in range(1, _MAX_ATTEMPTS + 1):
+        answer = _post(chosen, payload)
+        try:
+            parts = answer["candidates"][0]["content"]["parts"]
+        except (KeyError, IndexError, TypeError) as exc:
+            if attempt == _MAX_ATTEMPTS:
+                # NOT THE SAME AS SILENCE, and the caller has to be able to tell.
+                # Silence does not come back empty from this model — asked for a
+                # transcription of two seconds of nothing on 2026-08-24 it answered
+                # 「はい」 — so an empty answer here is the provider failing, not the
+                # learner staying quiet.
+                raise SpeechError(
+                    f"{chosen} answered with no transcription in it "
+                    f"(finish reason: {_finish_reason(answer)})"
+                ) from exc
+            continue
+        return close_sentence("".join(part.get("text", "") for part in parts).strip())
+
+    raise AssertionError("the loop above always returns or raises")
+
+
+def _finish_reason(answer: dict[str, Any]) -> str:
+    """Why the model stopped, when it stopped without saying anything."""
     try:
-        parts = answer["candidates"][0]["content"]["parts"]
-    except (KeyError, IndexError):
-        return ""
-    return close_sentence("".join(part.get("text", "") for part in parts).strip())
+        return str(answer["candidates"][0].get("finishReason", "not given"))
+    except (KeyError, IndexError, TypeError):
+        return str(answer.get("promptFeedback", {}).get("blockReason", "no candidates"))
 
 
 # Sentence-final punctuation, in the forms the transcription actually returns.

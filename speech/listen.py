@@ -30,8 +30,16 @@ from typing import Final
 # people off mid-sentence — beginners pause to think in the middle of one.
 SILENCE_TO_END: Final = 1.0
 
-# Nothing is sent until this much speech has been heard. A cough or a chair scrape
-# clears the loudness floor and would otherwise open and close a turn on its own.
+# Nothing is sent until this much speech has been heard, IN ONE UNBROKEN RUN. A cough
+# or a chair scrape clears the loudness floor and would otherwise open and close a
+# turn on its own.
+#
+# UNBROKEN IS THE WHOLE POINT, and it was not what the code did until 2026-08-24. The
+# total was accumulated and never reset, so a throat clear, a breath, a chair and an
+# 「えー…」 spread over several seconds added up to the same 0.35 and latched the turn
+# open. A second of quiet then ended it — before the learner had said their sentence.
+# What they got was "Nothing was heard. Please try again." arriving while they were
+# still mid-sentence, and no way to tell that the app had stopped listening.
 MIN_SPEECH: Final = 0.35
 
 # A turn cannot run forever: an open microphone in a pocket is a bill. The correction
@@ -80,6 +88,9 @@ class TurnDetector:
     speech: float = 0.0
     silence: float = 0.0
     started: bool = False
+    # How long the room has been quiet while still waiting for the turn to begin.
+    # Separate from `silence`, which only counts once someone is talking.
+    _lull: float = 0.0
     _noise: list[float] = field(default_factory=list)
     _floor: float = QUIET_FLOOR
 
@@ -107,14 +118,28 @@ class TurnDetector:
         if level >= self._floor:
             self.speech += seconds
             self.silence = 0.0
+            self._lull = 0.0
             if self.speech >= self.min_speech:
                 self.started = True
         elif self.started:
             self.silence += seconds
+        else:
+            # Still waiting for the turn to begin. A gap this long means whatever was
+            # heard before it was a noise and not the start of a sentence, so the
+            # count towards `min_speech` goes back to zero rather than waiting to be
+            # topped up by the next unrelated sound.
+            self._lull += seconds
+            if self._lull >= self.silence_to_end:
+                self.speech = 0.0
 
         if self.started and self.silence >= self.silence_to_end:
             return True
-        return self.heard >= self.max_turn and self.started
+        # THE TIMEOUT IS NOT GATED ON HAVING STARTED. It was until 2026-08-24, which
+        # meant a turn that never started was never bounded by anything: a microphone
+        # left open in a quiet room, or one whose calibration half-second caught the
+        # learner already talking and set the floor above their voice, blocked the
+        # script for ever behind a "Listening…" that would never change.
+        return self.heard >= self.max_turn
 
     @property
     def timed_out(self) -> bool:

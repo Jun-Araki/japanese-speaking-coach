@@ -87,6 +87,67 @@ class TestPlaybackSeconds:
         assert voice.playback_seconds(cut) == 0.5
 
 
+class TestLoudestSample:
+    def test_speech_clears_the_silence_gate(self) -> None:
+        raw = struct.pack("<100h", *([8000] * 100))
+        wav = voice.wav_header(len(raw), rate=16_000) + raw
+
+        assert voice.loudest_sample(wav) > voice.SILENT_PEAK
+
+    def test_a_silent_recording_does_not(self) -> None:
+        # Sending this on would not come back empty. Asked to transcribe silence on
+        # 2026-08-24 the model answered 「はい」, which would enter the conversation as
+        # a sentence the learner never said.
+        raw = struct.pack("<100h", *([3] * 100))
+        wav = voice.wav_header(len(raw), rate=16_000) + raw
+
+        assert voice.loudest_sample(wav) < voice.SILENT_PEAK
+
+    def test_anything_that_is_not_a_wav_is_zero(self) -> None:
+        assert voice.loudest_sample(b"nope") == 0.0
+
+
+class TestTranscriptionRetriesLikeSynthesisDoes:
+    """A candidate with no content is the provider failing, not the learner.
+
+    Measured on this provider for synthesis: one failure in five, both attempts
+    returning a content-less candidate. `transcribe` had no retry at all and turned
+    every such answer into "Nothing was heard. Please try again." — the app telling
+    someone who had just spoken that they had not.
+    """
+
+    def test_a_content_less_answer_is_retried(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        answers = [{"candidates": [{"finishReason": "STOP"}]}, answer_with_text("はい")]
+        monkeypatch.setattr(voice, "_post", lambda model, payload: answers.pop(0))
+
+        assert voice.transcribe(b"RIFF....") == "はい。"
+        assert answers == []
+
+    def test_a_second_failure_raises_rather_than_reading_as_silence(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setattr(
+            voice,
+            "_post",
+            lambda model, payload: {"candidates": [{"finishReason": "MAX_TOKENS"}]},
+        )
+
+        with pytest.raises(voice.SpeechError, match="MAX_TOKENS"):
+            voice.transcribe(b"RIFF....")
+
+    def test_no_candidates_at_all_names_the_block_reason(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setattr(
+            voice,
+            "_post",
+            lambda model, payload: {"promptFeedback": {"blockReason": "SAFETY"}},
+        )
+
+        with pytest.raises(voice.SpeechError, match="SAFETY"):
+            voice.transcribe(b"RIFF....")
+
+
 class TestSynthesise:
     def test_wraps_the_raw_samples_in_a_wav_header(
         self, monkeypatch: pytest.MonkeyPatch
