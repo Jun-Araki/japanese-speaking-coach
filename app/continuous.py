@@ -41,10 +41,23 @@ TARGET_RATE: Final = 16_000
 # How long to wait for the next frame before giving up on the stream.
 FRAME_TIMEOUT: Final = 3.0
 
-# The receiver's queue holds this many frames (`audio_receiver_size=256` below, at
-# 20ms each). Draining never reads more than a queue's worth, so a stream that
-# delivers frames in bursts cannot keep the drain running forever.
-BACKLOG_LIMIT: Final = 256
+# How many frames the receiver queues before it starts dropping the oldest, at 20ms
+# each: about five seconds.
+#
+# ONE NUMBER, USED TWICE, BECAUSE THE LOG ASKS FOR TROUBLE. A busy stream prints
+# "Queue overflow. Consider to set receiver size bigger. Current size is 256" — seen
+# on the deployment on 2026-08-24 — and taking that advice without reading this would
+# break the turn detector. The drain below stops after a queue's worth so that a
+# bursting stream cannot hold it for ever; raise the queue alone and the drain gives
+# up partway through the backlog, handing the detector seconds of audio recorded
+# before the turn began. Its noise floor comes from the first half second it is given,
+# so that audio would become the definition of silence.
+#
+# The overflow itself is not a fault. The script spends seconds transcribing,
+# replying and synthesising, and whatever arrives meanwhile is dropped — which is
+# fine, because the drain discards exactly that audio on purpose.
+RECEIVER_SIZE: Final = 256
+BACKLOG_LIMIT: Final = RECEIVER_SIZE
 
 
 def enabled() -> bool:
@@ -127,7 +140,7 @@ def open_stream() -> Any:
     return webrtc_streamer(
         key="listener",
         mode=WebRtcMode.SENDONLY,
-        audio_receiver_size=256,
+        audio_receiver_size=RECEIVER_SIZE,
         rtc_configuration=RTC_CONFIGURATION,
         media_stream_constraints={"audio": True, "video": False},
         desired_playing_state=True,
