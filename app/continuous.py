@@ -144,6 +144,21 @@ def open_stream() -> Any:
         rtc_configuration=RTC_CONFIGURATION,
         media_stream_constraints={"audio": True, "video": False},
         desired_playing_state=True,
+        # NO DEVICE PICKER. Left on, the widget offers a list — "MacBook Air
+        # Microphone (Built-in)", "iPhone Air Microphone" — to someone practising
+        # 「おはようございます」 on a phone that has one microphone. It is the same
+        # judgement that turned off Streamlit's developer toolbar, where pressing "C"
+        # opened a "Clear caches" dialog on a learner's screen: a control that exists
+        # for whoever built this, on the screen of someone who did not.
+        #
+        # It takes the mute toggle with it, which is the right trade here. The turn
+        # ends when the room goes quiet, so a muted microphone is a conversation that
+        # never advances, and "End the conversation" is the button that means stop.
+        #
+        # Anyone who really is on the wrong microphone can still change it in the
+        # browser's own site settings, and the record button is there when the stream
+        # will not carry.
+        media_toggle_controls=False,
     )
 
 
