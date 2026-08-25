@@ -42,7 +42,15 @@ from app.limits import (  # noqa: E402
     start_tts_cooldown,
     tts_is_quiet,
 )
-from app.theme import CONTACT, NOTICE, REVIEW_SPEECH_NOTE, SPEECH_CAVEAT, STYLE  # noqa: E402
+from app.theme import (  # noqa: E402
+    CONTACT,
+    NOTICE,
+    PROVIDER_VOICE_NOTE,
+    REVIEW_SPEECH_NOTE,
+    SPEECH_CAVEAT,
+    STYLE,
+    VOICE_SOURCE_NOTE,
+)
 from correction import CorrectionResult  # noqa: E402
 from dialogue import LEVELS, SCENES, Utterance, opening_line, reply  # noqa: E402
 from speech.voice import (  # noqa: E402
@@ -217,7 +225,16 @@ def render_setup() -> None:
 
     st.divider()
     st.markdown(NOTICE)
+    # Which sentence is true depends on which voice is running, and the two go quiet
+    # for unrelated reasons — a device with no Japanese voice, or a shared key with no
+    # requests left this minute. Saying the wrong one would be worse than saying
+    # nothing: whoever is handed silence would be looking for the wrong cause.
+    st.caption(VOICE_SOURCE_NOTE if browser_voice_enabled() else PROVIDER_VOICE_NOTE)
     st.caption(f"Questions, or want your session stopped mid-way? {CONTACT}")
+
+    # Last, and invisible. See _unlock_voice: it costs a one-pixel frame at the foot of
+    # the screen and buys the first spoken reply on an iPhone.
+    _unlock_voice()
 
 
 def render_conversation() -> None:
@@ -226,6 +243,30 @@ def render_conversation() -> None:
 
     st.title(SCENES[scene])
     st.caption(f"{LEVELS[level]} · write in Japanese · corrections come at the end")
+
+    learner_turns = sum(1 for utterance in history() if utterance.speaker == "learner")
+    at_the_cap = learner_turns >= max_turns()
+
+    # THE MICROPHONE IS OPENED HERE, ABOVE EVERYTHING THAT CHANGES, AND THAT POSITION
+    # IS THE WHOLE FIX. It used to be opened down in render_input(), below the
+    # conversation — and Streamlit rebuilds a custom component's iframe when what is
+    # drawn before it changes, which on this screen is every single turn. Measured on
+    # 2026-08-25 by stamping the component's window and reading the stamp back after a
+    # turn: drawn below the messages the stamp was gone on every turn, drawn above them
+    # it survived three in a row.
+    #
+    # A rebuilt iframe is a fresh document, so the component calls getUserMedia again.
+    # On a desktop browser the grant is remembered per site and nobody notices. On iOS
+    # Safari it is not: the learner was asked "would like to access the microphone"
+    # after every sentence they spoke, which is what Jun reported from a phone.
+    #
+    # Nothing of it is visible. With desired_playing_state set the start/stop button is
+    # not drawn, the device picker went on 2026-08-24, and a send-only stream has no
+    # video to show — so an empty box at the top of the page costs nothing, and an
+    # error inside it is better seen here than under the conversation.
+    listening_context = (
+        continuous.open_stream() if continuous.enabled() and not at_the_cap else None
+    )
 
     # The audio's place on the page, claimed in whichever bubble is last. It is
     # claimed here as well as in the reply block below because a reply written on an
@@ -285,9 +326,8 @@ def render_conversation() -> None:
             st.session_state["failure"] = None
             st.rerun()
 
-    listening: tuple[Any, Any] | None = None
-    learner_turns = sum(1 for utterance in history() if utterance.speaker == "learner")
-    if learner_turns >= max_turns():
+    status: Any | None = None
+    if at_the_cap:
         # A cap reached mid-conversation ends it rather than silently ignoring what
         # is typed next: an input box that accepts a sentence and does nothing with
         # it is worse than no input box.
@@ -296,7 +336,7 @@ def render_conversation() -> None:
             "End the conversation to see your corrections."
         )
     else:
-        listening = render_input()
+        status = render_input(listening_context)
 
     # AFTER THE INPUT BOX, AND THAT IS WHAT MOVED. Synthesis takes about 4.3 seconds,
     # and it used to run before the input box was drawn — so the learner sat looking
@@ -362,12 +402,13 @@ def render_conversation() -> None:
     # LAST, BECAUSE IT BLOCKS. This waits for the learner to speak and then stop
     # speaking, and it returns straight into a rerun — so every line above it has
     # already reached the browser and nothing below it would.
-    if listening is not None:
-        context, status = listening
-        heard_audio = continuous.collect_turn(context, status, skip_seconds=spoken_seconds)
+    if listening_context is not None and status is not None:
+        heard_audio = continuous.collect_turn(
+            listening_context, status, skip_seconds=spoken_seconds
+        )
         if heard_audio is not None:
             _send_recording(heard_audio)
-        elif continuous.is_live(context):
+        elif continuous.is_live(listening_context):
             # THE PAGE HAS TO GO ROUND AGAIN, or it is finished. Returning here used
             # to end the script run with the stream still open and nothing left to
             # wake it: the microphone widget only reruns the page when its own state
@@ -443,10 +484,22 @@ def _speak_in_browser(text: str, slot: Any, *, announce: bool) -> float:
     could press it. `announce` is what separates the two — false redraws the button
     and stays quiet, so nobody gets the same sentence read to them twice.
 
-    A CONTROL AS WELL AS AN ATTEMPT, for the reason the provider's player has one:
-    iOS Safari will not start audio without a gesture on the same rendering of the
-    page, and a reply arrives on a later rerun than the tap that asked for it. So it
-    tries, and there is something to press where trying is not allowed.
+    IT SPEAKS THROUGH THE PAGE, NOT THROUGH THIS FRAME, and that is what makes it work
+    on a phone. Streamlit builds this iframe from scratch on every rerun, so its
+    document is a few milliseconds old and has never been touched — and iOS Safari
+    will not let a document that has never been tapped start speech. The frame is
+    same-origin, so `window.parent` is the app's own page: it has been alive since the
+    learner opened the link, it has been tapped, and the voice list has had time to
+    load in it. That is where the speaking is done from. Reported from a phone on
+    2026-08-25 as simply no sound, with a laptop unaffected, which is the shape this
+    kind of fault always has.
+
+    A CONTROL AS WELL AS AN ATTEMPT, for the reason the provider's player has one: a
+    browser may still refuse, and a reply arrives on a later rerun than the tap that
+    asked for it. So it tries, there is something to press where trying is not allowed,
+    and — since nothing reports failure — if the speech has not started shortly after
+    it was asked for, the line says which button to press rather than leaving the
+    learner in silence wondering.
 
     The voice list loads asynchronously in some browsers, which is why this waits for
     `voiceschanged` when it arrives empty rather than concluding there is no voice.
@@ -469,28 +522,35 @@ def _speak_in_browser(text: str, slot: Any, *, announce: bool) -> float:
             </div>
             <script>
             const line = {spoken};
+            const page = window.parent;
+            const synth = page.speechSynthesis;
+            function note(said) {{ document.getElementById("note").textContent = said; }}
             function japanese() {{
-              return (window.speechSynthesis.getVoices() || [])
+              return (synth.getVoices() || [])
                 .find(v => v.lang && v.lang.toLowerCase().startsWith("ja"));
             }}
             function say() {{
               const voice = japanese();
               if (!voice) {{
-                document.getElementById("note").textContent =
-                  " この端末には日本語の音声が入っていません。";
+                note(" この端末には日本語の音声が入っていません。");
                 return;
               }}
-              const said = new SpeechSynthesisUtterance(line);
+              const said = new page.SpeechSynthesisUtterance(line);
               said.voice = voice;
               said.lang = "ja-JP";
-              window.speechSynthesis.cancel();
-              window.speechSynthesis.speak(said);
+              let started = false;
+              said.onstart = () => {{ started = true; note(""); }};
+              synth.cancel();
+              synth.speak(said);
+              // Nothing throws when a browser declines to start; it simply stays
+              // quiet. So the silence is timed, and named.
+              setTimeout(() => {{ if (!started) note(" ← 押すと聞こえます"); }}, 900);
             }}
             document.getElementById("again").onclick = say;
             if ({"true" if announce else "false"}) {{
-              if ((window.speechSynthesis.getVoices() || []).length === 0) {{
-                window.speechSynthesis.onvoiceschanged = () => {{
-                  window.speechSynthesis.onvoiceschanged = null;
+              if ((synth.getVoices() || []).length === 0) {{
+                synth.onvoiceschanged = () => {{
+                  synth.onvoiceschanged = null;
                   say();
                 }};
               }} else {{
@@ -503,6 +563,47 @@ def _speak_in_browser(text: str, slot: Any, *, announce: bool) -> float:
         )
     # An estimate, because nothing reports back from in there. See speaking_seconds.
     return speaking_seconds(text)
+
+
+def _unlock_voice() -> None:
+    """Spend the learner's first tap on permission to speak, before they need it.
+
+    iOS SAFARI WILL NOT SPEAK UNTIL IT HAS BEEN ASKED TO DURING A TAP. Not "until the
+    page has been tapped" — during the handling of one. A reply arrives seconds after
+    any tap, so left alone the first line of every conversation is silent on an iPhone,
+    and the learner has no way to know that pressing ▶ once would fix the rest of the
+    session.
+
+    So the first tap anywhere on the setup screen — which is the press on Start, since
+    that screen cannot be left any other way — also asks for a silent, empty utterance.
+    That is the request that counts as being made during a tap, and everything spoken
+    afterwards is allowed. It is placed on the page rather than in this frame because
+    the page is what survives: this frame is rebuilt on every rerun.
+
+    BEST EFFORT, AND SILENT WHEN IT FAILS. A browser that needs none of this loses
+    nothing by an utterance at zero volume, and one that refuses even this still has
+    the ▶ button. Nothing here may become an error on the screen someone reads before
+    they have started.
+    """
+    st.iframe(
+        """
+        <script>
+        (function () {
+          const page = window.parent;
+          if (page.__coachVoiceUnlocked) return;
+          page.__coachVoiceUnlocked = true;
+          page.document.addEventListener("pointerdown", function () {
+            try {
+              const quiet = new page.SpeechSynthesisUtterance(" ");
+              quiet.volume = 0;
+              page.speechSynthesis.speak(quiet);
+            } catch (ignored) {}
+          }, { once: true, capture: true });
+        })();
+        </script>
+        """,
+        height=1,
+    )
 
 
 def _no_audio(text: str, exc: Exception) -> None:
@@ -625,18 +726,20 @@ def _send_recording(audio: bytes) -> None:
     st.rerun()
 
 
-def render_input() -> tuple[Any, Any] | None:
-    """Draw the input box. Returns the open microphone, for the caller to collect from.
+def render_input(context: Any | None) -> Any:
+    """Draw the input box. Returns the container the status line belongs in.
 
     NOTHING HERE WAITS. It used to: the continuous listener drew its widget and then
     blocked in the same call until the learner had spoken, so the reply's audio and
     the button that ends the conversation — both written below this call — were never
-    reached on any turn where the microphone connected. The stream is opened here and
-    the waiting is done by the caller, last, once the page is complete.
+    reached on any turn where the microphone connected. The waiting is done by the
+    caller, last, once the page is complete.
 
-    The returned pair is the stream context and the container the status line belongs
-    in. The container is made here because that is where it appears on the page; it is
-    written into later, from a call sitting much further down the file.
+    NOR DOES IT OPEN THE MICROPHONE ANY MORE, since 2026-08-25. That happens at the top
+    of render_conversation() because a custom component drawn below the conversation is
+    rebuilt whenever the conversation grows — see the note there. What is left here is
+    the container the status line goes in, made at the place on the page where it
+    belongs and written into later from much further down this file.
 
     A CONFIRMATION STEP WAS BUILT AND THEN REMOVED (2026-08-21). It showed the
     transcription and asked "is this exactly what you said?" before sending, because
@@ -657,7 +760,7 @@ def render_input() -> tuple[Any, Any] | None:
         st.caption(SPEECH_CAVEAT)
         st.session_state["caveat_seen"] = True
 
-    if continuous.enabled():
+    if context is not None:
         # The microphone stays open and silence ends the turn.
         #
         # AND THE BUTTON IS THERE WHENEVER IT IS NOT. This comment used to say the
@@ -669,14 +772,13 @@ def render_input() -> tuple[Any, Any] | None:
         # 13 September is exactly where that runs out. A promise in a comment is not a
         # fallback.
         status = st.container()
-        context = continuous.open_stream()
         if not continuous.is_live(context):
             _offer_the_button()
         if typed := st.chat_input("または、日本語で書いてください"):
             history().append(Utterance("learner", typed))
             st.session_state["failure"] = None
             st.rerun()
-        return context, status
+        return status
 
     _offer_the_button()
 

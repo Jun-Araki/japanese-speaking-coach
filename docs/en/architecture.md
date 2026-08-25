@@ -148,6 +148,21 @@ unmeasurable in the first place.
 
 ## Speech synthesis reaches the free tier's rate limit (measured 2026-08-22)
 
+> **Since 2026-08-24 this section is not about the default path.** The default is the
+> browser's own voice: no round trip, no rate limit, no bill. What follows describes the
+> Gemini path, reached with `BROWSER_VOICE=0` — and it is **why 13 September can be run on
+> the free tier**: the shared key's limit no longer stops the path everyone is on.
+>
+> **The constraint that replaced it belongs to the device** (worked through 2026-08-25).
+> **A phone with no Japanese voice installed says nothing at all.** At a meetup the phones
+> differ and whoever gets silence assumes their own is broken. So **(1) the start screen says
+> the reply is always written down and that it is your own device reading it, and (2) the
+> message shown on a device with no Japanese voice is in English** — it used to be in
+> Japanese, which made the one sentence aimed at someone who cannot follow spoken Japanese
+> another thing they could not follow. **On the day the audio is still introduced as a bonus,
+> not a feature.** If enough devices turn out to have no Japanese voice, `BROWSER_VOICE=0`
+> puts the provider's voice back — and then the limit below applies, so people take turns.
+
 **One person practising for a few turns is enough to get `429 Too Many Requests`.**
 Twelve short lines synthesised back to back were refused eleven times (`You exceeded
 your current quota`). A later run after a pause succeeded eleven times out of twelve,
@@ -176,9 +191,12 @@ per 1M tokens and text input $0.50 per 1M, which for the expected size of this d
 - **Free hosting does not guarantee filesystem persistence across restarts.** This once forced
   usage logs into an external database; **with nothing stored at all, the constraint no longer
   applies** (see "The decision to store nothing").
-- **Streamlit cannot hold a persistent connection**, so continuous hands-free speech is not
+- ~~**Streamlit cannot hold a persistent connection**, so continuous hands-free speech is not
   attempted before 20 September. Reconsidered after applications open (28 September), and only
-  if testers actually complain about pressing the button.
+  if testers actually complain about pressing the button.~~
+  → **Built on 2026-08-24.** `streamlit-webrtc` holds the microphone open and a second of
+  silence ends the turn. **The constraint was right about Streamlit alone** — it took one
+  external component to get around it.
 - **The SudachiDict package is ~70MB**, installed at image build time.
 - **No local models before 20 September.** The goal is applying LLMs in a product, not
   training them; GPU cost and iteration do not fit a budget of two hours a day (14 a week).
