@@ -58,8 +58,13 @@ conversation ends, and are never rendered outside the review.**
   (never make them retype). ~~The count of presses is a proxy for transcription quality.~~
   → **Nothing is stored, so it cannot be counted** (2026-08-16). The button stays: its purpose
   is sparing the learner from retyping, not producing a metric.
+  → **The button is not built (checked 2026-08-25).** There is only a prompt to say it again
+  when nothing was heard; **once a sentence has been transcribed there is no way to take it
+  back and say it differently.** Whether to build it or drop it is undecided.
 - Only the **AI's** reply text can be hidden; hiding it turns the session into listening
   practice. ~~Which mode was used is recorded.~~ → **Not recorded** (same reason).
+  → **Not built (checked 2026-08-25).** There is no toggle on the screen and no `show_ai_text`
+  key. Whether to build it or drop it is undecided.
 - Corrections never interrupt the conversation. The correction node runs **once the
   conversation is over, over all of the learner's sentences at once (ten at a time)**, and
   results appear only in the review. **Changed from per-turn on 2026-08-22**: the principle
@@ -188,10 +193,17 @@ Session state lives in `st.session_state` and nowhere else.
 | Key | Contents |
 |---|---|
 | `scene` / `level` | The chosen scene and level. **Their presence means "in conversation"** (this drives the screen flow) |
-| `show_ai_text` | Whether the AI's reply text is shown |
-| `turns` | The sequence of transcripts and AI replies |
+| `history` | The sequence of learner sentences (transcribed or typed) and AI replies |
+| `spoken` | How far the replies have been read aloud, so **no reply is spoken twice**. The scene's opening line starts out marked as read: a page that talks to a room before anyone has said anything is not what this is |
 | `corrections` | Correction results, produced in one batch when the conversation ends. **Never rendered outside the review** |
 | `review` | **Its presence means "in review"** |
+| `review_used_speech` | Whether the learner spoke. It decides **whether the review carries the note that transcription may have repaired a mistake**. Every conversation key is cleared when the session ends, so this is the one thing that crosses into the review |
+| `unlocked` / `caveat_seen` / `used_speech` / `failure` / `unheard` / `audio_cache` | Screen bookkeeping: the shared code was accepted / the caveat has been shown / speech was used / the last failure / what to say when nothing was heard / **the session's synthesised audio** (so a repeated sentence is not synthesised twice; 20 entries, gone when the conversation ends) |
+
+> **This table was reconciled with the implementation on 2026-08-25.** The previous version
+> listed `turns` and `show_ai_text`; **neither exists in the code** (the real key is `history`).
+> **`show_ai_text` was the pair of "only the AI's reply text can be hidden" below — a feature
+> that was never built.**
 
 **Closing the tab erases all of it.** No learner name, no utterance, no audio, no correction
 result survives. **Latency, token counts and Say-again presses are not recorded either** (see

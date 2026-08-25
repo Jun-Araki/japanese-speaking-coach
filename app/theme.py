@@ -110,20 +110,18 @@ STYLE: Final = """
 # FOUR THINGS COULD NOT GO, and none of them did: that what is said leaves this
 # machine, that private things should not be said, that the voice is not a person,
 # and how to reach one (the line under this, in main.py). The rest was compression.
+#
+# THE SYNTHETIC-VOICE DISCLOSURE LIVES HERE, SAID ONCE. Speech-synthesis terms
+# require telling people the voice is generated, and it is a line item in the
+# definition of done. It used to be its own sentence under every audio player, where
+# it was read once and then became furniture; it is now the last clause above, on the
+# screen everyone passes before they speak. Repeating it every turn was noise, and
+# dropping it altogether was never an option — so it is short, and it is early.
 NOTICE: Final = (
     "**Before you start.** What you say goes to an AI outside this app, so say nothing "
     "private — no names, addresses or passwords. **Nothing is stored**: no database, no "
     "recording, no log. Replies can be wrong, and **the voice is AI-generated, not a "
     "person's.**"
-)
-
-# DISCLOSURE, SAID ONCE. Speech-synthesis terms require telling people the voice is
-# generated, and it is a line item in the definition of done. It used to sit under
-# every audio player, where it was read once and then became furniture — so it moved
-# into the notice on the start screen, which is read before anyone speaks. Repeating
-# it every turn was noise; removing it altogether is not an option.
-VOICE_NOTICE: Final = (
-    "The voice you hear is synthesised by an AI. It is not a recording of a person."
 )
 
 # MEASURED, NOT SUSPECTED. Five sentences carrying real learner mistakes were spoken
@@ -135,6 +133,17 @@ VOICE_NOTICE: Final = (
 #
 # A beginner cannot see that this has happened, which is why it is written on the
 # screen rather than left in the README: they are the one person who cannot check.
+# THE SAME WARNING, WHERE THE RESULT IS. `SPEECH_CAVEAT` is shown before anyone
+# speaks, which is the wrong moment to be told that "this one is fine" may be wrong:
+# nothing is fine yet. This is the sentence for the screen where a repaired mistake
+# actually shows up as a green card. Shown only when the learner spoke — typed
+# sentences reach the engine exactly as they were written.
+REVIEW_SPEECH_NOTE: Final = (
+    "Some of these sentences were spoken and transcribed. Transcription sometimes "
+    "repairs a mistake before it is checked, so a sentence shown as fine may not have "
+    "been said that way."
+)
+
 SPEECH_CAVEAT: Final = (
     "**Speaking is for practice.** Transcription sometimes tidies up a mistake before "
     "the correction engine sees it, so a sentence you got wrong can come back as "

@@ -42,7 +42,7 @@ from app.limits import (  # noqa: E402
     start_tts_cooldown,
     tts_is_quiet,
 )
-from app.theme import CONTACT, NOTICE, SPEECH_CAVEAT, STYLE  # noqa: E402
+from app.theme import CONTACT, NOTICE, REVIEW_SPEECH_NOTE, SPEECH_CAVEAT, STYLE  # noqa: E402
 from correction import CorrectionResult  # noqa: E402
 from dialogue import LEVELS, SCENES, Utterance, opening_line, reply  # noqa: E402
 from speech.voice import (  # noqa: E402
@@ -721,6 +721,12 @@ def render_review() -> None:
             f"{'sentence' if len(results) == 1 else 'sentences'}. "
             f"{len(to_change)} of them would sound better said another way."
         )
+        # WRITTEN AT THE END OF `end_session`, READ HERE, AND NOWHERE ELSE. The
+        # conversation's own keys are gone by now, so whether the learner spoke has
+        # to survive into the review on its own key. Before the cards, not after:
+        # the card this warns about is a green "this one is fine".
+        if st.session_state.get("review_used_speech"):
+            st.caption(REVIEW_SPEECH_NOTE)
 
     for result in results:
         answer = result.correction

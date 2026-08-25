@@ -21,8 +21,9 @@ typing is not, and the decision not to store anything (§2-5) is easiest to keep
 never having a path that could.
 
 DISCLOSURE IS NOT OPTIONAL. Every speech provider's terms require telling people
-the voice is synthetic, and `app.theme.VOICE_NOTICE` is that sentence. It is shown
-wherever audio plays.
+the voice is synthetic, and `app.theme.NOTICE` carries that sentence. It is on the
+start screen rather than under each player: read before anyone speaks, once, instead
+of every turn until it stops being read at all.
 """
 
 from __future__ import annotations

@@ -13,7 +13,10 @@ WHAT IT MUST NOT DO IS CHANGE THE ANSWER. Every published number was measured
 through `correction.check_with_retrieval`, and if the graph corrected differently
 then the README would describe an engine that is not the one running. So the nodes
 call the same functions the measurement calls, in the same order, and
-`tests/test_graph.py` pins the two paths to the same output.
+`tests/test_api.py::TestTheGraphAndTheEngineAgree` pins the two paths to the same
+output — against `engine.judge`, which is the call `check_with_retrieval` makes once
+its search returns, so both sides are handed identical articles and only what comes
+after retrieval is compared.
 
 RETRIEVAL FAILURE IS NOT CORRECTION FAILURE. The retrieving node catches its own
 errors and passes an empty grounding on, because a build without torch still has to

@@ -3,9 +3,11 @@
 No provider is called and no index is built: the graph's nodes are replaced with
 recorded answers, which is the same rule the correction tests follow.
 
-The test that matters most is the one pinning the graph to
-`check_with_retrieval`. Every published number was measured through that function,
-and the graph is what ships — so if the two ever disagree, the README describes an
+The test that matters most is the one pinning the graph to the engine every
+published number was measured through. It compares against `engine.judge` with the
+same articles, which is what `check_with_retrieval` calls once its search returns —
+the search itself is stubbed on both sides, so what is compared is everything after
+it. The graph is what ships, so if the two ever disagree, the README describes an
 engine that is not the one running.
 """
 
