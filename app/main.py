@@ -160,6 +160,8 @@ SESSION_KEYS = (
     "spoken",
     "audio_cache",
     "unheard",
+    "dead_runs",
+    "stream_was_live",
 )
 
 # One conversation's worth of replies, at roughly 90KB of WAV each. `max_turns()`
@@ -264,8 +266,23 @@ def render_conversation() -> None:
     # not drawn, the device picker went on 2026-08-24, and a send-only stream has no
     # video to show — so an empty box at the top of the page costs nothing, and an
     # error inside it is better seen here than under the conversation.
+    #
+    # AND IT STOPS ASKING ONCE THE STREAM HAS NEVER COME UP. Left asking, the
+    # component retries the connection thousands of times a second and the browser
+    # ends up printing "Cannot create so many PeerConnections" in red on the
+    # learner's screen — see `continuous.open_stream`.
+    #
+    # DECIDED ONCE, HERE, AND USED TWICE. The count below changes while this page is
+    # being drawn, so asking again at the bottom would let the caption say the
+    # microphone was given up on during the very run that still asked for it.
+    keep_asking = continuous.worth_asking(
+        st.session_state.get("dead_runs", 0),
+        bool(st.session_state.get("stream_was_live")),
+    )
     listening_context = (
-        continuous.open_stream() if continuous.enabled() and not at_the_cap else None
+        continuous.open_stream(keep_trying=keep_asking)
+        if continuous.enabled() and not at_the_cap
+        else None
     )
 
     # The audio's place on the page, claimed in whichever bubble is last. It is
@@ -404,7 +421,10 @@ def render_conversation() -> None:
     # already reached the browser and nothing below it would.
     if listening_context is not None and status is not None:
         heard_audio = continuous.collect_turn(
-            listening_context, status, skip_seconds=spoken_seconds
+            listening_context,
+            status,
+            skip_seconds=spoken_seconds,
+            still_trying=keep_asking,
         )
         if heard_audio is not None:
             _send_recording(heard_audio)
@@ -532,7 +552,7 @@ def _speak_in_browser(text: str, slot: Any, *, announce: bool) -> float:
             function say() {{
               const voice = japanese();
               if (!voice) {{
-                note(" この端末には日本語の音声が入っていません。");
+                note(" No Japanese voice on this device — the reply is above as text.");
                 return;
               }}
               const said = new page.SpeechSynthesisUtterance(line);
@@ -772,7 +792,18 @@ def render_input(context: Any | None) -> Any:
         # 13 September is exactly where that runs out. A promise in a comment is not a
         # fallback.
         status = st.container()
-        if not continuous.is_live(context):
+        if continuous.is_live(context):
+            st.session_state["dead_runs"] = 0
+            # Remembered for the rest of the conversation: a device that has carried
+            # audio once is never given up on, however badly the signal behaves after.
+            st.session_state["stream_was_live"] = True
+        else:
+            # COUNTED, NOT ACTED ON YET. The first run always lands here — the stream
+            # is still being negotiated while this line runs — and a successful
+            # connection spends two runs before it reports itself playing. How many
+            # it takes to give up lives in `continuous.GIVE_UP_AFTER`, with the
+            # arithmetic behind the number.
+            st.session_state["dead_runs"] = st.session_state.get("dead_runs", 0) + 1
             _offer_the_button()
         if typed := st.chat_input("または、日本語で書いてください"):
             history().append(Utterance("learner", typed))

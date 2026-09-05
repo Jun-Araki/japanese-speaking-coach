@@ -245,6 +245,43 @@ not the files.** **The only check is to open the deployed URL.**
   → **Built on 2026-08-24.** `streamlit-webrtc` holds the microphone open and a second of
   silence ends the turn. **The constraint was right about Streamlit alone** — it took one
   external component to get around it.
+- **A custom component is rebuilt every turn unless it is drawn above the conversation**
+  (measured 2026-08-25). Streamlit rebuilds a component's iframe when what is drawn before it
+  changes, and on the conversation screen that is every turn. A microphone placed below the
+  messages therefore gets a fresh document each time and **calls `getUserMedia` again**. A
+  desktop browser remembers the grant per site and nobody notices; **iOS Safari does not, so
+  the learner is asked for the microphone after every sentence.** The fix is to open it at the
+  **top of the screen**, above everything that changes. Confirmed by stamping the component's
+  window and reading the stamp back across a turn: gone every turn when drawn below, and
+  **alive through two turns in the app itself** when drawn above (three in a minimal
+  reproduction).
+- **A microphone that will not connect does not wait quietly** (measured 2026-09-03). Left with
+  `desired_playing_state=True`, `streamlit-webrtc` builds **about 5,000 `RTCPeerConnection`s a
+  second** when the stream cannot start, without pausing, until the browser refuses and prints
+  **`Cannot create so many PeerConnections` in red inside the component** — **that is the red line
+  the deployed app showed on 2026-09-02.** At a meetup the person who meets it is holding the
+  phone that heats up — and at a meetup, that is whoever tapped "Don't allow". The fix is to
+  **stop asking after six consecutive runs in which the stream was not carrying audio**
+  (`continuous.worth_asking`). **Six is not a round number**: a connection that succeeds spends
+  **at least two runs first** — the first draws the widget before the browser has been asked
+  anything, and the run that hands back the answer finishes before the front end reports itself
+  playing. (**That two is a lower bound read off the library's own code, not counted in a
+  browser.**) At three, the slack is a single run, and a learner who types a sentence while the
+  microphone is still negotiating spends it — losing a microphone that would have worked. **A
+  stream that has carried audio once is never given up on**: a drop after that is signal, on a
+  device already known to work. **What that costs** is the storm coming back if permission is
+  revoked mid-conversation, which is accepted here — it is rare, and the record button survives
+  it. Once it has stopped, **the caption changes too** — `Starting the microphone…` is a lie on a
+  screen that has stopped starting it.
+
+  **What this does not do is stop the storm by itself.** **When permission was refused**, the
+  failing retry sends nothing back to Streamlit — no offer, no playing flag, no ICE candidates
+  change — so it starts no rerun, and a value the screen never draws cannot reach the widget. **It
+  stops when the learner does something**: types, or presses the record button the screen is
+  already offering. The bound is a person, not a timer, and that is the limit of this fix. (**A
+  network that will not carry WebRTC is a different case**: the offer and the candidates change on
+  every attempt, so reruns do happen and the backoff arrives on its own. The 5,000 a second was
+  measured with the microphone blocked.)
 - **The SudachiDict package is ~70MB**, installed at image build time.
 - **No local models before 20 September.** The goal is applying LLMs in a product, not
   training them; GPU cost and iteration do not fit a budget of two hours a day (14 a week).

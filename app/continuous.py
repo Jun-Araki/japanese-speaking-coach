@@ -131,11 +131,62 @@ def _wav(chunks: list[np.ndarray]) -> bytes:
 # everything that has to reach the page goes between them.
 
 
-def open_stream() -> Any:
+# SIX RUNS, AND THE NUMBER IS NOT ROUND BY ACCIDENT. A connection that succeeds
+# already spends two of them: the first run draws the widget before the browser has
+# been asked anything, and the run that hands the answer back finishes before the
+# front end reports itself playing. Three would leave a single run of slack, and a
+# learner who types a sentence while the microphone is still negotiating would spend
+# it — losing the microphone this code exists to keep open. Six leaves four.
+GIVE_UP_AFTER: Final = 6
+
+
+def worth_asking(dead_runs: int, ever_live: bool = False) -> bool:
+    """Whether to keep asking the browser for the microphone.
+
+    `dead_runs` is how many script runs in a row have ended with the stream not
+    carrying audio, and `ever_live` whether it has carried any in this conversation.
+
+    A STREAM THAT ONCE WORKED IS ALWAYS WORTH ASKING FOR AGAIN. What the count is for
+    is the microphone that never arrives — a refused permission, a network that will
+    not carry WebRTC. A stream that connected and then dropped is ordinary churn on a
+    device already known to work, and latching it off for the rest of the
+    conversation would punish a moment of bad signal.
+
+    Pure, and here rather than in the screen, so the number can be pinned by a test
+    without a browser.
+    """
+    if ever_live:
+        return True
+    return int(dead_runs) < GIVE_UP_AFTER
+
+
+def open_stream(*, keep_trying: bool = True) -> Any:
     """Put the microphone on the page and return at once, without waiting for a word.
 
     Draws the widget and nothing else. The returned context is handed back to
     `collect_turn` once the rest of the page has been drawn.
+
+    `keep_trying=False` STOPS THE COMPONENT RETRYING, and it exists because the retry
+    is not gentle. When the stream cannot start — the learner tapped "Don't allow",
+    or the network will not carry WebRTC — the widget builds a new `RTCPeerConnection`
+    and fails, over and over, with no pause: **5,000 a second**, measured on
+    2026-09-03 with the microphone blocked, until the browser refuses with
+    `Cannot create so many PeerConnections` and prints that in red where the learner
+    can read it. That red line was seen on the deployed app on 2026-09-02.
+    A phone doing that is a phone getting hot in someone's hand at a meetup.
+
+    The caller counts the runs where the stream never came up and passes False, which
+    takes `desired_playing_state` off and lets the component sit still. Nothing is
+    lost by then: the screen has already put the record button up, which is the path
+    that needs nothing but HTTP.
+
+    WHAT THIS DOES NOT DO IS STOP THE STORM ON ITS OWN. The retry sends nothing back
+    to Streamlit — a refused `getUserMedia` never changes the offer, the playing flag
+    or the ICE candidates — so it starts no rerun, and a value the screen never gets
+    to draw cannot reach the widget. The storm therefore runs until the learner does
+    something: types a sentence, or presses the record button the screen is already
+    offering. That is the bound, and it is worth knowing it is the learner rather
+    than a timer.
     """
     return webrtc_streamer(
         key="listener",
@@ -143,7 +194,7 @@ def open_stream() -> Any:
         audio_receiver_size=RECEIVER_SIZE,
         rtc_configuration=RTC_CONFIGURATION,
         media_stream_constraints={"audio": True, "video": False},
-        desired_playing_state=True,
+        desired_playing_state=keep_trying,
         # NO DEVICE PICKER. Left on, the widget offers a list — "MacBook Air
         # Microphone (Built-in)", "iPhone Air Microphone" — to someone practising
         # 「おはようございます」 on a phone that has one microphone. It is the same
@@ -172,7 +223,9 @@ def is_live(context: Any) -> bool:
     return bool(context.state.playing) and context.audio_receiver is not None
 
 
-def collect_turn(context: Any, status: Any, skip_seconds: float = 0.0) -> bytes | None:
+def collect_turn(
+    context: Any, status: Any, skip_seconds: float = 0.0, still_trying: bool = True
+) -> bytes | None:
     """Stream until the turn ends. Returns the audio, or None if it did not.
 
     The loop belongs to one script run: Streamlit reruns after a turn is sent, and
@@ -213,8 +266,15 @@ def collect_turn(context: Any, status: Any, skip_seconds: float = 0.0) -> bytes 
     that turn is what gives way.
     """
     if not is_live(context):
+        # TWO SENTENCES, BECAUSE THEY ARE TRUE AT DIFFERENT TIMES. While the stream is
+        # still being negotiated the first one is right; once the caller has stopped
+        # asking (`worth_asking`), it is not — the app is not starting anything any
+        # more, and telling a learner it is leaves them waiting for something that
+        # will not arrive.
         status.caption(
             "Starting the microphone… if it does not connect, use the button or type."
+            if still_trying
+            else "The microphone did not connect. Use the button below, or type."
         )
         return None
 

@@ -248,6 +248,16 @@ class TestTheStreamIsNotUp:
         assert "button" in status.captions[0]
         assert not continuous.is_live(context)
 
+    def test_it_stops_saying_it_is_starting_once_it_has_stopped_trying(self) -> None:
+        # The same screen, one run later. "Starting the microphone…" is a promise, and
+        # after the caller gives up there is nothing left to keep it.
+        status = FakeStatus()
+        context: Any = FakeContext([], playing=False)
+
+        assert continuous.collect_turn(context, status, still_trying=False) is None
+        assert "did not connect" in status.captions[0]
+        assert "Starting" not in status.captions[0]
+
     def test_a_running_stream_is_live(self) -> None:
         # What the screen asks before deciding whether to draw the button.
         context: Any = FakeContext(frames((0.1, QUIET)))
@@ -258,3 +268,54 @@ class TestTheStreamIsNotUp:
         context: Any = FakeContext(frames((0.5, QUIET), (0.2, SPEECH)))
 
         assert continuous.collect_turn(context, FakeStatus()) is None
+
+
+class TestTheMicrophoneStopsBeingAskedFor:
+    """The retry is not gentle, so something has to say when to stop.
+
+    Measured on 2026-09-03 with the microphone blocked: the widget built about
+    **5,000 `RTCPeerConnection`s a second**, without pausing, until the browser
+    refused with `Cannot create so many PeerConnections` and printed that in red
+    inside the component — the same red line the deployed app showed on 2026-09-02.
+    A learner who taps "Don't allow" at a meetup is holding the phone that does it.
+    """
+
+    def test_the_first_runs_keep_asking(self) -> None:
+        # THE LITERALS ARE THE POINT. Written against `GIVE_UP_AFTER` alone, these
+        # pass for any value of it — including 1, which is the one change the design
+        # is most afraid of: the stream is always down on the first run, and a
+        # connection that works spends two runs before it says so, so giving up early
+        # takes the microphone from the people it works for.
+        assert continuous.worth_asking(0)
+        assert continuous.worth_asking(2)
+        assert continuous.worth_asking(5)
+
+    def test_it_gives_up_after_six_runs_that_never_came_up(self) -> None:
+        assert continuous.GIVE_UP_AFTER == 6
+        assert not continuous.worth_asking(6)
+        assert not continuous.worth_asking(50)
+
+    def test_a_stream_that_once_worked_is_asked_for_again(self) -> None:
+        # Ordinary churn on a device already known to carry audio. Latching the
+        # microphone off for the rest of the conversation would punish bad signal.
+        assert continuous.worth_asking(50, ever_live=True)
+
+    def test_giving_up_takes_the_asking_off_the_widget(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        # `desired_playing_state` is the whole lever: with it on, the component keeps
+        # trying to connect; with it off, it sits still and the record button beside
+        # it is the way through.
+        asked: dict[str, Any] = {}
+
+        def fake(**kwargs: Any) -> str:
+            asked.update(kwargs)
+            return "context"
+
+        monkeypatch.setattr(continuous, "webrtc_streamer", fake)
+
+        continuous.open_stream(keep_trying=False)
+        assert asked["desired_playing_state"] is False
+
+        continuous.open_stream()
+        assert asked["desired_playing_state"] is True
