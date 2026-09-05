@@ -162,6 +162,16 @@ unmeasurable in the first place.
 > another thing they could not follow. **On the day the audio is still introduced as a bonus,
 > not a feature.** If enough devices turn out to have no Japanese voice, `BROWSER_VOICE=0`
 > puts the provider's voice back — and then the limit below applies, so people take turns.
+>
+> **The other device-side constraint is that it will only speak during a tap** (2026-08-25).
+> iOS Safari starts speech only when it was asked for while a tap was being handled, and a
+> reply arrives seconds after any tap — so written the obvious way, **every reply is silent on
+> an iPhone.** Two answers. **(1) The speaking is done from the page itself
+> (`window.parent`) rather than from the frame**, because the frame is rebuilt on every rerun
+> and a document milliseconds old has never been tapped. **(2) The first tap on the start
+> screen — the press on Start — also asks for one silent utterance, which unlocks the rest.**
+> And for whatever still refuses: if the speech has not begun 900ms after it was asked for,
+> the screen says to press ▶.
 
 **One person practising for a few turns is enough to get `429 Too Many Requests`.**
 Twelve short lines synthesised back to back were refused eleven times (`You exceeded
