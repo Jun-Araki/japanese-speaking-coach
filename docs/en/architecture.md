@@ -196,6 +196,44 @@ per 1M tokens and text input $0.50 per 1M, which for the expected size of this d
   corrections all succeeded** (2026-08-22). It is the preview speech model alone that
   is tightly limited.
 
+## What to check after deploying (observed 2026-08-25 and 2026-09-02)
+
+**"The push went through" and "it is running" are different things.** On 2026-08-25 the
+public URL was a red error screen.
+
+```
+File "/mount/src/japanese-speaking-coach/app/main.py", line 45, in <module>
+    from app.theme import (  # noqa: E402
+ImportError
+```
+
+**The files were new and the running process was old.** Streamlit Community Cloud re-runs
+the script while keeping the process, so **presumably the `app.theme` left in `sys.modules`
+was the one used** — that was never inspected; what was seen is the traceback.
+**The same failure appeared the same day on a local `localhost:8501`**, over
+`start_tts_cooldown`, a function newly added to `app.limits`.
+
+**The symptom depends on how the name is reached** (reproduced 2026-09-03): `from x import y`
+raises `ImportError`, while `x.y` raises
+**`AttributeError: module 'app.continuous' has no attribute 'worth_asking'`**. **Both are the
+same single cause** — a function was added and the process was not restarted.
+
+- **After adding a function or a constant to another file, restart once the push lands.**
+  The same applies whenever the shape of an import changes.
+- **After the restart, open the URL, exchange one turn, and go through to the review.**
+  **"Deployed successfully" does not mean the script ran to the end.**
+- **The red screen hides the reason.** It exists only in the Manage app logs.
+- **A free-tier app goes to sleep when nobody opens it for a while** (observed 2026-09-02:
+  a "Zzzz" screen, and **about four minutes** from waking it to the start screen).
+  **Open the URL yourself beforehand on any day someone else will.** Otherwise the first
+  thing the testers on 9/13 — and the interviewer who opens the link from an application —
+  see is "Zzzz" and a wait of several minutes.
+
+**Tests cannot catch this failure.** `tests/test_screens.py` runs `app/main.py` in full
+through `AppTest`, so a broken import fails locally. **It still cannot protect production**:
+**the files a test reads are new every time, and what is stale in production is the process,
+not the files.** **The only check is to open the deployed URL.**
+
 ## Constraints that shaped these choices
 
 - **Free hosting does not guarantee filesystem persistence across restarts.** This once forced
