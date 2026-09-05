@@ -34,6 +34,12 @@ where they can see it, and the screen says in as many words that speaking can hi
 that typing catches every one. `CONTINUOUS_VOICE=0` puts a record button back for a network that
 will not carry WebRTC.
 
+![The review screen at the end of a conversation: one sentence corrected with the reason in English, one confirmed as already correct.](docs/images/review.png)
+
+*The review screen at the end of a two-sentence conversation, rendered from the running page's
+own markup and stylesheet. The app's screen ends at the button; the numbered markers, and
+everything below the button, were added for this README.*
+
 ## What it deliberately does not do
 
 No lessons, no drills, no exam preparation, no flashcards, and **no pronunciation scoring**.
@@ -79,7 +85,14 @@ Japanese, or you can compose your own sentences, but not both at once.
    accuracy figures — including this one, which sells correction quality as a paid feature
    without quantifying it. **Measuring is the real differentiator**, and it is the part of
    this project worth reading.
-4. **Corrections cite a grammar reference** rather than asserting things ungrounded.
+4. **A correction can cite the grammar section it came from** rather than asserting things
+   ungrounded — **21 of the 40 held-out items (52.5%)** carried a citation on the run of 20 August.
+   When the retrieved sections do not contain the rule, the correction is made without one instead
+   of inventing a reference, so the reader should expect the line to be absent about half the time.
+   *A separate defect, found on 2 September: the prompt still carries a leftover instruction saying
+   the citation list is always empty, and the review screen has shown no citation in the two
+   conversations tried by hand. Fixing the prompt moves every published number, so it is scheduled
+   after this measurement round rather than slipped in under it.*
 
 ---
 
@@ -529,7 +542,7 @@ accepted price of storing nothing.
 - [x] FastAPI + LangGraph
 - [x] Voice input and output — **shipped with a measured limitation, above**
 - [x] Docker Compose, built and run — the image, `GET /health` reporting what the build can do
-- [ ] A deployed demo carrying the current code
+- [x] A deployed demo carrying the current code
 - [ ] Two or three testers, three written comments
 
 **What is deliberately not on this list:** response time, cost per turn, any measurement of the
