@@ -49,3 +49,7 @@ data/sessions/
 # PLAN.md already fixed for JMdict: fetch it, do not ship it.
 # Rebuild with: .venv/bin/python -m nlp.frequency --build
 data/frequency/
+
+# Editor and tooling configuration for whoever is working on this locally. The
+# launch command belongs to one machine's checkout, not to the project.
+.claude/

@@ -4,6 +4,12 @@ A speaking-practice partner for people who have just started learning Japanese. 
 situation, talk to it **with your voice**, and after the conversation ends you get your
 sentences back with a natural phrasing and a short reason in English.
 
+**Try it: <https://nihongo-coach.streamlit.app>** — access code `nihongo`. The code is here so
+that the demo is not open to whatever finds it, not to keep anyone out. It runs on a free tier
+and **goes to sleep when nobody has opened it for a while**, so the first load can take a few
+minutes; it is one shared API key, so the spoken reply sometimes stays silent and the text
+always appears. Nothing you say is stored.
+
 ---
 
 ## The problem

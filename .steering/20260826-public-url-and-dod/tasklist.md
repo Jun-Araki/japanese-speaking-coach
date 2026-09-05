@@ -147,7 +147,10 @@
 - [ ] **アーキ図は新しく描かない。** 339 行目の mermaid で DoD を満たすと判断済み（design.md §3）
 - [x] **Progress の `A deployed demo carrying the current code` にチェックを入れた**
       — **A の本体（本番で1往復＋振り返り）が通ってから入れた**
-- [~] **公開 URL のリンク**（**未決。ただし判断材料は 9/2 に揃えた。決めるのは Jun**）
+- [x] **公開 URL のリンク**（**2026-09-05 に決めた：URL とコードの両方を README に書く**）
+      — 書いたコードは **`nihongo`**。**Jun が Manage app → Settings → Secrets に
+        `ACCESS_CODE = "nihongo"` を入れるまで、門は出ない**（README だけ先に書いてある状態になる）
+      — README には**寝ること・音声が黙ることがある・何も保存しないこと**も1段落で書いた
 
   **事実**：
   - **アクセスコードは実装されている**（`app/limits.py:153` `code_matches`、`app/main.py:908` で門を出す）。
@@ -254,8 +257,9 @@ Progress のチェックと README 他部分の整合／ja・en の同期／READ
       （**9/5 の再確認では「Zzzz」は出ず、約40秒で開始画面まで来た**。
       **寝る間隔は一定ではない**ので、毎回開くほかない）
 - [ ] **1往復して振り返りまで出す。** 押した先が動くことを、送る前に自分の目で見る
-- [ ] **`ACCESS_CODE` を決める。** いま**本番は誰でも開ける**（PLAN.md の DoD と §2-5 に反している）。
-      設定するなら Manage app → Settings → Secrets に1行
+- [ ] **`ACCESS_CODE = "nihongo"` を Manage app → Settings → Secrets に入れる。**
+      **README にはもうそのコードが書いてある。**入れるまで本番は誰でも開ける状態のままで、
+      PLAN.md の DoD と §2-5 に反している。**入れたら1往復して、門が出ることを確かめる**
 
 ### 会場に着く前（9/13）
 
