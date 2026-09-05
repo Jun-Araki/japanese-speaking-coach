@@ -222,6 +222,10 @@ same single cause** — a function was added and the process was not restarted.
   The same applies whenever the shape of an import changes.
 - **After the restart, open the URL, exchange one turn, and go through to the review.**
   **"Deployed successfully" does not mean the script ran to the end.**
+- **A start screen that draws is not proof that anything works** (measured 2026-09-05). A
+  deployment that had taken the new code without restarting drew the start screen normally and
+  then, the moment "Start" was pressed, turned into a red `AttributeError` — because the new
+  name was used by the conversation screen. **What is broken can be one screen in.**
 - **The red screen hides the reason.** It exists only in the Manage app logs.
 - **A free-tier app goes to sleep when nobody opens it for a while** (observed 2026-09-02:
   a "Zzzz" screen, and **about four minutes** from waking it to the start screen).
