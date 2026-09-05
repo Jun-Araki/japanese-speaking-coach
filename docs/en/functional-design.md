@@ -58,9 +58,13 @@ conversation ends, and are never rendered outside the review.**
   (never make them retype). ~~The count of presses is a proxy for transcription quality.~~
   → **Nothing is stored, so it cannot be counted** (2026-08-16). The button stays: its purpose
   is sparing the learner from retyping, not producing a metric.
-  → **The button is not built (checked 2026-08-25).** There is only a prompt to say it again
-  when nothing was heard; **once a sentence has been transcribed there is no way to take it
-  back and say it differently.** Whether to build it or drop it is undecided.
+  → **The button is not built (checked 2026-08-25, and again on 2026-09-03).** There is only a
+  prompt to say it again when nothing was heard; **once a sentence has been transcribed there is
+  no way to take it back and say it differently.** Whether to build it or drop it is undecided.
+  → **It is not the ▶ "Say again" already on the screen.** That one **replays the AI's reply**;
+  this one would **take back what the learner said**. Two different features under one name, and
+  if this one is ever built it needs a different one — **the person who wrote this conflated them
+  on 3 September**, and a reader has less to go on.
 - Only the **AI's** reply text can be hidden; hiding it turns the session into listening
   practice. ~~Which mode was used is recorded.~~ → **Not recorded** (same reason).
   → **Not built (checked 2026-08-25).** There is no toggle on the screen and no `show_ai_text`
