@@ -295,6 +295,35 @@ class TestGroundedPrompt:
 
         assert len(versions) == 2
 
+    def test_a_grounded_prompt_does_not_also_say_never_to_cite(self) -> None:
+        # THE DEFECT THIS FILE EXISTS FOR, from 2 September: the body of the prompt
+        # ended with "`grounding_ids` is always an empty array" and the retrieval
+        # block was appended after it, so the model was told to cite and never to
+        # cite in the same breath. It resolved that by citing nothing, in production
+        # and locally, while retrieval ran correctly the whole time.
+        #
+        # Asserted on the assembled text, because both halves read correctly alone.
+        grounded = engine.build_prompt("a friend", "beginner", "grammar-001 · particles")
+
+        assert "always an empty array" not in grounded
+        assert "ACTUALLY USED" in grounded
+        assert "grammar-001 · particles" in grounded
+
+    def test_an_ungrounded_prompt_still_asks_for_an_empty_array(self) -> None:
+        # The other half of the same choice. Without it, a prompt with no articles
+        # would ask for citations from a list that was never supplied — which is how
+        # an invented id gets into a correction.
+        ungrounded = engine.build_prompt("a friend", "beginner")
+
+        assert "always an empty array" in ungrounded
+        assert "ACTUALLY USED" not in ungrounded
+
+    def test_the_grounded_prompt_version_says_it_is_a_third_version(self) -> None:
+        # The numbers published from the held-out split were measured on v2, with the
+        # contradiction in place. A run under the repaired prompt must not be able to
+        # claim their name.
+        assert engine.GROUNDED_PROMPT_VERSION == "correction-rag-v3"
+
     def test_retrieval_is_not_imported_when_the_engine_is(self) -> None:
         # The published build may have to run without torch. An import at module
         # scope would make that fallback impossible — the correction engine would

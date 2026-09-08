@@ -44,7 +44,11 @@ PROMPT_VERSION: Final = "correction-v2"
 # comparison table is measured on the prompt above and has to stay reproducible
 # after this file learns to retrieve, so the two versions live side by side and a
 # run record says which one produced it.
-GROUNDED_PROMPT_VERSION: Final = "correction-rag-v2"
+# v3 (2026-09-08): the bullet below saying `grounding_ids` is always empty used to
+# stay in the prompt when articles were appended, so the model was told both to cite
+# and never to cite — and it resolved that by citing nothing. Every number measured
+# under v2 keeps its name; this one is a different prompt and says so.
+GROUNDED_PROMPT_VERSION: Final = "correction-rag-v3"
 
 # The conversation wants variety; the judgement must not have any. The same
 # sentence measured twice has to give the same label, or the evaluation numbers
@@ -144,10 +148,19 @@ wrote; do not write a better sentence of your own.
 - `reason_en` IS WRITTEN IN ENGLISH. Quote Japanese inside 「」 when you need to \
 point at a word, but the explanation itself is English — the learner reads English, \
 not Japanese.
+"""
+
+# THE LAST BULLET IS NOT FIXED, and this is the whole repair. It used to be written
+# into the body above and the retrieval block was appended after it, so a grounded
+# prompt carried both "always an empty array" and "cite what you used". The model
+# obeyed the first one: on 2 September, in production and locally, no correction
+# cited anything. Chosen here rather than patched into the string afterwards —
+# a rule that is selected cannot be contradicted by a rule that is appended.
+_NO_ARTICLES_RULE: Final = """\
 - `grounding_ids` is always an empty array.
 """
 
-# Appended to the prompt above when retrieval is on, replacing the last bullet. The
+# Chosen instead of `_NO_ARTICLES_RULE` when retrieval returned something. The
 # articles are handed over whole — the sections the search returned, with their ids —
 # because a citation the model never read is not grounding, it is decoration. Asking
 # it to name the ones it USED, rather than recording what was shown, is what makes
@@ -249,6 +262,19 @@ def judge(
     return _judge(sentence, scene, level, grounding)
 
 
+def build_prompt(situation: str, level: str, articles: str = "") -> str:
+    """The judge's whole system prompt, with the rule that fits what it was given.
+
+    Public because the contradiction it exists to prevent is invisible from the
+    outside: both halves were plausible on their own, and only the assembled text
+    showed the model being told two opposite things. A test reads this.
+    """
+    prompt = SYSTEM_PROMPT.format(situation=situation, level=level)
+    if articles:
+        return prompt + _GROUNDING_BLOCK.format(articles=articles)
+    return prompt + _NO_ARTICLES_RULE
+
+
 def _judge(
     sentence: str,
     scene: str,
@@ -256,9 +282,8 @@ def _judge(
     grounding: tuple[str, set[str]] | None,
 ) -> CorrectionResult:
     role, _ = scene_brief(scene)
-    prompt = SYSTEM_PROMPT.format(situation=role, level=level_brief(level))
-    if grounding is not None and grounding[0]:
-        prompt += _GROUNDING_BLOCK.format(articles=grounding[0])
+    articles = grounding[0] if grounding is not None else ""
+    prompt = build_prompt(role, level_brief(level), articles)
 
     model = build_chat_model(temperature=TEMPERATURE)
     messages: list[BaseMessage] = [SystemMessage(prompt), HumanMessage(sentence)]
