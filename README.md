@@ -92,13 +92,27 @@ Japanese, or you can compose your own sentences, but not both at once.
    without quantifying it. **Measuring is the real differentiator**, and it is the part of
    this project worth reading.
 4. **A correction can cite the grammar section it came from** rather than asserting things
-   ungrounded — **21 of the 40 held-out items (52.5%)** carried a citation on the run of 20 August.
-   When the retrieved sections do not contain the rule, the correction is made without one instead
-   of inventing a reference, so the reader should expect the line to be absent about half the time.
-   *A separate defect, found on 2 September: the prompt still carries a leftover instruction saying
-   the citation list is always empty, and the review screen has shown no citation in the two
-   conversations tried by hand. Fixing the prompt moves every published number, so it is scheduled
-   after this measurement round rather than slipped in under it.*
+   ungrounded — **21 of the 40 held-out items (52.5%)** carried a citation on the run of 20 August,
+   at prompt `correction-rag-v2`. When the retrieved sections do not contain the rule, the
+   correction is made without one instead of inventing a reference.
+
+   *That figure was held down by a defect, found on 2 September and repaired on 8 September: the
+   prompt ended by saying the citation list is always empty, and the retrieval block asking for
+   citations was appended after it. Both halves read correctly alone; assembled, they contradicted
+   each other, and the model settled it by citing nothing.*
+
+   *The repair is measured on the development split only, at `correction-rag-v3`. Against the same
+   80 dev items at v2: citations **35 → 49**, detection accuracy **93.8% → 96.9%**, and
+   over-correction **12.5% → 18.8%** — one more item out of sixteen, which is inside the noise that
+   split can resolve and is reported rather than smoothed. Five items changed verdict: three
+   corrections it had been missing, one it now misses, and one already-natural sentence it now
+   corrects.*
+
+   ***The held-out table below is not re-run.*** *This README publishes the rule that prompts are
+   tuned on dev and the held-out split is touched at the start and the end and never in between;
+   re-running it here would spend that "end" a second time to improve a number. So every held-out
+   figure keeps its `correction-rag-v2` label, and the repair's evidence stays a dev figure —
+   which is the weaker claim, and the one the method allows.*
 
 ---
 

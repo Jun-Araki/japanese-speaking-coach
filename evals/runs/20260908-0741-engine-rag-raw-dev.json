@@ -1,0 +1,138 @@
+{
+  "run_id": "20260908-0741",
+  "implementation": "engine-rag",
+  "model": "gemini/gemini-2.5-flash",
+  "prompt_version": "correction-rag-v3",
+  "scorer_version": "score-v1",
+  "thresholds_digest": "a3b19b50d990",
+  "items_digest": "758e01ba6d39",
+  "n": 5,
+  "split": "dev",
+  "level": "beginner",
+  "date": "20260908",
+  "detection_accuracy": 1.0,
+  "over_correction_rate": null,
+  "format_compliance_rate": 1.0,
+  "unusable_verdicts": 0,
+  "stage": "raw",
+  "retrieval_version": "retrieval-v2",
+  "validation_fired": {
+    "on_needs_correction": 0,
+    "on_already_natural": 0
+  },
+  "grounded_items": 4,
+  "japanese_left_unquoted": 0,
+  "latency_ms": {
+    "median": 7120,
+    "p95": 16874
+  },
+  "manual_check_ids": [
+    "eval-001",
+    "eval-002",
+    "eval-004",
+    "eval-005",
+    "eval-008"
+  ],
+  "scorer_checked_on": null,
+  "results_redacted": false,
+  "results": [
+    {
+      "id": "eval-001",
+      "scene": "greeting",
+      "learner_sentence": "スーパーに買い物します。",
+      "expected": true,
+      "predicted": true,
+      "format_compliant": true,
+      "format_problems": [],
+      "japanese_left_unquoted": false,
+      "japanese_ratio": 0.0,
+      "validation_reason": null,
+      "discarded_correction": null,
+      "elapsed_ms": 12675,
+      "attempts": 1,
+      "corrected_sentence": "スーパーで買い物します。",
+      "reason_en": "When an action takes place at a specific location, the particle 「で」 is used to mark that location, not 「に」.",
+      "grounding_ids": [
+        "grammar-001"
+      ]
+    },
+    {
+      "id": "eval-002",
+      "scene": "greeting",
+      "learner_sentence": "私は毎朝六時起きます。",
+      "expected": true,
+      "predicted": true,
+      "format_compliant": true,
+      "format_problems": [],
+      "japanese_left_unquoted": false,
+      "japanese_ratio": 0.0,
+      "validation_reason": null,
+      "discarded_correction": null,
+      "elapsed_ms": 5059,
+      "attempts": 1,
+      "corrected_sentence": "私は毎朝六時に起きます。",
+      "reason_en": "When stating a specific clock time like 「六時」, you need to use the particle 「に」.",
+      "grounding_ids": [
+        "grammar-001"
+      ]
+    },
+    {
+      "id": "eval-004",
+      "scene": "greeting",
+      "learner_sentence": "良い一日。",
+      "expected": true,
+      "predicted": true,
+      "format_compliant": true,
+      "format_problems": [],
+      "japanese_left_unquoted": false,
+      "japanese_ratio": 0.0,
+      "validation_reason": null,
+      "discarded_correction": null,
+      "elapsed_ms": 16874,
+      "attempts": 1,
+      "corrected_sentence": "おはようございます。",
+      "reason_en": "「良い一日。」 is a direct translation of 'Good day' but is not used as a common morning greeting in Japanese. The standard morning greeting for a neighbour is 「おはようございます。」",
+      "grounding_ids": [
+        "grammar-008"
+      ]
+    },
+    {
+      "id": "eval-005",
+      "scene": "greeting",
+      "learner_sentence": "日曜日は走りませんかった。",
+      "expected": true,
+      "predicted": true,
+      "format_compliant": true,
+      "format_problems": [],
+      "japanese_left_unquoted": false,
+      "japanese_ratio": 0.0,
+      "validation_reason": null,
+      "discarded_correction": null,
+      "elapsed_ms": 7120,
+      "attempts": 1,
+      "corrected_sentence": "日曜日は走りませんでした。",
+      "reason_en": "The polite negative past form of a verb is 「〜ませんでした」, not 「〜ませんかった」.",
+      "grounding_ids": []
+    },
+    {
+      "id": "eval-008",
+      "scene": "greeting",
+      "learner_sentence": "おはようです。",
+      "expected": true,
+      "predicted": true,
+      "format_compliant": true,
+      "format_problems": [],
+      "japanese_left_unquoted": false,
+      "japanese_ratio": 0.0,
+      "validation_reason": null,
+      "discarded_correction": null,
+      "elapsed_ms": 4138,
+      "attempts": 1,
+      "corrected_sentence": "おはようございます。",
+      "reason_en": "「おはようございます」 is a fixed greeting and cannot be altered by adding 「です」.",
+      "grounding_ids": [
+        "grammar-008"
+      ]
+    }
+  ]
+}
