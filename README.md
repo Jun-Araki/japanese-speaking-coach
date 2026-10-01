@@ -564,12 +564,21 @@ accepted price of storing nothing.
 - [x] Voice input and output — **shipped with a measured limitation, above**
 - [x] Docker Compose, built and run — the image, `GET /health` reporting what the build can do
 - [x] A deployed demo carrying the current code
-- [ ] Two or three testers, three written comments
+- [ ] **Two or three testers, three written comments — not collected.** The one meetup inside
+      the schedule was 13 September; no comments came back from it, and none are recorded here.
+      The next monthly meeting is 11 October, after the date this table was due, so the line
+      stays open rather than being quietly removed
+
+**The deadline was 20 September, and this is what it found.** Everything above it is done except
+the testers' comments. That line is the one that needed other people, and it is the one that did
+not happen — which is worth more as a finished sentence than as an unticked box: **the parts of
+this project that depended only on me were finished; the part that depended on a room full of
+other people was not.**
 
 **What is deliberately not on this list:** response time, cost per turn, any measurement of the
 speech stage, and tester retention. Each was dropped from scope, and each is named here rather
 than left off quietly. **A second rater's agreement is dropped**: the first request went
 unanswered, no second rater was found, and every validity figure here is single-rater as a
 result — stated in the metrics section rather than left for a reader to discover.
-The working budget is two hours a day and the deadline is 20 September; what that budget bought,
-and what it did not, is the honest version of this table.
+The working budget was two hours a day; what that budget bought, and what it did not, is the
+honest version of this table.

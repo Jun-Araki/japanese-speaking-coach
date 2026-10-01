@@ -58,17 +58,24 @@ conversation ends, and are never rendered outside the review.**
   (never make them retype). ~~The count of presses is a proxy for transcription quality.~~
   → **Nothing is stored, so it cannot be counted** (2026-08-16). The button stays: its purpose
   is sparing the learner from retyping, not producing a metric.
-  → **The button is not built (checked 2026-08-25, and again on 2026-09-03).** There is only a
-  prompt to say it again when nothing was heard; **once a sentence has been transcribed there is
-  no way to take it back and say it differently.** Whether to build it or drop it is undecided.
+  → **Decided against, 2026-10-01.** It was carried as unbuilt through 8-25 and 9-03; it is
+  dropped here, and **not for want of hours — it would break the thing being measured.** If a
+  learner can take a sentence back, they can repair it **before it is corrected**. This app's
+  central claim is that **nothing is corrected during the conversation and everything is
+  corrected after it**; a review of sentences the learner was allowed to polish first would make
+  the published numbers mean something else. Sparing them from retyping is already served by
+  showing the transcript as their own line.
   → **It is not the ▶ "Say again" already on the screen.** That one **replays the AI's reply**;
-  this one would **take back what the learner said**. Two different features under one name, and
-  if this one is ever built it needs a different one — **the person who wrote this conflated them
-  on 3 September**, and a reader has less to go on.
+  the dropped one would **take back what the learner said**. Two different features under one
+  name, and if anyone ever builds it, it needs a different one — **the person who wrote this
+  conflated them on 3 September**, and a reader has less to go on.
 - Only the **AI's** reply text can be hidden; hiding it turns the session into listening
   practice. ~~Which mode was used is recorded.~~ → **Not recorded** (same reason).
-  → **Not built (checked 2026-08-25).** There is no toggle on the screen and no `show_ai_text`
-  key. Whether to build it or drop it is undecided.
+  → **Decided against, 2026-10-01.** There is no toggle on the screen and no `show_ai_text` key.
+  **The decision to treat the voice as a bonus had already removed the ground under it**: on a
+  device with no Japanese voice installed, the text is all there is, and hiding it leaves an empty
+  screen. The start screen promises that **the reply is always written on screen** — a promise and
+  a switch that breaks it cannot both exist.
 - Corrections never interrupt the conversation. The correction node runs **once the
   conversation is over, over all of the learner's sentences at once (ten at a time)**, and
   results appear only in the review. **Changed from per-turn on 2026-08-22**: the principle
@@ -206,8 +213,8 @@ Session state lives in `st.session_state` and nowhere else.
 
 > **This table was reconciled with the implementation on 2026-08-25.** The previous version
 > listed `turns` and `show_ai_text`; **neither exists in the code** (the real key is `history`).
-> **`show_ai_text` was the pair of "only the AI's reply text can be hidden" below — a feature
-> that was never built.**
+> **`show_ai_text` was the key for "only the AI's reply text can be hidden" below — a feature
+> that was never built and, on 2026-10-01, decided against.**
 
 **Closing the tab erases all of it.** No learner name, no utterance, no audio, no correction
 result survives. **Latency, token counts and Say-again presses are not recorded either** (see
