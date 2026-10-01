@@ -4,8 +4,9 @@ A speaking-practice partner for people who have just started learning Japanese. 
 situation, talk to it **with your voice**, and after the conversation ends you get your
 sentences back with a natural phrasing and a short reason in English.
 
-**Try it: <https://nihongo-coach.streamlit.app>** — access code `nihongo`. The code is here so
-that the demo is not open to whatever finds it, not to keep anyone out. It runs on a free tier
+**Try it: <https://nihongo-coach.streamlit.app>** — **open, with nothing in front of it.** A
+shared-code gate is built and is switched on by an `ACCESS_CODE` secret that this deployment does
+not currently set; until it does, the link is the whole of the entry. It runs on a free tier
 and **goes to sleep when nobody has opened it for a while**, so the first load can take a few
 minutes; it is one shared API key, so the spoken reply sometimes stays silent and the text
 always appears. Nothing you say is stored.
@@ -528,7 +529,7 @@ It costs something. Retention, response time, the number of *Say again* presses,
 measurement of the speech stage all become impossible. Those were dropped as metrics rather than
 quietly worked around.
 
-Testers enter through **one shared access code**; no accounts, no names. Before the first turn the
+Testers enter through **one shared access code**; no accounts, no names. **It is built and not currently switched on** — the deployment above sets no `ACCESS_CODE`, so the demo is open. Before the first turn the
 app states that recordings go to external APIs, that confidential information should not be
 spoken, **that the AI voice is synthetic**, and gives a contact address. A per-session turn limit
 and a daily cap are cost guards, not measurements: nothing is published from them, and they exist
